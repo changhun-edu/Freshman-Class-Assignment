@@ -145,6 +145,22 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 .lock-banner{background:var(--green-light);border:1px solid #bbf7d0;color:var(--green);padding:12px 16px;border-radius:var(--r);font-size:.85rem;display:flex;justify-content:space-between;align-items:center}
 .suggest-card{border:1px solid #fde68a;background:var(--amber-light);border-radius:var(--r);padding:10px 14px;margin-bottom:8px;font-size:.83rem}
 .suggest-card .opts{margin-top:6px;display:flex;gap:6px;flex-wrap:wrap}
+
+/* prep (통합 준비 화면) */
+.prep-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.step-badge{display:inline-block;background:var(--primary);color:#fff;font-size:.72rem;font-weight:800;padding:4px 11px;border-radius:6px;letter-spacing:.03em;margin-bottom:10px}
+.rule-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface2);margin-bottom:8px}
+.rule-row input[type=checkbox]{width:16px;height:16px}
+.rule-row .rlabel{font-weight:700;font-size:.85rem;flex:1;display:flex;align-items:center;gap:6px}
+.rule-row input[type=number]{width:52px;padding:5px 6px;text-align:center}
+.rule-row .balance-pill{font-size:.72rem;font-weight:700;background:var(--green-light);color:var(--green);padding:3px 9px;border-radius:10px;white-space:nowrap}
+.summary-pill{background:var(--primary-light);color:var(--primary-dark);border:1px solid #bfdbfe;border-radius:var(--r);padding:9px 14px;font-size:.82rem;font-weight:600;margin-bottom:12px}
+.btn-big-green{width:100%;padding:14px;border-radius:8px;font-size:.92rem;font-weight:800;background:var(--green);color:#fff;border:none;cursor:pointer;margin-bottom:10px}
+.btn-big-green:hover{background:#128a4a}
+.btn-big-green:disabled{background:#c3ccd8;cursor:not-allowed}
+.steps-text{font-size:.78rem;color:var(--text-muted);margin-bottom:10px}
+.goto-upload{display:block;text-align:center;padding:10px;border:1px solid var(--border);border-radius:var(--r);font-size:.85rem;font-weight:700;color:var(--primary-dark);cursor:pointer;background:#fff}
+.goto-upload[disabled]{color:var(--text-muted);cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -167,69 +183,79 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
   <div id="step-progress"></div>
 
   <main>
-    <!-- -1. 명단 등록 -->
-    <section class="panel active" id="panel-roster">
-      <div class="card">
-        <h3><span class="icon">📋</span>신입생 명단 등록</h3>
-        <p style="font-size:.83rem;color:var(--text-sub);margin-bottom:12px">면접 전에 이름·성별만 담긴 명단을 등록하면, 앱이 학생마다 고유한 <b>관리번호</b>를 자동으로 부여합니다. 면접교사는 이 번호를 그대로 옮겨 적기만 하면 되므로 접수번호를 직접 만들면서 생기는 오타·중복 문제를 막을 수 있습니다.</p>
-        <div class="row" style="margin-bottom:10px">
-          <div class="field" style="max-width:160px">
-            <label>학년도(번호 앞자리)</label>
-            <input type="text" id="roster-year" value="" maxlength="2" oninput="renderRosterTable()">
-          </div>
-        </div>
-        <label style="font-size:.82rem;font-weight:600;color:var(--text-sub)">한 줄에 한 명씩 붙여넣기 (이름,성별 또는 이름 [탭] 성별)</label>
-        <textarea id="roster-paste" placeholder="김민준,남&#10;이서연,여&#10;김민준,남"></textarea>
-        <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="addFromPaste()">명단에 추가</button>
-        <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addRosterRow()">빈 행 추가</button>
-        <table class="roster-table" id="roster-table"><thead><tr><th style="width:90px">관리번호</th><th>이름</th><th style="width:90px">성별</th><th>구분 메모</th><th style="width:40px"></th></tr></thead><tbody id="roster-tbody"></tbody></table>
-        <div id="roster-summary" style="margin-top:10px"></div>
-        <div id="roster-lock-area" style="margin-top:14px"></div>
-      </div>
-      <div class="footer-nav">
-        <span></span>
-        <button class="btn btn-primary" id="btn-to-setup" onclick="goStep('setup')" disabled>다음: 기준 설정 →</button>
-      </div>
-    </section>
-
-    <!-- 0. 설정 -->
-    <section class="panel" id="panel-setup">
-      <div class="card">
-        <h3><span class="icon">⚙️</span>기준 설정</h3>
-        <div class="row">
-          <div class="field">
-            <label>학급 수</label>
-            <input type="number" id="cfg-numClasses" min="1" max="20" value="5" oninput="onConfigChange()">
-          </div>
-          <div class="field">
-            <label>학급당 개별지원 기준 인원</label>
-            <input type="range" id="cfg-perClass" min="1" max="8" value="4" oninput="onConfigChange()">
-            <div style="font-size:.82rem;color:var(--text-sub);margin-top:4px">현재: <b id="cfg-perClass-val">4</b>명 / 학급</div>
-          </div>
-        </div>
-        <div class="target-preview">
-          이번 학년도 <b id="preview-target">20</b>명이 종합지원 대상으로 자동 선정됩니다. (학급수 × 학급당 기준인원)
-        </div>
-      </div>
-
-      <div class="card">
-        <details class="adv">
-          <summary>고급 설정 (도메인별 균형배치 · 라벨 기준)</summary>
-          <div style="margin-top:14px">
-            <div class="sec-title">도메인 태그를 균형배치 대상에도 포함</div>
-            <div id="domain-toggles"></div>
-            <div class="sec-title">참고용 단계 라벨 기준 (상위 %)</div>
+    <!-- 0. 준비 (명단 등록 + 기준 설정) -->
+    <section class="panel active" id="panel-prep">
+      <div class="prep-grid">
+        <!-- 왼쪽: STEP1 기준 설정 -->
+        <div>
+          <div class="card">
+            <span class="step-badge">STEP 1</span>
+            <h3 style="margin-bottom:14px">⚙️ 반편성 기준 설정</h3>
             <div class="row">
-              <div class="field"><label>개별지원필요 (상위 %)</label><input type="number" id="cfg-pct1" min="1" max="90" value="20" oninput="onConfigChange()"></div>
-              <div class="field"><label>관찰필요 (상위 %, 개별지원 포함 누적)</label><input type="number" id="cfg-pct2" min="1" max="95" value="40" oninput="onConfigChange()"></div>
+              <div class="field">
+                <label>학급 수</label>
+                <input type="number" id="cfg-numClasses" min="1" max="20" value="5" oninput="onConfigChange()">
+              </div>
+              <div class="field">
+                <label>학급당 개별지원 기준 인원</label>
+                <input type="range" id="cfg-perClass" min="1" max="8" value="4" oninput="onConfigChange()">
+                <div style="font-size:.82rem;color:var(--text-sub);margin-top:4px">현재: <b id="cfg-perClass-val">4</b>명 / 학급</div>
+              </div>
             </div>
+            <div class="target-preview">
+              <b id="preview-target">20</b>명이 종합지원 대상으로 자동 선정됩니다. (학급수 × 학급당 기준인원)
+            </div>
+            <details class="adv" style="margin-top:12px">
+              <summary>고급 설정 (참고용 단계 라벨 기준)</summary>
+              <div class="row" style="margin-top:10px">
+                <div class="field"><label>개별지원필요 (상위 %)</label><input type="number" id="cfg-pct1" min="1" max="90" value="20" oninput="onConfigChange()"></div>
+                <div class="field"><label>관찰필요 (상위 %, 누적)</label><input type="number" id="cfg-pct2" min="1" max="95" value="40" oninput="onConfigChange()"></div>
+              </div>
+            </details>
           </div>
-        </details>
-      </div>
 
-      <div class="footer-nav">
-        <button class="btn btn-ghost" onclick="goStep('roster')">← 이전</button>
-        <button class="btn btn-primary" onclick="goStep('upload')">다음: 자료 업로드 →</button>
+          <div class="card">
+            <h3>✅ 특성 태그 배치 규칙</h3>
+            <p style="font-size:.8rem;color:var(--text-sub);margin-bottom:10px">체크된 특성만 검토 화면에 표시되고, '균형 반영'이 켜진 특성만 목표인원 산정·반편성 앱 내보내기에 사용됩니다.</p>
+            <div class="rule-row">
+              <span class="rlabel">🆘 종합지원</span>
+              <span style="font-size:.78rem;color:var(--text-sub)"><b id="rule-target-count">20</b>명 자동 선정</span>
+              <span class="balance-pill">⚖️ 균형 반영</span>
+            </div>
+            <div id="domain-toggles"></div>
+          </div>
+        </div>
+
+        <!-- 오른쪽: STEP2 명단 등록 + 서식 받기 -->
+        <div>
+          <div class="card">
+            <span class="step-badge">STEP 2</span>
+            <h3 style="margin-bottom:6px">📋 신입생 명단 등록</h3>
+            <p style="font-size:.82rem;color:var(--text-sub);margin-bottom:12px">이름·성별만 등록하면 학생마다 고유한 <b>관리번호</b>를 자동으로 부여합니다. 면접교사는 이 번호를 그대로 옮겨 적기만 하면 되어 오타·중복 문제를 막을 수 있습니다.</p>
+            <div class="row" style="margin-bottom:10px">
+              <div class="field" style="max-width:140px">
+                <label>학년도(번호 앞자리)</label>
+                <input type="text" id="roster-year" value="" maxlength="2" oninput="renderRosterTable()">
+              </div>
+            </div>
+            <label style="font-size:.82rem;font-weight:600;color:var(--text-sub)">한 줄에 한 명씩 붙여넣기 (이름,성별 또는 이름 [탭] 성별)</label>
+            <textarea id="roster-paste" placeholder="김민준,남&#10;이서연,여&#10;김민준,남"></textarea>
+            <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="addFromPaste()">명단에 추가</button>
+            <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addRosterRow()">빈 행 추가</button>
+            <table class="roster-table" id="roster-table"><thead><tr><th style="width:90px">관리번호</th><th>이름</th><th style="width:90px">성별</th><th>구분 메모</th><th style="width:40px"></th></tr></thead><tbody id="roster-tbody"></tbody></table>
+            <div id="roster-summary" style="margin-top:10px"></div>
+            <div id="roster-lock-area" style="margin-top:14px"></div>
+          </div>
+
+          <div class="card">
+            <h3 style="margin-bottom:12px">⬇ 면접 서식 받기</h3>
+            <div class="summary-pill" id="prep-summary-pill">📌 현재 설정: 학급 5개 · 목표인원 20명 · 특성 1개 사용</div>
+            <button class="btn-big-green" id="btn-download-main" onclick="downloadRosterTemplate()" disabled>⬇ 면접용 서식 다운로드 (명단 번호 포함)</button>
+            <div class="steps-text">① 다운로드 → ② 면접교사에게 배부 → ③ 작성 후 업로드로 이동</div>
+            <button class="btn btn-ghost btn-sm" id="btn-print-survey" style="width:100%;margin-bottom:10px" onclick="printParentSurvey()" disabled>🖨️ 학부모 설문지 인쇄용 만들기</button>
+            <button class="goto-upload" id="btn-to-upload" onclick="goStep('upload')" disabled>→ 작성 완료 후 업로드로 이동</button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -237,11 +263,9 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
     <section class="panel" id="panel-upload">
       <div class="card">
         <h3><span class="icon">📄</span>면접 결과 업로드</h3>
-        <p style="font-size:.82rem;color:var(--text-sub);margin-bottom:12px">학생 면접은 교사가 엑셀에 입력하지만, 학부모 설문은 학부모가 직접 응답하는 자료입니다. 아래 '학부모 설문지 인쇄용 만들기'로 관리번호가 미리 인쇄된 종이 설문지를 만들어 배부하고, 걷은 뒤에는 담당자가 면접용 서식의 '학부모확인' 시트에 일괄로 옮겨 적어 업로드하면 됩니다.</p>
+        <p style="font-size:.82rem;color:var(--text-sub);margin-bottom:12px">학생 면접은 교사가 엑셀에 입력하지만, 학부모 설문은 학부모가 직접 응답하는 자료입니다. 걷은 뒤에는 담당자가 면접용 서식의 '학부모확인' 시트에 일괄로 옮겨 적어 업로드하면 됩니다. 서식·설문지는 준비 단계에서 받을 수 있습니다.</p>
         <div style="margin-bottom:14px">
-          <button class="btn btn-primary btn-sm" onclick="downloadRosterTemplate()">⬇ 면접용 서식 다운로드 (명단 번호 포함)</button>
           <button class="btn btn-ghost btn-sm" onclick="downloadTemplate()">⬇ 빈 템플릿 (명단 미사용시)</button>
-          <button class="btn btn-ghost btn-sm" onclick="printParentSurvey()">🖨️ 학부모 설문지 인쇄용 만들기</button>
         </div>
         <div id="drop-zone" onclick="document.getElementById('file-input').click()">
           <div class="big">📁</div>
@@ -254,7 +278,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
         <div id="suggest-area"></div>
       </div>
       <div class="footer-nav">
-        <button class="btn btn-ghost" onclick="goStep('setup')">← 이전</button>
+        <button class="btn btn-ghost" onclick="goStep('prep')">← 이전</button>
         <button class="btn btn-primary" id="btn-to-review" onclick="proceedToReview()" disabled>다음: 검토 →</button>
       </div>
     </section>
@@ -310,9 +334,9 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 
 <script>
 /* ===================== 설정/상태 ===================== */
-const STEPS=['roster','setup','upload','review','export'];
-const STEP_LABELS={roster:'명단등록',setup:'설정',upload:'업로드',review:'검토',export:'내보내기'};
-let currentStep='roster';
+const STEPS=['prep','upload','review','export'];
+const STEP_LABELS={prep:'준비',upload:'업로드',review:'검토',export:'내보내기'};
+let currentStep='prep';
 let ROSTER=[]; // {no,name,gender,note}
 let rosterLocked=false;
 let unregistered=[]; // ids present in uploads but not in ROSTER
@@ -397,13 +421,20 @@ function renderRosterLockArea(needNote){
   if(rosterLocked){
     el.innerHTML=`<div class="lock-banner">✅ 명단이 확정되었습니다 (${ROSTER.length}명, 관리번호 ${rosterNo(0)}~${rosterNo(ROSTER.length-1)})
       <button class="btn btn-ghost btn-sm" onclick="unlockRoster()">명단 다시 열기</button></div>`;
-    document.getElementById('btn-to-setup').disabled=false;
   }else{
     const disabled=(ROSTER.length===0||needNote)?'disabled':'';
     el.innerHTML=`<button class="btn btn-primary" ${disabled} onclick="lockRoster()">명단 확정하고 관리번호 발급 →</button>
       ${needNote?'<div style="font-size:.8rem;color:var(--amber);margin-top:6px">동명이인 구분 메모를 모두 입력해야 확정할 수 있습니다.</div>':''}`;
-    document.getElementById('btn-to-setup').disabled=true;
   }
+  ['btn-download-main','btn-print-survey','btn-to-upload'].forEach(id=>{
+    const b=document.getElementById(id);if(b)b.disabled=!rosterLocked;
+  });
+  renderPrepSummary();
+}
+function renderPrepSummary(){
+  const pill=document.getElementById('prep-summary-pill');if(!pill)return;
+  const domainOn=Object.values(CONFIG.domainBalance).filter(Boolean).length;
+  pill.textContent=`📌 현재 설정: 학급 ${CONFIG.numClasses}개 · 목표인원 ${CONFIG.numClasses*CONFIG.perClassTarget}명 · 특성 ${1+domainOn}개 사용 · 명단 ${ROSTER.length}명${rosterLocked?' (확정됨)':' (미확정)'}`;
 }
 function lockRoster(){
   rosterLocked=true;
@@ -546,11 +577,15 @@ function printParentSurvey(){
 /* ===================== 설정 패널 ===================== */
 function renderDomainToggles(){
   const el=document.getElementById('domain-toggles');
-  el.innerHTML=Object.keys(DOMAIN_LABELS).map(k=>`
-    <div class="toggle-row">
-      <label>${DOMAIN_LABELS[k]} 태그도 균형배치에 포함</label>
-      <label class="switch"><input type="checkbox" onchange="CONFIG.domainBalance['${k}']=this.checked"><span class="slider-toggle"></span></label>
-    </div>`).join('');
+  const icons={정서:'💗',언어:'💬',사회성:'🤝',행동조절:'🧭'};
+  el.innerHTML=Object.keys(DOMAIN_LABELS).map(k=>{
+    const on=CONFIG.domainBalance[k];
+    return `<div class="rule-row">
+      <input type="checkbox" ${on?'checked':''} onchange="CONFIG.domainBalance['${k}']=this.checked;renderDomainToggles();renderPrepSummary();">
+      <span class="rlabel">${icons[k]} ${DOMAIN_LABELS[k]}</span>
+      ${on?'<span class="balance-pill">⚖️ 균형 반영</span>':'<span style="font-size:.75rem;color:var(--text-muted)">참고용 정보</span>'}
+    </div>`;
+  }).join('');
 }
 function onConfigChange(){
   CONFIG.numClasses=Math.max(1,+document.getElementById('cfg-numClasses').value||1);
@@ -558,7 +593,10 @@ function onConfigChange(){
   CONFIG.pctIndividual=+document.getElementById('cfg-pct1').value;
   CONFIG.pctObserve=+document.getElementById('cfg-pct2').value;
   document.getElementById('cfg-perClass-val').textContent=CONFIG.perClassTarget;
-  document.getElementById('preview-target').textContent=CONFIG.numClasses*CONFIG.perClassTarget;
+  const target=CONFIG.numClasses*CONFIG.perClassTarget;
+  document.getElementById('preview-target').textContent=target;
+  document.getElementById('rule-target-count').textContent=target;
+  renderPrepSummary();
 }
 
 /* ===================== 템플릿 다운로드 ===================== */
