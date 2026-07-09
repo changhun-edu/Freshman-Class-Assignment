@@ -124,6 +124,8 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 .rule-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface2);margin-bottom:8px}
 .rule-row input[type=checkbox]{width:16px;height:16px}
 .rule-row .rlabel{font-weight:700;font-size:.85rem;flex:1;display:flex;align-items:center;gap:6px}
+.rule-row .weight-input{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--text-sub);white-space:nowrap}
+.rule-row .weight-input input{width:44px;padding:4px 6px;text-align:center}
 .summary-pill{background:var(--primary-light);color:var(--primary-dark);border:1px solid #bfdbfe;border-radius:var(--r);padding:9px 14px;font-size:.82rem;font-weight:600;margin-bottom:12px}
 .btn-big-green{width:100%;padding:14px;border-radius:8px;font-size:.92rem;font-weight:800;background:var(--green);color:#fff;border:none;cursor:pointer;margin-bottom:10px}
 .btn-big-green:hover{background:#128a4a}
@@ -160,18 +162,10 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
         <div>
           <div class="card">
             <span class="step-badge">STEP 1</span>
-            <h3 style="margin-bottom:10px">⚙️ 학급 수</h3>
-            <div class="field" style="max-width:200px">
-              <label>학급 수</label>
-              <input type="number" id="cfg-numClasses" min="1" max="20" value="5" oninput="onConfigChange()">
-            </div>
-            <p style="font-size:.78rem;color:var(--text-sub);margin-top:10px">실제 반 배치와 인원 균형은 스마트 반편성 앱에서 수행됩니다. 여기서는 참고 정보로만 쓰입니다.</p>
-          </div>
-
-          <div class="card">
             <h3>✅ 관찰 영역 선택</h3>
             <p style="font-size:.8rem;color:var(--text-sub);margin-bottom:10px">선택한 영역의 문항만 면접 서식·설문지에 포함되고, 검토·내보내기에도 선택한 영역만 표시됩니다. 점수가 높은(주의가 필요한) 학생을 각 영역별로 표시해두면, 실제 반 배치에서 고루 나눠 배치하는 건 스마트 반편성 앱이 맡습니다.</p>
             <div id="domain-toggles"></div>
+            <div id="specialed-toggle" style="margin-top:6px"></div>
           </div>
         </div>
 
@@ -294,6 +288,7 @@ const DOMAIN_COLORS={
   또래관계:{bg:'#fce7f3',fg:'#9d174d'},
   '정서표현·감정조절':{bg:'#fee2e2',fg:'#991b1b'},
   기본생활안전:{bg:'#f1f5f9',fg:'#334155'},
+  특수교육:{bg:'#f5f3ff',fg:'#6d28d9'},
 };
 const STU_FIELDS=[
   {idx:0,label:'이름말하기',domain:'의사소통',cmt:'0 인사하거나 이름을 자연스럽게 말함 / 1 작은 목소리·단답형 / 2 대답을 어려워함'},
@@ -332,7 +327,7 @@ let currentStep='prep';
 let ROSTER=[];
 let rosterLocked=false;
 let unregistered=[];
-const CONFIG={numClasses:5,domains:Object.fromEntries(DOMAIN_LIST.map(d=>[d,true]))};
+const CONFIG={domains:Object.fromEntries(DOMAIN_LIST.map(d=>[d,true])),specialEd:{enabled:true,weight:2}};
 
 let uploadedFiles=[];
 let students={};
@@ -419,7 +414,7 @@ function renderRosterLockArea(needNote){
 function renderPrepSummary(){
   const pill=document.getElementById('prep-summary-pill');if(!pill)return;
   const enabledCnt=DOMAIN_LIST.filter(d=>CONFIG.domains[d]).length;
-  pill.textContent=`📌 현재 설정: 학급 ${CONFIG.numClasses}개 · 관찰 영역 ${enabledCnt}개 사용 · 명단 ${ROSTER.length}명${rosterLocked?' (확정됨)':' (미확정)'}`;
+  pill.textContent=`📌 현재 설정: 관찰 영역 ${enabledCnt}개 사용${CONFIG.specialEd.enabled?` · 특수교육(가중치 1명=${CONFIG.specialEd.weight}명) 반영`:''} · 명단 ${ROSTER.length}명${rosterLocked?' (확정됨)':' (미확정)'}`;
 }
 function lockRoster(){
   rosterLocked=true;
@@ -448,8 +443,24 @@ function renderDomainToggles(){
     </div>`;
   }).join('');
 }
+function onSpecialEdChange(enabled){
+  CONFIG.specialEd.enabled=enabled;
+  renderSpecialEdToggle();renderPrepSummary();
+}
+function onSpecialEdWeightChange(v){
+  CONFIG.specialEd.weight=Math.max(1,+v||1);
+  renderPrepSummary();
+}
+function renderSpecialEdToggle(){
+  const el=document.getElementById('specialed-toggle');if(!el)return;
+  const on=CONFIG.specialEd.enabled;
+  el.innerHTML=`<div class="rule-row">
+    <input type="checkbox" ${on?'checked':''} onchange="onSpecialEdChange(this.checked)">
+    <span class="rlabel">🧩 특수교육</span>
+    ${on?`<span class="weight-input">가중치 1명=<input type="number" min="1" max="10" value="${CONFIG.specialEd.weight}" onchange="onSpecialEdWeightChange(this.value)" onclick="event.stopPropagation()">명</span>`:'<span style="font-size:.75rem;color:var(--text-muted)">문항 없음 · 수동 지정</span>'}
+  </div>`;
+}
 function onConfigChange(){
-  CONFIG.numClasses=Math.max(1,+document.getElementById('cfg-numClasses').value||1);
   renderPrepSummary();
 }
 
@@ -599,7 +610,7 @@ const dz=()=>document.getElementById('drop-zone');
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('roster-year').value=String(new Date().getFullYear()).slice(-2);
   renderRosterTable();
-  renderStepProgress();renderDomainToggles();onConfigChange();
+  renderStepProgress();renderDomainToggles();renderSpecialEdToggle();onConfigChange();
   const zone=dz();
   ['dragover','dragenter'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.add('drag');}));
   ['dragleave','drop'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.remove('drag');}));
@@ -803,7 +814,7 @@ function computeScores(){
 /* ===================== 검토 화면 ===================== */
 function renderFilters(){
   const enabled=DOMAIN_LIST.filter(d=>CONFIG.domains[d]);
-  const filters=[['all','전체'],...enabled.map(d=>[d,d])];
+  const filters=[['all','전체'],...enabled.map(d=>[d,d]),...(CONFIG.specialEd.enabled?[['특수교육','특수교육']]:[])];
   document.getElementById('review-filters').innerHTML=filters.map(([k,l])=>
     `<button class="filter-btn ${activeFilter===k?'active':''}" onclick="activeFilter='${k}';renderReviewList()">${l}</button>`).join('');
 }
@@ -848,6 +859,11 @@ function renderDetail(){
   html+=`<div class="sec-title">확정 관찰 영역 (클릭해서 on/off)</div><div>`;
   html+=enabled.map(d=>tagChip(d,{off:!s.tags.includes(d),interactive:true})).join('');
   html+='</div>';
+  if(CONFIG.specialEd.enabled){
+    html+=`<div class="sec-title">행정 특성 (수동 지정)</div><div>`;
+    html+=tagChip('특수교육',{off:!s.tags.includes('특수교육'),interactive:true});
+    html+=`<span style="font-size:.78rem;color:var(--text-muted);margin-left:6px">문항 없이 담당자가 직접 지정합니다</span></div>`;
+  }
   enabled.forEach(d=>{
     const res=s.domains[d];
     html+=`<div class="sec-title">${d} <span style="color:var(--text-sub);font-weight:600;text-transform:none;letter-spacing:0">(${res.score}/${res.max})</span></div><div class="qgrid">`;
@@ -879,13 +895,15 @@ function renderDetail(){
 /* ===================== 내보내기 ===================== */
 async function exportClassApp(){
   const enabled=DOMAIN_LIST.filter(d=>CONFIG.domains[d]);
+  const extra=CONFIG.specialEd.enabled?['특수교육']:[];
+  const allCols=[...enabled,...extra];
   const wb=new ExcelJS.Workbook();
   const ws=wb.addWorksheet('신입생 특성');
-  ws.addRow(['※ 스마트 반편성 앱에 업로드하기 전, 반편성 앱에서 아래 특성명과 동일한 커스텀 특성을 먼저 등록하세요.']);
-  ws.mergeCells(1,1,1,3+enabled.length);
-  const headers=['접수번호','이름','성별',...enabled];
+  ws.addRow(['※ 관찰 영역은 스마트 반편성 앱에서 동일한 이름의 커스텀 특성을 먼저 등록해야 합니다. \'특수교육\' 열은 반편성 앱의 기본 특성(도움)과 자동으로 매칭됩니다.']);
+  ws.mergeCells(1,1,1,3+allCols.length);
+  const headers=['접수번호','이름','성별',...allCols];
   ws.addRow(headers);ws.getRow(2).font={bold:true};
-  studentsRanked.forEach(s=>{ws.addRow([s.id,s.name,s.gender,...enabled.map(d=>s.tags.includes(d)?'O':'')]);});
+  studentsRanked.forEach(s=>{ws.addRow([s.id,s.name,s.gender,...allCols.map(d=>s.tags.includes(d)?'O':'')]);});
   ws.columns.forEach(c=>c.width=14);
   const buf=await wb.xlsx.writeBuffer();
   downloadBuffer(buf,'반편성용_신입생특성.xlsx');
@@ -894,11 +912,14 @@ async function exportHandoff(){
   const enabled=DOMAIN_LIST.filter(d=>CONFIG.domains[d]);
   const wb=new ExcelJS.Workbook();
   const ws=wb.addWorksheet('담임 인계자료');
-  ws.addRow(['접수번호','이름','성별','확정 관찰영역',...enabled.map(d=>`${d} 점수`),'표시된 생활안전 항목','검사경험','입학초기 배려사항','학생면접 특이사항']);
+  ws.addRow(['접수번호','이름','성별','확정 관찰영역',...enabled.map(d=>`${d} 점수`),
+    ...(CONFIG.specialEd.enabled?['특수교육 대상']:[]),
+    '표시된 생활안전 항목','검사경험','입학초기 배려사항','학생면접 특이사항']);
   ws.getRow(1).font={bold:true};
   studentsRanked.forEach(s=>{
     const habitMarks=s.par?[...PAR_HABIT,...PAR_HEALTH].filter(h=>(s.par.habit&&s.par.habit[h]==='O')||(s.par.health&&s.par.health[h]==='O')):[];
     ws.addRow([s.id,s.name,s.gender,s.tags.join(', '),...enabled.map(d=>`${s.domains[d].score}/${s.domains[d].max}`),
+      ...(CONFIG.specialEd.enabled?[s.tags.includes('특수교육')?'O':'']:[]),
       habitMarks.join(', '), s.par&&s.par.testExp==='있음'?'있음':'', s.par?s.par.care:'', s.stu?s.stu.note:'']);
   });
   ws.columns.forEach(c=>c.width=16);
