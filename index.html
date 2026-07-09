@@ -138,6 +138,19 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 .qprev-title{font-size:.8rem;font-weight:800}
 .qprev-list{margin:5px 0 0 16px;font-size:.78rem;color:var(--text-sub);line-height:1.6}
 .qprev-common{font-size:.78rem;color:var(--text-muted);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
+
+/* 배치 */
+.classname-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-top:10px}
+.classname-grid input{padding:6px 8px;font-size:.85rem}
+.assign-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-top:14px}
+.class-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;box-shadow:var(--shadow)}
+.class-card h4{font-size:.92rem;color:var(--primary-dark);margin-bottom:4px}
+.class-stat{font-size:.74rem;color:var(--text-sub);margin-bottom:10px;line-height:1.6}
+.class-student-row{display:flex;justify-content:space-between;align-items:center;gap:6px;padding:6px 0;border-bottom:1px dashed var(--border);font-size:.8rem}
+.class-student-row .cname{flex:1}
+.class-student-row select{font-size:.72rem;padding:2px 4px;border-radius:4px;border:1px solid var(--border)}
+.violation-banner{background:var(--red-light);border:1px solid #fecaca;color:var(--red);border-radius:var(--r);padding:12px 16px;font-size:.83rem;margin-bottom:14px}
+.violation-banner div{padding:2px 0}
 </style>
 </head>
 <body>
@@ -183,7 +196,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
           <div class="card">
             <span class="step-badge">STEP 2</span>
             <h3 style="margin-bottom:6px">📋 신입생 명단 등록</h3>
-            <p style="font-size:.82rem;color:var(--text-sub);margin-bottom:12px">이름·성별만 등록하면 학생마다 고유한 <b>관리번호</b>를 자동으로 부여합니다. 면접교사는 이 번호를 그대로 옮겨 적기만 하면 되어 오타·중복 문제를 막을 수 있습니다.</p>
+            <p style="font-size:.82rem;color:var(--text-sub);margin-bottom:12px">이름·성별만 등록하면 학생마다 고유한 <b>관리번호</b>를 자동으로 부여합니다. 면접교사는 이 번호를 그대로 옮겨 적기만 하면 되어 오타·중복 문제를 막을 수 있습니다. 형제자매 등 <b>분리·동반이 필요한 관계</b>가 있으면 상대방의 관리번호를 표에 적어두세요 (행 순서를 다 정한 뒤에 입력하는 게 안전합니다 — 관리번호는 행 순서로 정해집니다).</p>
             <div class="row" style="margin-bottom:10px">
               <div class="field" style="max-width:140px">
                 <label>학년도(번호 앞자리)</label>
@@ -194,7 +207,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
             <textarea id="roster-paste" placeholder="김민준,남&#10;이서연,여&#10;김민준,남"></textarea>
             <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="addFromPaste()">명단에 추가</button>
             <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addRosterRow()">빈 행 추가</button>
-            <table class="roster-table" id="roster-table"><thead><tr><th style="width:90px">관리번호</th><th>이름</th><th style="width:90px">성별</th><th>구분 메모</th><th style="width:40px"></th></tr></thead><tbody id="roster-tbody"></tbody></table>
+            <table class="roster-table" id="roster-table"><thead><tr><th style="width:90px">관리번호</th><th>이름</th><th style="width:70px">성별</th><th>구분 메모</th><th style="width:110px">분리대상<br><span style="font-weight:400;font-size:.68rem">관리번호,관리번호</span></th><th style="width:110px">동반대상<br><span style="font-weight:400;font-size:.68rem">관리번호,관리번호</span></th><th style="width:40px"></th></tr></thead><tbody id="roster-tbody"></tbody></table>
             <div id="roster-summary" style="margin-top:10px"></div>
             <div id="roster-lock-area" style="margin-top:14px"></div>
           </div>
@@ -205,18 +218,9 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
             <button class="btn-big-green" id="btn-download-main" onclick="downloadRosterTemplate()" disabled>⬇ 면접용 서식 다운로드 (명단 번호 포함)</button>
             <div class="steps-text">① 다운로드 → ② 면접교사에게 배부 → ③ 작성 후 업로드로 이동</div>
 
-            <div style="border-top:1px solid var(--border);margin:12px 0;padding-top:12px">
-              <label style="font-size:.82rem;font-weight:700;color:var(--text)">🖨️ 학부모 설문지 — 접수처에서 개별 인쇄 (권장)</label>
-              <p style="font-size:.78rem;color:var(--text-sub);margin:4px 0 8px">접수 시 학생 이름을 검색해서 그 학생 것만 1장 인쇄하세요. 전체를 미리 뽑아 찾을 필요가 없어집니다.</p>
-              <input type="text" id="survey-search-input" placeholder="학생 이름 검색" oninput="searchSurveyStudent()" disabled>
-              <div id="survey-search-results" style="margin-top:6px"></div>
-              <details class="adv" style="margin-top:10px">
-                <summary>전체 일괄 인쇄 (보관·우편 발송용)</summary>
-                <button class="btn btn-ghost btn-sm" id="btn-print-survey" style="width:100%;margin-top:8px" onclick="printParentSurvey()" disabled>🖨️ 전체 학생 설문지 인쇄</button>
-              </details>
-            </div>
+            <button class="btn btn-ghost btn-sm" id="btn-print-survey" style="width:100%;margin-bottom:10px" onclick="printParentSurvey()" disabled>🖨️ 학부모 설문지 인쇄</button>
 
-            <button class="goto-upload" id="btn-to-upload" onclick="goStep('upload')" disabled style="margin-top:12px">→ 작성 완료 후 업로드로 이동</button>
+            <button class="goto-upload" id="btn-to-upload" onclick="goStep('upload')" disabled>→ 작성 완료 후 업로드로 이동</button>
           </div>
         </div>
       </div>
@@ -263,22 +267,45 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
       </div>
       <div class="footer-nav">
         <button class="btn btn-ghost" onclick="goStep('upload')">← 이전</button>
+        <button class="btn btn-primary" onclick="goStep('assign')">다음: 배치 →</button>
+      </div>
+    </section>
+
+    <!-- 3. 배치 -->
+    <section class="panel" id="panel-assign">
+      <div class="card">
+        <h3><span class="icon">🏫</span>학급 배치</h3>
+        <div class="row">
+          <div class="field" style="max-width:160px">
+            <label>학급 수</label>
+            <input type="number" id="assign-numClasses" min="1" max="15" value="5" oninput="onAssignNumClassesChange()">
+          </div>
+        </div>
+        <label style="font-size:.82rem;font-weight:600;color:var(--text-sub);display:block;margin-top:10px">반 이름</label>
+        <div class="classname-grid" id="assign-classname-inputs"></div>
+        <button class="btn btn-primary" style="margin-top:14px" onclick="runAutoAssign()">⚙️ 자동 배치 실행 (희귀 특성 우선)</button>
+        <p style="font-size:.78rem;color:var(--text-sub);margin-top:8px">성별 균형, 확정된 관찰영역 태그, 특수교육 가중치, 분리·동반 관계를 반영해 자동으로 나눕니다. 배치 후 각 학생 옆 드롭다운으로 직접 반을 옮길 수도 있습니다.</p>
+      </div>
+      <div id="assign-violations"></div>
+      <div class="assign-grid" id="assign-results"></div>
+      <div class="footer-nav">
+        <button class="btn btn-ghost" onclick="goStep('review')">← 이전</button>
         <button class="btn btn-primary" onclick="goStep('export')">다음: 내보내기 →</button>
       </div>
     </section>
 
-    <!-- 3. 내보내기 -->
+    <!-- 4. 내보내기 -->
     <section class="panel" id="panel-export">
       <div class="card">
         <h3><span class="icon">📤</span>내보내기</h3>
         <div class="export-card">
           <div class="ic">🏫</div>
-          <div class="info"><b>반편성 앱용 엑셀<span class="sensitive-tag sens-no">민감정보 없음</span></b><span>이름·성별·확정 관찰영역(O표시)만 포함. 스마트 반편성 앱에 그대로 업로드하세요.</span></div>
+          <div class="info"><b>학급별 최종 명렬표<span class="sensitive-tag sens-no">민감정보 없음</span></b><span>배치 단계에서 확정한 반별 명단(번호·이름·성별·확정 관찰영역). 담임 배정용 최종 결과물입니다.</span></div>
           <button class="btn btn-primary btn-sm" onclick="exportClassApp()">다운로드</button>
         </div>
         <div class="export-card">
           <div class="ic">🗂️</div>
-          <div class="info"><b>담임 인계 자료<span class="sensitive-tag sens-yes">민감정보 포함</span></b><span>확정 관찰영역, 영역별 점수, 서술, 건강·검사경험 포함. 반 배정 후 새 담임에게만 전달하세요.</span></div>
+          <div class="info"><b>담임 인계 자료<span class="sensitive-tag sens-yes">민감정보 포함</span></b><span>배정 반, 확정 관찰영역, 영역별 점수, 서술, 건강·검사경험 포함. 반 배정 후 새 담임에게만 전달하세요.</span></div>
           <button class="btn btn-primary btn-sm" onclick="exportHandoff()">다운로드</button>
         </div>
         <div class="export-card">
@@ -288,7 +315,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
         </div>
       </div>
       <div class="footer-nav">
-        <button class="btn btn-ghost" onclick="goStep('review')">← 이전</button>
+        <button class="btn btn-ghost" onclick="goStep('assign')">← 이전</button>
         <span></span>
       </div>
     </section>
@@ -341,9 +368,11 @@ const SEVERITY_MAP={
 function severity(key,val){return (SEVERITY_MAP[key]&&SEVERITY_MAP[key][val])||0;}
 
 /* ===================== 설정/상태 ===================== */
-const STEPS=['prep','upload','review','export'];
-const STEP_LABELS={prep:'준비',upload:'업로드',review:'검토',export:'내보내기'};
+const STEPS=['prep','upload','review','assign','export'];
+const STEP_LABELS={prep:'준비',upload:'업로드',review:'검토',assign:'배치',export:'내보내기'};
 let currentStep='prep';
+const CLASS_NAMES_DEFAULT=['가반','나반','다반','라반','마반','바반','사반','아반','자반','차반','카반','타반','파반','하반','거반'];
+let ASSIGN={numClasses:5,classNames:[],classes:[],violations:[],assigned:false};
 let ROSTER=[];
 let rosterLocked=false;
 let unregistered=[];
@@ -373,20 +402,21 @@ function goStep(name){
   document.getElementById('panel-'+name).classList.add('active');
   renderStepProgress();
   if(name==='review'){computeScores();renderFilters();renderReviewList();}
+  if(name==='assign'){renderClassNameInputs();renderAssignResults();}
 }
-function resetAll(){uploadedFiles=[];students={};conflicts=[];conflictsAck=false;selectedId=null;ROSTER=[];rosterLocked=false;unregistered=[];location.reload();}
+function resetAll(){uploadedFiles=[];students={};conflicts=[];conflictsAck=false;selectedId=null;ROSTER=[];rosterLocked=false;unregistered=[];ASSIGN={numClasses:5,classNames:[],classes:[],violations:[],assigned:false};location.reload();}
 
 /* ===================== 명단 등록 ===================== */
 function rosterNo(idx){
   const yy=document.getElementById('roster-year').value||String(new Date().getFullYear()).slice(-2);
   return `${yy}-${String(idx+1).padStart(3,'0')}`;
 }
-function addRosterRow(name='',gender='',note=''){ROSTER.push({name,gender,note});renderRosterTable();}
+function addRosterRow(name='',gender='',note='',sep='',pair=''){ROSTER.push({name,gender,note,sep,pair});renderRosterTable();}
 function addFromPaste(){
   const raw=document.getElementById('roster-paste').value;
   raw.split('\n').map(l=>l.trim()).filter(Boolean).forEach(line=>{
     const parts=line.split(/[,\t]/).map(s=>s.trim());
-    ROSTER.push({name:parts[0]||'',gender:parts[1]||'',note:''});
+    ROSTER.push({name:parts[0]||'',gender:parts[1]||'',note:'',sep:'',pair:''});
   });
   document.getElementById('roster-paste').value='';
   renderRosterTable();
@@ -405,6 +435,8 @@ function renderRosterTable(){
       <td><input value="${r.name}" ${rosterLocked?'disabled':''} onchange="updateRosterField(${i},'name',this.value)"></td>
       <td><input value="${r.gender}" ${rosterLocked?'disabled':''} placeholder="남/여" onchange="updateRosterField(${i},'gender',this.value)"></td>
       <td><input value="${r.note}" ${rosterLocked?'disabled':''} placeholder="${unresolved?'동명이인 - 구분 메모 필요':''}" onchange="updateRosterField(${i},'note',this.value)"></td>
+      <td><input value="${r.sep||''}" ${rosterLocked?'disabled':''} placeholder="예: 25-004" onchange="updateRosterField(${i},'sep',this.value)"></td>
+      <td><input value="${r.pair||''}" ${rosterLocked?'disabled':''} placeholder="예: 25-004" onchange="updateRosterField(${i},'pair',this.value)"></td>
       <td>${rosterLocked?'':`<span style="cursor:pointer;color:var(--text-muted)" onclick="removeRosterRow(${i})">✕</span>`}</td>
     </tr>`;
   }).join('');
@@ -428,7 +460,7 @@ function renderRosterLockArea(needNote){
     el.innerHTML=`<button class="btn btn-primary" ${disabled} onclick="lockRoster()">명단 확정하고 관리번호 발급 →</button>
       ${needNote?'<div style="font-size:.8rem;color:var(--amber);margin-top:6px">동명이인 구분 메모를 모두 입력해야 확정할 수 있습니다.</div>':''}`;
   }
-  ['btn-download-main','btn-print-survey','btn-to-upload','survey-search-input'].forEach(id=>{
+  ['btn-download-main','btn-print-survey','btn-to-upload'].forEach(id=>{
     const b=document.getElementById(id);if(b)b.disabled=!rosterLocked;
   });
   renderPrepSummary();
@@ -640,21 +672,6 @@ function printParentSurvey(subset){
   </body></html>`;
   const win=window.open('','_blank');
   win.document.write(html);win.document.close();
-}
-function printSingleSurvey(no){
-  const r=ROSTER.find(x=>x.no===no);
-  if(!r)return;
-  printParentSurvey([r]);
-}
-function searchSurveyStudent(){
-  const el=document.getElementById('survey-search-results');
-  const q=(document.getElementById('survey-search-input').value||'').trim();
-  if(!q){el.innerHTML='';return;}
-  const results=ROSTER.filter(r=>r.name&&r.name.includes(q));
-  el.innerHTML=results.length?results.map(r=>`<div class="file-card">
-      <span class="name">${r.name} <span style="color:var(--text-muted);font-weight:400">(${r.no}${r.gender?', '+r.gender:''})</span></span>
-      <button class="btn btn-primary btn-sm" onclick="printSingleSurvey('${r.no}')">이 학생만 인쇄</button>
-    </div>`).join(''):'<div style="font-size:.82rem;color:var(--text-muted);padding:6px 0">일치하는 학생이 없습니다</div>';
 }
 
 /* ===================== 빈 템플릿(정적) 다운로드 ===================== */
@@ -961,33 +978,202 @@ function renderDetail(){
   el.innerHTML=html;
 }
 
+/* ===================== 학급 배치 ===================== */
+function renderClassNameInputs(){
+  ASSIGN.numClasses=Math.max(1,Math.min(15,+document.getElementById('assign-numClasses').value||1));
+  if(!ASSIGN.classNames.length||ASSIGN.classNames.length!==ASSIGN.numClasses){
+    ASSIGN.classNames=Array.from({length:ASSIGN.numClasses},(_,i)=>ASSIGN.classNames[i]||CLASS_NAMES_DEFAULT[i]||`${i+1}반`);
+  }
+  document.getElementById('assign-classname-inputs').innerHTML=ASSIGN.classNames.map((n,i)=>
+    `<input value="${n}" onchange="ASSIGN.classNames[${i}]=this.value;renderAssignResults()">`).join('');
+}
+function onAssignNumClassesChange(){renderClassNameInputs();}
+
+function resolveSepPair(){
+  ROSTER.forEach(r=>{
+    r.sepIds=(r.sep||'').split(',').map(s=>s.trim()).filter(x=>x&&x!==r.no);
+    r.pairIds=(r.pair||'').split(',').map(s=>s.trim()).filter(x=>x&&x!==r.no);
+  });
+}
+function buildClusters(){
+  const parent={};
+  ROSTER.forEach(r=>{parent[r.no]=r.no;});
+  function find(x){while(parent[x]!==x){parent[x]=parent[parent[x]];x=parent[x];}return x;}
+  function union(a,b){if(parent[a]==null||parent[b]==null)return;const ra=find(a),rb=find(b);if(ra!==rb)parent[ra]=rb;}
+  ROSTER.forEach(r=>{(r.pairIds||[]).forEach(pid=>union(r.no,pid));});
+  const groups={};
+  ROSTER.forEach(r=>{const root=find(r.no);(groups[root]=groups[root]||[]).push(r.no);});
+  return Object.values(groups);
+}
+function studentWeight(no){
+  const s=students[no];
+  if(!s)return 1;
+  return (s.tags&&s.tags.includes('특수교육'))?CONFIG.specialEd.weight:1;
+}
+function clusterScore(ids){
+  let tagSum=0,weight=0;
+  ids.forEach(no=>{
+    const s=students[no];if(!s)return;
+    tagSum+=(s.tags||[]).filter(t=>t!=='특수교육').length;
+    weight+=studentWeight(no);
+  });
+  return{tagSum,weight,size:ids.length};
+}
+function runAutoAssign(){
+  if(!rosterLocked){alert('먼저 명단을 확정해 주세요.');return;}
+  computeScores();
+  resolveSepPair();
+  renderClassNameInputs();
+  const numClasses=ASSIGN.numClasses;
+  const classes=Array.from({length:numClasses},(_,i)=>({idx:i,name:ASSIGN.classNames[i],ids:[],genderCount:{},tagCount:{},weight:0}));
+  const clusters=buildClusters().map(ids=>({ids,...clusterScore(ids)}));
+  clusters.sort((a,b)=>b.tagSum-a.tagSum||b.weight-a.weight||b.size-a.size);
+  const assignmentMap={};
+  const forcedViolations=[];
+  clusters.forEach(cl=>{
+    const blocked=new Set();
+    cl.ids.forEach(no=>{
+      const r=ROSTER.find(x=>x.no===no);
+      (r&&r.sepIds||[]).forEach(sepId=>{if(assignmentMap[sepId]!=null)blocked.add(assignmentMap[sepId]);});
+    });
+    let candidates=classes.filter(c=>!blocked.has(c.idx));
+    const forced=!candidates.length;
+    if(forced)candidates=classes;
+    let best=null,bestScore=Infinity;
+    candidates.forEach(c=>{
+      let score=c.weight*3;
+      cl.ids.forEach(no=>{
+        const s=students[no];if(!s)return;
+        score+=(c.genderCount[s.gender]||0);
+        (s.tags||[]).forEach(t=>{score+=(c.tagCount[t]||0)*2;});
+      });
+      if(score<bestScore){bestScore=score;best=c;}
+    });
+    cl.ids.forEach(no=>{
+      const s=students[no];if(!s)return;
+      best.ids.push(no);assignmentMap[no]=best.idx;
+      best.genderCount[s.gender]=(best.genderCount[s.gender]||0)+1;
+      (s.tags||[]).forEach(t=>{best.tagCount[t]=(best.tagCount[t]||0)+1;});
+      best.weight+=studentWeight(no);
+    });
+    if(forced){
+      cl.ids.forEach(no=>{
+        const r=ROSTER.find(x=>x.no===no);
+        (r&&r.sepIds||[]).forEach(sepId=>{
+          if(assignmentMap[sepId]===best.idx)forcedViolations.push(`${no} ↔ ${sepId} (분리 요청이지만 ${best.name}에 함께 배치됨 — 학급 수가 부족할 수 있습니다)`);
+        });
+      });
+    }
+  });
+  ASSIGN.classes=classes;
+  ASSIGN.assigned=true;
+  computeViolationsLive();
+  renderAssignResults();
+}
+function computeViolationsLive(){
+  const assignmentMap={};
+  ASSIGN.classes.forEach(c=>c.ids.forEach(no=>{assignmentMap[no]=c.idx;}));
+  const violations=[];
+  ROSTER.forEach(r=>{
+    (r.sepIds||[]).forEach(sepId=>{
+      if(assignmentMap[r.no]!=null&&assignmentMap[sepId]!=null&&assignmentMap[r.no]===assignmentMap[sepId]){
+        const other=ROSTER.find(x=>x.no===sepId);
+        violations.push(`⚠ 분리 위반: ${r.name}(${r.no})와 ${other?other.name:sepId}(${sepId})가 같은 반(${ASSIGN.classes[assignmentMap[r.no]].name})에 배치됨`);
+      }
+    });
+    (r.pairIds||[]).forEach(pid=>{
+      if(assignmentMap[r.no]!=null&&assignmentMap[pid]!=null&&assignmentMap[r.no]!==assignmentMap[pid]){
+        const other=ROSTER.find(x=>x.no===pid);
+        violations.push(`⚠ 동반 위반: ${r.name}(${r.no})와 ${other?other.name:pid}(${pid})가 다른 반에 배치됨`);
+      }
+    });
+  });
+  ASSIGN.violations=[...new Set(violations)];
+}
+function moveStudentToClass(no,newIdx){
+  newIdx=+newIdx;
+  const oldC=ASSIGN.classes.find(c=>c.ids.includes(no));
+  const newC=ASSIGN.classes[newIdx];
+  if(!oldC||!newC||oldC.idx===newIdx)return;
+  const s=students[no];
+  oldC.ids=oldC.ids.filter(x=>x!==no);
+  oldC.genderCount[s.gender]=(oldC.genderCount[s.gender]||1)-1;
+  (s.tags||[]).forEach(t=>{oldC.tagCount[t]=(oldC.tagCount[t]||1)-1;});
+  oldC.weight-=studentWeight(no);
+  newC.ids.push(no);
+  newC.genderCount[s.gender]=(newC.genderCount[s.gender]||0)+1;
+  (s.tags||[]).forEach(t=>{newC.tagCount[t]=(newC.tagCount[t]||0)+1;});
+  newC.weight+=studentWeight(no);
+  computeViolationsLive();
+  renderAssignResults();
+}
+function renderAssignResults(){
+  const vEl=document.getElementById('assign-violations');
+  if(vEl){
+    vEl.innerHTML=(ASSIGN.violations&&ASSIGN.violations.length)?
+      `<div class="violation-banner"><b>배치 규칙 위반 ${ASSIGN.violations.length}건</b>${ASSIGN.violations.map(v=>`<div>${v}</div>`).join('')}</div>`:'';
+  }
+  const el=document.getElementById('assign-results');if(!el)return;
+  if(!ASSIGN.assigned){el.innerHTML='';return;}
+  el.innerHTML=ASSIGN.classes.map(c=>{
+    const genders=Object.entries(c.genderCount).map(([g,n])=>`${g} ${n}`).join(' · ')||'-';
+    const tagSummary=Object.entries(c.tagCount).filter(([,n])=>n>0).map(([t,n])=>`${t} ${n}`).join(', ')||'없음';
+    const rows=c.ids.map(no=>{
+      const s=students[no]||{};
+      const opts=ASSIGN.classes.map(cc=>`<option value="${cc.idx}" ${cc.idx===c.idx?'selected':''}>${cc.name}</option>`).join('');
+      return `<div class="class-student-row"><span class="cname">${s.name||no}${(s.tags||[]).length?' '+s.tags.map(t=>tagChip(t)).join(''):''}</span>
+        <select onchange="moveStudentToClass('${no}',this.value)">${opts}</select></div>`;
+    }).join('');
+    return `<div class="class-card">
+      <h4>${c.name} <span style="font-size:.75rem;color:var(--text-muted);font-weight:400">(${c.ids.length}명)</span></h4>
+      <div class="class-stat">성별 ${genders}<br>관찰영역: ${tagSummary}</div>
+      ${rows||'<div style="font-size:.8rem;color:var(--text-muted)">배정된 학생 없음</div>'}
+    </div>`;
+  }).join('');
+}
+
 /* ===================== 내보내기 ===================== */
 async function exportClassApp(){
+  if(!ASSIGN.assigned){alert('먼저 배치 단계에서 "자동 배치 실행"을 눌러 학급을 배정해 주세요.');return;}
   const enabled=DOMAIN_LIST.filter(d=>CONFIG.domains[d]);
   const extra=CONFIG.specialEd.enabled?['특수교육']:[];
   const allCols=[...enabled,...extra];
   const wb=new ExcelJS.Workbook();
-  const ws=wb.addWorksheet('신입생 특성');
-  ws.addRow(['※ 관찰 영역은 스마트 반편성 앱에서 동일한 이름의 커스텀 특성을 먼저 등록해야 합니다. \'특수교육\' 열은 반편성 앱의 기본 특성(도움)과 자동으로 매칭됩니다.']);
-  ws.mergeCells(1,1,1,3+allCols.length);
-  const headers=['접수번호','이름','성별',...allCols];
-  ws.addRow(headers);ws.getRow(2).font={bold:true};
-  studentsRanked.forEach(s=>{ws.addRow([s.id,s.name,s.gender,...allCols.map(d=>s.tags.includes(d)?'O':'')]);});
-  ws.columns.forEach(c=>c.width=14);
+  ASSIGN.classes.forEach(c=>{
+    const ws=wb.addWorksheet(c.name);
+    ws.addRow(['번호','이름','성별',...allCols]);
+    ws.getRow(1).font={bold:true};
+    c.ids.forEach((no,i)=>{
+      const s=students[no]||{};
+      ws.addRow([i+1,s.name||'',s.gender||'',...allCols.map(d=>(s.tags||[]).includes(d)?'O':'')]);
+    });
+    ws.columns.forEach(col=>col.width=14);
+  });
+  const wsSum=wb.addWorksheet('반별 요약');
+  wsSum.addRow(['반','인원','성별','관찰영역 인원']);
+  wsSum.getRow(1).font={bold:true};
+  ASSIGN.classes.forEach(c=>{
+    const genders=Object.entries(c.genderCount).map(([g,n])=>`${g} ${n}`).join(' · ');
+    const tags=Object.entries(c.tagCount).filter(([,n])=>n>0).map(([t,n])=>`${t} ${n}`).join(', ')||'없음';
+    wsSum.addRow([c.name,c.ids.length,genders,tags]);
+  });
+  wsSum.columns.forEach(c=>c.width=20);
   const buf=await wb.xlsx.writeBuffer();
-  downloadBuffer(buf,'반편성용_신입생특성.xlsx');
+  downloadBuffer(buf,'학급별_최종명렬표.xlsx');
 }
 async function exportHandoff(){
   const enabled=DOMAIN_LIST.filter(d=>CONFIG.domains[d]);
+  const classOf={};
+  if(ASSIGN.assigned)ASSIGN.classes.forEach(c=>c.ids.forEach(no=>{classOf[no]=c.name;}));
   const wb=new ExcelJS.Workbook();
   const ws=wb.addWorksheet('담임 인계자료');
-  ws.addRow(['접수번호','이름','성별','확정 관찰영역',...enabled.map(d=>`${d} 점수`),
+  ws.addRow(['배정 반','접수번호','이름','성별','확정 관찰영역',...enabled.map(d=>`${d} 점수`),
     ...(CONFIG.specialEd.enabled?['특수교육 대상']:[]),
     '표시된 생활안전 항목','검사경험','입학초기 배려사항','학생면접 특이사항']);
   ws.getRow(1).font={bold:true};
   studentsRanked.forEach(s=>{
     const habitMarks=s.par?[...PAR_HABIT,...PAR_HEALTH].filter(h=>(s.par.habit&&s.par.habit[h]==='O')||(s.par.health&&s.par.health[h]==='O')):[];
-    ws.addRow([s.id,s.name,s.gender,s.tags.join(', '),...enabled.map(d=>`${s.domains[d].score}/${s.domains[d].max}`),
+    ws.addRow([classOf[s.id]||'',s.id,s.name,s.gender,s.tags.join(', '),...enabled.map(d=>`${s.domains[d].score}/${s.domains[d].max}`),
       ...(CONFIG.specialEd.enabled?[s.tags.includes('특수교육')?'O':'']:[]),
       habitMarks.join(', '), s.par&&s.par.testExp==='있음'?'있음':'', s.par?s.par.care:'', s.stu?s.stu.note:'']);
   });
