@@ -241,7 +241,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
             <textarea id="roster-paste" placeholder="김민준,남&#10;이서연,여&#10;김민준,남"></textarea>
             <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="addFromPaste()">명단에 추가</button>
             <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addRosterRow()">빈 행 추가</button>
-            <table class="roster-table" id="roster-table"><thead><tr><th style="width:90px">관리번호</th><th>이름</th><th style="width:70px">성별</th><th>구분 메모</th><th style="width:110px">분리대상<br><span style="font-weight:400;font-size:.68rem">관리번호,관리번호</span></th><th style="width:110px">동반대상<br><span style="font-weight:400;font-size:.68rem">관리번호,관리번호</span></th><th style="width:40px"></th></tr></thead><tbody id="roster-tbody"></tbody></table>
+            <table class="roster-table" id="roster-table"><thead><tr><th style="width:90px">관리번호</th><th>이름</th><th style="width:70px">성별</th><th>구분 메모</th><th style="width:40px"></th></tr></thead><tbody id="roster-tbody"></tbody></table>
             <div id="roster-summary" style="margin-top:10px"></div>
             <div id="roster-lock-area" style="margin-top:14px"></div>
           </div>
@@ -269,8 +269,9 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
         </div>
         <div id="drop-zone" onclick="document.getElementById('file-input').click()">
           <div class="big">📁</div>
-          <div style="margin-top:8px;font-weight:700">면접교사별 엑셀 파일을 여기로 끌어다 놓으세요</div>
-          <div style="font-size:.82rem;margin-top:4px">여러 파일을 한 번에 올려도 됩니다 (클릭해서 선택도 가능)</div>
+          <div style="margin-top:8px;font-weight:700">엑셀 파일을 여기로 끌어다 놓으세요</div>
+          <div style="font-size:.82rem;margin-top:4px;color:var(--text-muted)">여러 파일을 한 번에 올릴 수 있습니다</div>
+          <button class="btn btn-primary btn-sm" style="margin-top:14px" onclick="event.stopPropagation();document.getElementById('file-input').click()">📂 파일 찾아보기</button>
         </div>
         <input type="file" id="file-input" multiple accept=".xlsx" style="display:none" onchange="handleFiles(this.files)">
         <div id="file-list" style="margin-top:16px"></div>
@@ -353,6 +354,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
       </div>
     </section>
   </main>
+  <footer style="text-align:center;padding:10px;font-size:.72rem;color:var(--text-muted);border-top:1px solid var(--border);flex-shrink:0">만든이 2026 최창훈</footer>
 </div>
 
 <script>
@@ -492,8 +494,6 @@ function renderRosterTable(){
       <td><input value="${r.name}" ${rosterLocked?'disabled':''} onchange="updateRosterField(${i},'name',this.value)"></td>
       <td><input value="${r.gender}" ${rosterLocked?'disabled':''} placeholder="남/여" onchange="updateRosterField(${i},'gender',this.value)"></td>
       <td><input value="${r.note}" ${rosterLocked?'disabled':''} placeholder="${unresolved?'동명이인 - 구분 메모 필요':''}" onchange="updateRosterField(${i},'note',this.value)"></td>
-      <td><input value="${r.sep||''}" ${rosterLocked?'disabled':''} placeholder="예: 25-004" onchange="updateRosterField(${i},'sep',this.value)"></td>
-      <td><input value="${r.pair||''}" ${rosterLocked?'disabled':''} placeholder="예: 25-004" onchange="updateRosterField(${i},'pair',this.value)"></td>
       <td>${rosterLocked?'':`<span style="cursor:pointer;color:var(--text-muted)" onclick="removeRosterRow(${i})">✕</span>`}</td>
     </tr>`;
   }).join('');
@@ -666,7 +666,7 @@ async function buildInterviewWorkbook(prefill){
 
   const wb=new ExcelJS.Workbook();
   const ws1=wb.addWorksheet('학생면접');
-  const h1=['접수번호','이름','성별','면접교사',...(specialEdOn?['특수교육']:[]),...stuFields.map((f,i)=>`${i+1}.${f.label}(0~2)`),'합계','특이사항(서술)'];
+  const h1=['접수번호','이름','성별','면접교사',...(specialEdOn?['특수교육']:[]),...stuFields.map((f,i)=>`${i+1}.${f.label}(0~2)`),'합계','분리대상(관리번호)','동반대상(관리번호)','특이사항(서술)'];
   ws1.mergeCells(1,1,1,Math.max(h1.length,2));
   ws1.getCell(1,1).value='※ 본인이 면접한 학생 행만 입력하세요. 점수 문항은 드롭다운(0/1/2)에서 선택합니다.'+(specialEdOn?' 이미 특수교육 대상으로 파악된 학생은 \'특수교육\' 칸에 O로 표시하세요.':'');
   ws1.addRow(h1);ws1.getRow(2).font={bold:true};ws1.getRow(2).alignment={wrapText:true,vertical:'middle'};
@@ -678,7 +678,7 @@ async function buildInterviewWorkbook(prefill){
   if(stuFields.length){scoreStartLetter=ws1.getColumn(scoreStart).letter;scoreEndLetter=ws1.getColumn(scoreEnd).letter;}
   const n=prefill?ROSTER.length:200;
   for(let i=0;i<n;i++){
-    const rowVals=prefill?[ROSTER[i].no,ROSTER[i].name,ROSTER[i].gender,'',...(specialEdOn?['']:[]),...stuFields.map(()=>''),'','']:[];
+    const rowVals=prefill?[ROSTER[i].no,ROSTER[i].name,ROSTER[i].gender,'',...(specialEdOn?['']:[]),...stuFields.map(()=>''),'','','','']:[];
     const row=ws1.addRow(rowVals);
     const r=row.number;
     for(let c=scoreStart;c<=scoreEnd;c++)ws1.getCell(r,c).dataValidation={type:'list',formula1:'"0,1,2"',allowBlank:true};
@@ -686,7 +686,7 @@ async function buildInterviewWorkbook(prefill){
     if(specialEdCol)ws1.getCell(r,specialEdCol).dataValidation={type:'list',formula1:'"O"',allowBlank:true};
     if(stuFields.length)ws1.getCell(r,sumCol).value={formula:`SUM(${scoreStartLetter}${r}:${scoreEndLetter}${r})`};
   }
-  const widths=[11,10,7,10,...(specialEdOn?[9]:[]),...stuFields.map(()=>12),9,34];
+  const widths=[11,10,7,10,...(specialEdOn?[9]:[]),...stuFields.map(()=>12),9,18,18,34];
   ws1.columns.forEach((c,i)=>c.width=widths[i]||12);
 
   const ws2=wb.addWorksheet('학부모확인');
@@ -777,7 +777,7 @@ function printParentSurvey(subset){
   }
   const pages=list.map(r=>surveyPageHTML(r,items)).join('');
   const html=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>학부모 설문지</title><style>
-    @page{size:A4 portrait;margin:16mm 14mm 12mm}
+    @page{size:A4 portrait;margin:22mm 14mm 12mm}
     *{box-sizing:border-box;margin:0;padding:0}
 
     /* ── 화면 미리보기 ── */
@@ -823,19 +823,20 @@ function printParentSurvey(subset){
       body{background:none;padding:0;font-size:10px}
       .toolbar{display:none}
       .survey-page{box-shadow:none;border-radius:0;padding:0;margin:0;max-width:none}
-      .s-head{padding-bottom:5px;margin-bottom:6px}
+      .s-head{padding-bottom:6px;margin-bottom:10px}
       .s-head h2{font-size:.98rem}
-      .s-guide{font-size:.72rem;padding:4px 8px;margin-bottom:8px;line-height:1.4}
+      .s-ids{font-size:.8rem}
+      .s-id-line{width:52px}
+      .s-id-line.wide{width:82px}
+      .s-guide{font-size:.72rem;padding:4px 8px;margin-bottom:12px;line-height:1.4}
       .q-grid{gap:0 16px}
-      .q-block{padding:7px 0 7px}
-      .q-label{font-size:.81rem;margin-bottom:2px}
-      .q-text{font-size:.75rem;margin-bottom:4px;line-height:1.4}
-      .q-opts{font-size:.76rem;line-height:1.85}
-      .q-note{font-size:.71rem;margin-top:4px}
-      .s-id-line{width:54px}
-      .s-id-line.wide{width:84px}
-      .care-lines{gap:16px;margin-top:8px}
-      .care-line-row{height:20px}
+      .q-block{padding:11px 0 11px}
+      .q-label{font-size:.81rem;margin-bottom:3px}
+      .q-text{font-size:.75rem;margin-bottom:5px;line-height:1.4}
+      .q-opts{font-size:.76rem;line-height:1.9}
+      .q-note{font-size:.71rem;margin-top:5px}
+      .care-lines{gap:18px;margin-top:10px}
+      .care-line-row{height:22px}
     }
   </style></head><body>
   <div class="toolbar"><button onclick="window.print()">🖨️ 인쇄 / PDF로 저장</button></div>
@@ -923,7 +924,9 @@ function parseStuSheet(ws){
   const rows=XLSX.utils.sheet_to_json(ws,{header:1,range:1,defval:''});
   if(!rows.length)return[];
   const idx=headerIndexMap(rows[0]);
-  const iId=idx['접수번호'],iName=idx['이름'],iGender=idx['성별'],iTeacher=idx['면접교사'],iNote=idx['특이사항(서술)'],iSpecialEd=idx['특수교육'];
+  const iId=idx['접수번호'],iName=idx['이름'],iGender=idx['성별'],iTeacher=idx['면접교사'],
+        iNote=idx['특이사항(서술)'],iSpecialEd=idx['특수교육'],
+        iSep=idx['분리대상(관리번호)'],iPair=idx['동반대상(관리번호)'];
   const fieldCols=STU_FIELDS.map(f=>({...f,col:idx[f.label]}));
   const out=[];
   for(let i=1;i<rows.length;i++){
@@ -936,7 +939,9 @@ function parseStuSheet(ws){
     fieldCols.forEach(f=>{if(f.col!=null){const v=r[f.col];if(String(v).trim()!=='')q[f.idx]=Number(v)||0;}});
     out.push({id,name:iName!=null?String(r[iName]||'').trim():'',gender:iGender!=null?String(r[iGender]||'').trim():'',
       teacher:iTeacher!=null?String(r[iTeacher]||'').trim():'',q,note:iNote!=null?String(r[iNote]||'').trim():'',
-      specialEd:iSpecialEd!=null?String(r[iSpecialEd]||'').trim():''});
+      specialEd:iSpecialEd!=null?String(r[iSpecialEd]||'').trim():'',
+      sep:iSep!=null?String(r[iSep]||'').trim():'',
+      pair:iPair!=null?String(r[iPair]||'').trim():''});
   }
   return out;
 }
@@ -976,6 +981,14 @@ function mergeStu(records,filename){
     if(!s.name)s.name=rec.name; if(!s.gender)s.gender=rec.gender;
     if(s.stu)conflicts.push({id:rec.id,type:'학생면접 중복 입력',detail:`${s.stu.source} → ${filename} 값으로 덮어씀`});
     if(rec.specialEd==='O')s.specialEdMark=true;
+    // 분리/동반 대상 → ROSTER에 반영
+    if(rec.sep||rec.pair){
+      const r=ROSTER.find(x=>x.no===rec.id);
+      if(r){
+        if(rec.sep)r.sep=rec.sep;
+        if(rec.pair)r.pair=rec.pair;
+      }
+    }
     s.stu={...rec,source:filename};
   });
 }
