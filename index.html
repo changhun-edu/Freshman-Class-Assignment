@@ -750,7 +750,7 @@ function printParentSurvey(subset){
   }
   const pages=list.map(r=>surveyPageHTML(r,items)).join('');
   const html=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>학부모 설문지</title><style>
-    @page{size:A4 portrait;margin:12mm 14mm 10mm}
+    @page{size:A4 portrait;margin:18mm 14mm 14mm}
     *{box-sizing:border-box;margin:0;padding:0}
 
     /* ── 화면 미리보기 ── */
@@ -796,9 +796,14 @@ function printParentSurvey(subset){
       body{background:none;padding:0}
       .toolbar{display:none}
       .survey-page{box-shadow:none;border-radius:0;padding:0;margin:0;max-width:none}
-      .q-block{padding:5px 0 5px}
-      .q-opts{line-height:1.75}
-      .care-lines{gap:11px}
+      .q-block{padding:10px 0 10px}
+      .q-label{margin-bottom:4px}
+      .q-text{margin-bottom:6px}
+      .q-opts{line-height:2.1}
+      .q-note{margin-top:6px}
+      .care-lines{gap:20px;margin-top:10px}
+      .care-line-row{height:22px}
+      .s-guide{margin-bottom:14px}
     }
   </style></head><body>
   <div class="toolbar"><button onclick="window.print()">🖨️ 인쇄 / PDF로 저장</button></div>
