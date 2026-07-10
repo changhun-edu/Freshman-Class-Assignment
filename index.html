@@ -34,11 +34,13 @@ header h1{font-size:1.15rem;font-weight:800;color:var(--primary-dark)}
 header .sub{font-size:.8rem;color:var(--text-muted);margin-top:2px}
 
 #step-progress{display:flex;align-items:center;justify-content:center;gap:6px;background:var(--surface);border-bottom:1px solid var(--border);padding:14px;flex-shrink:0}
-.step-item{display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:.85rem;font-weight:600}
-.step-item .dot{width:26px;height:26px;border-radius:50%;background:var(--surface2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.8rem}
+.step-item{display:flex;align-items:center;gap:8px;color:var(--text-muted);font-size:.85rem;font-weight:600;cursor:pointer;border-radius:8px;padding:4px 8px;transition:.15s}
+.step-item:hover{background:var(--surface2);color:var(--text)}
 .step-item.active{color:var(--primary-dark)}
 .step-item.active .dot{background:var(--primary);border-color:var(--primary);color:#fff}
+.step-item.done{color:var(--green)}
 .step-item.done .dot{background:var(--green);border-color:var(--green);color:#fff}
+.step-item .dot{width:26px;height:26px;border-radius:50%;background:var(--surface2);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0}
 .step-line{width:50px;height:2px;background:var(--border)}
 
 main{flex:1;overflow:auto;padding:24px 32px}
@@ -249,7 +251,8 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
             <p style="font-size:.78rem;color:var(--text-sub);margin-bottom:10px">명단을 확정하면 관리번호가 포함된 면접용 엑셀 서식을 받을 수 있습니다.</p>
             <button class="btn-big-green" id="btn-download-main" onclick="downloadRosterTemplate()" disabled>⬇ 면접용 서식 다운로드 (명단 번호 포함)</button>
             <div class="steps-text">① 다운로드 → ② 면접교사에게 배부 → ③ 작성 후 업로드로 이동</div>
-            <button class="goto-upload" id="btn-to-upload" onclick="goStep('upload')" disabled style="margin-top:10px">→ 작성 완료 후 업로드로 이동</button>
+            <button class="goto-upload" id="btn-to-upload" onclick="goStep('upload')" style="margin-top:10px">→ 작성 완료 후 업로드로 이동</button>
+            <div id="no-roster-note" style="font-size:.78rem;color:var(--text-muted);margin-top:6px;display:none">💡 명단 미등록 상태입니다. 업로드 후 관리번호가 일치하지 않으면 수동 매핑이 필요할 수 있습니다.</div>
           </div>
         </div>
 
@@ -419,14 +422,35 @@ let activeFilter='all';
 let selectedId=null;
 
 /* ===================== 스텝 진행 ===================== */
+function canGoStep(name){
+  // 어느 단계든 자유롭게 이동 허용
+  // 단, 검토 이후 단계는 업로드된 데이터가 있어야 함
+  if(name==='review'||name==='assign'||name==='export'){
+    return Object.keys(students).length>0||studentsRanked.length>0;
+  }
+  return true;
+}
 function renderStepProgress(){
   const el=document.getElementById('step-progress');
   el.innerHTML=STEPS.map((s,i)=>{
     const idx=STEPS.indexOf(currentStep);
     const cls=s===currentStep?'active':(i<idx?'done':'');
     const dot=i<idx?'✓':(i+1);
-    return `<div class="step-item ${cls}"><div class="dot">${dot}</div>${STEP_LABELS[s]}</div>`+(i<STEPS.length-1?'<div class="step-line"></div>':'');
+    const clickable=canGoStep(s);
+    const title=clickable?`${STEP_LABELS[s]}으로 이동`:`업로드된 데이터가 없어 이동할 수 없습니다`;
+    return `<div class="step-item ${cls}" title="${title}" onclick="onStepClick('${s}')" style="${!clickable?'opacity:.45;cursor:not-allowed':''}">
+      <div class="dot">${dot}</div>${STEP_LABELS[s]}</div>`+(i<STEPS.length-1?'<div class="step-line"></div>':'');
   }).join('');
+}
+function onStepClick(name){
+  if(!canGoStep(name)){
+    alert('업로드된 면접 데이터가 없습니다.\n먼저 업로드 단계에서 엑셀 파일을 올려 주세요.');
+    return;
+  }
+  if(name===currentStep)return;
+  if(name==='review'){computeScores();renderFilters();renderReviewList();}
+  if(name==='assign'){renderClassNameInputs();renderAssignResults();}
+  goStep(name);
 }
 function goStep(name){
   currentStep=name;
@@ -493,9 +517,12 @@ function renderRosterLockArea(needNote){
     el.innerHTML=`<button class="btn btn-primary" ${disabled} onclick="lockRoster()">명단 확정하고 관리번호 발급 →</button>
       ${needNote?'<div style="font-size:.8rem;color:var(--amber);margin-top:6px">동명이인 구분 메모를 모두 입력해야 확정할 수 있습니다.</div>':''}`;
   }
-  ['btn-download-main','btn-to-upload'].forEach(id=>{
-    const b=document.getElementById(id);if(b)b.disabled=!rosterLocked;
-  });
+  // 서식 다운로드만 명단 확정 후 활성화, 업로드 이동 버튼은 항상 활성
+  const dlBtn=document.getElementById('btn-download-main');
+  if(dlBtn)dlBtn.disabled=!rosterLocked;
+  // 명단 미등록 안내 표시
+  const note=document.getElementById('no-roster-note');
+  if(note)note.style.display=rosterLocked?'none':'block';
   renderPrepSummary();
 }
 function renderPrepSummary(){
@@ -750,7 +777,7 @@ function printParentSurvey(subset){
   }
   const pages=list.map(r=>surveyPageHTML(r,items)).join('');
   const html=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>학부모 설문지</title><style>
-    @page{size:A4 portrait;margin:18mm 14mm 14mm}
+    @page{size:A4 portrait;margin:16mm 14mm 12mm}
     *{box-sizing:border-box;margin:0;padding:0}
 
     /* ── 화면 미리보기 ── */
@@ -793,17 +820,22 @@ function printParentSurvey(subset){
 
     /* ── 인쇄 ── */
     @media print{
-      body{background:none;padding:0}
+      body{background:none;padding:0;font-size:10px}
       .toolbar{display:none}
       .survey-page{box-shadow:none;border-radius:0;padding:0;margin:0;max-width:none}
-      .q-block{padding:10px 0 10px}
-      .q-label{margin-bottom:4px}
-      .q-text{margin-bottom:6px}
-      .q-opts{line-height:2.1}
-      .q-note{margin-top:6px}
-      .care-lines{gap:20px;margin-top:10px}
-      .care-line-row{height:22px}
-      .s-guide{margin-bottom:14px}
+      .s-head{padding-bottom:5px;margin-bottom:6px}
+      .s-head h2{font-size:.98rem}
+      .s-guide{font-size:.72rem;padding:4px 8px;margin-bottom:8px;line-height:1.4}
+      .q-grid{gap:0 16px}
+      .q-block{padding:7px 0 7px}
+      .q-label{font-size:.81rem;margin-bottom:2px}
+      .q-text{font-size:.75rem;margin-bottom:4px;line-height:1.4}
+      .q-opts{font-size:.76rem;line-height:1.85}
+      .q-note{font-size:.71rem;margin-top:4px}
+      .s-id-line{width:54px}
+      .s-id-line.wide{width:84px}
+      .care-lines{gap:16px;margin-top:8px}
+      .care-line-row{height:20px}
     }
   </style></head><body>
   <div class="toolbar"><button onclick="window.print()">🖨️ 인쇄 / PDF로 저장</button></div>
