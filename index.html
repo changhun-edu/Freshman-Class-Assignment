@@ -29,7 +29,7 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
 #mobile-block p{color:#9aaabb;font-size:.92rem;line-height:1.6;max-width:360px}
 
 #app{display:flex;flex-direction:column;height:100vh}
-header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 header h1{font-size:1.15rem;font-weight:800;color:var(--primary-dark)}
 header .sub{font-size:.8rem;color:var(--text-muted);margin-top:2px}
 
@@ -41,7 +41,7 @@ header .sub{font-size:.8rem;color:var(--text-muted);margin-top:2px}
 .step-item.done .dot{background:var(--green);border-color:var(--green);color:#fff}
 .step-line{width:50px;height:2px;background:var(--border)}
 
-main{flex:1;overflow:auto;padding:24px 28px}
+main{flex:1;overflow:auto;padding:24px 32px}
 .panel{display:none;max-width:1300px;margin:0 auto}
 .panel.active{display:block}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 22px;margin-bottom:16px;box-shadow:var(--shadow)}
@@ -708,7 +708,7 @@ const SURVEY_Q=[
   {label:'검사·상담·치료 경험',domain:null,q:'이전에 발달검사, 언어검사, 심리검사, 병원 진료, 상담, 언어치료, 놀이치료, 감각통합치료 등을 받은 경험이 있나요?',opts:['없음','있음'],note:true},
 ];
 function surveyPageHTML(s,items){
-  const opts=(o,multi)=>o.map(x=>`<span class="opt">${multi?'□':'○'} ${x}</span>`).join(' &nbsp; ');
+  const opts=(o,multi)=>o.map(x=>`<span class="opt">${multi?'□':'○'} ${x}</span>`).join('　');
   const qHtml=items.map((item,i)=>`
     <div class="q-block">
       <div class="q-label">${i+1}. ${item.label}</div>
@@ -722,11 +722,13 @@ function surveyPageHTML(s,items){
       <div class="s-ids"><span>관리번호 <b>${s.no}</b></span><span>이름 <b>${s.name}</b></span><span>성별 ${s.gender||''}</span></div>
     </div>
     <p class="s-guide">이 조사는 신입생의 안정적인 학교 적응과 균형 있는 학급 편성을 위한 참고자료입니다. 응답 내용은 학생의 학교생활 지원을 위해 활용되며, 학급 편성은 학교의 교육적 판단에 따라 이루어집니다.</p>
+    <div class="q-grid">
     ${qHtml}
-    <div class="q-block">
+    <div class="q-block full">
       <div class="q-label">${items.length+1}. 입학 초기 배려 사항</div>
       <div class="q-text">입학 초기 담임교사가 꼭 알아야 할 내용이 있다면 적어 주세요. (예: 낯선 환경에서 긴장함, 큰 소리에 민감함, 특정 상황에서 불안해함, 친구 관계에서 도움이 필요함 등)</div>
       <div class="care-lines"><span class="line"></span><span class="line"></span></div>
+    </div>
     </div>
   </section>`;
 }
@@ -744,25 +746,29 @@ function printParentSurvey(subset){
   }
   const pages=list.map(r=>surveyPageHTML(r,items)).join('');
   const html=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>학부모 설문지</title><style>
-    @page{size:A4;margin:16mm}
-    *{box-sizing:border-box}
-    body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#1a2233;font-size:12.5px}
-    .toolbar{position:fixed;top:10px;right:10px;z-index:9}
-    .toolbar button{padding:8px 16px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer}
-    .survey-page{page-break-after:always;padding:6px 2px}
-    .s-head{border-bottom:2px solid #1a2233;padding-bottom:10px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:baseline}
-    .s-head h2{font-size:1.3rem}
-    .s-ids{font-size:.95rem}
-    .s-ids span{margin-left:16px}
-    .s-guide{font-size:.82rem;color:#5a6a82;background:#f4f6f9;padding:8px 10px;border-radius:6px;margin-bottom:14px;line-height:1.5}
-    .q-block{margin-bottom:13px}
-    .q-label{font-weight:800;font-size:.95rem;margin-bottom:2px}
-    .q-text{font-size:.88rem;margin-bottom:5px}
-    .q-opts{font-size:.88rem;line-height:1.9}
-    .opt{white-space:nowrap}
-    .q-note{font-size:.82rem;color:#5a6a82;margin-top:3px}
-    .line{display:inline-block;border-bottom:1px solid #9aaabb;width:70%;margin-left:6px}
-    .care-lines{display:flex;flex-direction:column;gap:16px;margin-top:6px}
+    @page{size:A4 portrait;margin:10mm 12mm}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#1a2233;font-size:10.5px;line-height:1.4}
+    .toolbar{position:fixed;top:8px;right:8px;z-index:9}
+    .toolbar button{padding:6px 14px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:11px}
+    .survey-page{page-break-after:always}
+    .s-head{border-bottom:2px solid #1a2233;padding-bottom:6px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:baseline}
+    .s-head h2{font-size:1.05rem;font-weight:800}
+    .s-ids{font-size:.88rem}
+    .s-ids span{margin-left:14px}
+    .s-guide{font-size:.75rem;color:#5a6a82;background:#f4f6f9;padding:5px 8px;border-radius:4px;margin-bottom:7px;line-height:1.45}
+    /* 2열 그리드 */
+    .q-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+    .q-block{margin-bottom:7px;break-inside:avoid}
+    .q-label{font-weight:800;font-size:.88rem;margin-bottom:1px}
+    .q-text{font-size:.8rem;color:#334155;margin-bottom:3px}
+    .q-opts{font-size:.8rem;line-height:1.7}
+    .opt{white-space:nowrap;margin-right:6px}
+    .q-note{font-size:.75rem;color:#5a6a82;margin-top:2px}
+    .line{display:inline-block;border-bottom:1px solid #9aaabb;width:65%;margin-left:4px;vertical-align:middle}
+    /* 배려사항은 전체 너비 */
+    .q-block.full{grid-column:1/-1}
+    .care-lines{display:flex;flex-direction:column;gap:10px;margin-top:4px}
     .care-lines .line{width:100%;margin-left:0}
     @media print{.toolbar{display:none}}
   </style></head><body>
