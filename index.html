@@ -195,11 +195,11 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 
 <div id="app">
   <header>
-    <div>
+    <div style="display:flex;align-items:center;gap:10px;flex:1">
       <h1>🏫 스마트 반편성 (신입생용)</h1>
-    </div>
-    <div class="header-badge">
-      <span class="lock-icon">🔒</span>개인정보 미저장 · 작업 후 엑셀로 내보내세요
+      <div class="header-badge">
+        <span class="lock-icon">🔒</span>개인정보 미저장 · 작업 후 엑셀로 내보내세요
+      </div>
     </div>
     <button style="padding:7px 14px;border-radius:8px;border:1.5px solid rgba(255,255,255,.6);background:transparent;color:#fff;font-weight:700;font-size:.82rem;cursor:pointer;white-space:nowrap" onclick="if(confirm('현재 작업 내용이 모두 초기화됩니다. 계속할까요?'))resetAll()">■ 전체초기화</button>
   </header>
@@ -800,17 +800,14 @@ async function buildInterviewWorkbook(prefill){
   activeItems.forEach((item,qi)=>{
     const qNum=qi+1;
     if(item.multi&&item.subNums){
-      // 다항 선택형: 각 항목을 별도 열로 (8-1.화장실사용 등)
-      item.opts.forEach((opt,oi)=>{
-        const sub=item.subNums[oi]||`${qNum}-${oi+1}`;
-        h2Base.push(`${sub}.${opt.replace(/\s/g,'')}`);
-        par2Dropdowns[col2]=['O'];col2++;
-      });
+      // 다항 선택형: 1열로 합치기 — 해당 번호를 쉼표로 입력
+      h2Base.push(`${qNum}.${item.label} (예:${item.subNums[0]},${item.subNums[1]})`);
+      col2++;
       h2Base.push(`${qNum}.${item.label} 구체내용`);col2++;
     } else {
       // 단순 선택형: 1열 + 구체내용 1열
-      const nums=item.optNums?item.optNums.join('/'):'';
-      h2Base.push(`${qNum}.${item.label}${nums?` (${nums})`:''}`);;
+      const nums=item.optNums?item.optNums.join('/'):'';;
+      h2Base.push(`${qNum}.${item.label}${nums?` (${nums})`:''}`);
       par2Dropdowns[col2]=item.opts;col2++;
       h2Base.push(`${qNum}.${item.label} 구체내용`);col2++;
     }
@@ -821,7 +818,7 @@ async function buildInterviewWorkbook(prefill){
   // 1행 안내
   ws2.mergeCells(1,1,1,h2Base.length);
   const g2=ws2.getCell(1,1);
-  g2.value='※ 학부모 설문지 응답 내용을 옮겨 적습니다. 체크 항목은 해당 칸에 O를 입력하세요.';
+  g2.value='※ 학부모 설문지 응답 내용을 옮겨 적습니다. ① 단순 선택 문항은 드롭다운에서 선택  ② 기본생활습관·건강안전(다항 선택)은 해당 번호를 쉼표로 입력 (예: 8-1,8-3,8-5)';
   g2.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEBF5FB'}};
   g2.font={italic:true,color:{argb:'FF2C5F8A'},size:9};
   g2.alignment={horizontal:'left',vertical:'middle'};
@@ -903,39 +900,41 @@ function printInterviewQuestions(){
   }).join('');
 
   const html=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>학생 면접 문항</title><style>
-    @page{size:A4 portrait;margin:16mm 14mm 12mm}
+    @page{size:A4 portrait;margin:14mm 13mm 10mm}
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#1a2233;background:#f0f2f5;padding:24px}
+    body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#1a2233;background:#f0f2f5;padding:24px;font-size:10px}
     .toolbar{position:fixed;top:12px;right:16px;z-index:99}
     .toolbar button{padding:7px 18px;background:#2563eb;color:#fff;border:none;border-radius:7px;font-weight:700;cursor:pointer;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,.18)}
-    .page{background:#fff;border-radius:4px;box-shadow:0 2px 12px rgba(0,0,0,.10);padding:24px 28px;max-width:794px;margin:0 auto}
-    .p-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid #1a2233;padding-bottom:7px;margin-bottom:10px}
-    .p-head h2{font-size:1.08rem;font-weight:900}
-    .p-head-right{font-size:.8rem;color:#5a6a82}
-    .p-guide{font-size:.76rem;color:#5a6a82;background:#f4f6f9;border-left:3px solid #bfdbfe;padding:5px 10px;border-radius:0 4px 4px 0;margin-bottom:12px;line-height:1.5}
+    .page{background:#fff;border-radius:4px;box-shadow:0 2px 12px rgba(0,0,0,.10);padding:22px 26px;max-width:794px;margin:0 auto}
+    .p-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid #1a2233;padding-bottom:6px;margin-bottom:8px}
+    .p-head h2{font-size:1rem;font-weight:900}
+    .p-head-right{font-size:.75rem;color:#5a6a82}
+    .p-guide{font-size:.72rem;color:#5a6a82;background:#f4f6f9;border-left:3px solid #bfdbfe;padding:4px 9px;border-radius:0 4px 4px 0;margin-bottom:9px;line-height:1.45}
     /* 2열 그리드 */
-    .iq-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
-    .iq-domain-block{margin-bottom:4px;break-inside:avoid}
-    .iq-domain-title{font-size:.78rem;font-weight:800;padding:3px 8px;border-radius:4px;margin-bottom:4px}
-    .iq-block{padding:7px 0 7px;border-bottom:1px solid #e8ecf2;break-inside:avoid}
+    .iq-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+    .iq-domain-block{margin-bottom:3px;break-inside:avoid}
+    .iq-domain-title{font-size:.72rem;font-weight:800;padding:2px 7px;border-radius:4px;margin-bottom:3px}
+    .iq-block{padding:5px 0 5px;border-bottom:1px solid #e8ecf2;break-inside:avoid}
     .iq-block:last-child{border-bottom:none}
-    .iq-num-row{display:flex;align-items:center;gap:6px;margin-bottom:3px}
-    .iq-num{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:800;flex-shrink:0}
-    .iq-label{font-weight:800;font-size:.84rem;color:#1a2233}
-    .iq-q{font-size:.78rem;color:#334155;margin-bottom:4px;padding-left:26px;line-height:1.4}
-    .iq-cmt-grid{padding-left:26px;margin-bottom:5px}
-    .iq-cmt-row{display:flex;align-items:flex-start;gap:5px;margin-bottom:2px}
-    .iq-score-badge{width:14px;height:14px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;flex-shrink:0;margin-top:1px}
-    .iq-cmt-text{font-size:.72rem;color:#5a6a82;line-height:1.4}
-    .iq-write-row{display:flex;align-items:center;gap:5px;padding-left:26px;margin-top:4px}
-    .iq-write-label{font-size:.72rem;color:#5a6a82;white-space:nowrap}
-    .iq-box{font-size:.72rem;border:1px solid #b0bcc8;border-radius:3px;padding:1px 5px;color:#1a2233}
-    .iq-line{flex:1;border-bottom:1px solid #b0bcc8;height:14px;margin-left:4px}
+    .iq-num-row{display:flex;align-items:center;gap:5px;margin-bottom:2px}
+    .iq-num{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;flex-shrink:0}
+    .iq-label{font-weight:800;font-size:.79rem;color:#1a2233}
+    .iq-q{font-size:.73rem;color:#334155;margin-bottom:3px;padding-left:23px;line-height:1.35}
+    .iq-cmt-grid{padding-left:23px;margin-bottom:4px}
+    .iq-cmt-row{display:flex;align-items:flex-start;gap:4px;margin-bottom:1px}
+    .iq-score-badge{width:13px;height:13px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-weight:800;flex-shrink:0;margin-top:1px}
+    .iq-cmt-text{font-size:.68rem;color:#5a6a82;line-height:1.35}
+    .iq-write-row{display:flex;align-items:center;gap:4px;padding-left:23px;margin-top:3px}
+    .iq-write-label{font-size:.68rem;color:#5a6a82;white-space:nowrap}
+    .iq-box{font-size:.68rem;border:1px solid #b0bcc8;border-radius:3px;padding:1px 4px;color:#1a2233}
+    .iq-line{flex:1;border-bottom:1px solid #b0bcc8;height:12px;margin-left:4px}
     @media print{
-      body{background:none;padding:0}
+      body{background:none;padding:0;font-size:10px}
       .toolbar{display:none}
       .page{box-shadow:none;border-radius:0;padding:0;margin:0;max-width:none}
-      .iq-block{padding:5px 0 5px}
+      .iq-block{padding:4px 0 4px}
+      .iq-domain-block{margin-bottom:2px}
+      .p-guide{margin-bottom:7px}
     }
   </style></head><body>
   <div class="toolbar"><button onclick="window.print()">🖨️ 인쇄 / PDF로 저장</button></div>
@@ -996,7 +995,7 @@ function surveyPageHTML(s,items){
     <div class="q-block">
       <div class="q-label">${i+1}. ${item.label}</div>
       <div class="q-text">${item.q}</div>
-      <div class="q-opts">${opts(item)}</div>
+      ${(item.multi&&item.subNums)?'<div class="q-hint">※ 엑셀 입력 시 해당 번호를 쉼표로 구분해 적으세요 (예: '+item.subNums[0]+','+item.subNums[1]+')</div>':''}      <div class="q-opts">${opts(item)}</div>
       ${item.note?'<div class="q-note"><span>구체적인 내용:</span><span class="line"></span></div>':''}
     </div>`).join('');
   return `<section class="survey-page">
@@ -1069,6 +1068,7 @@ function printParentSurvey(subset){
     .opt{white-space:nowrap;margin-right:10px;display:inline-block}
 
     /* ── 구체적 내용 ── */
+    .q-hint{font-size:.7rem;color:#2563eb;margin-bottom:3px;font-style:italic}
     .q-note{font-size:.75rem;color:#5a6a82;margin-top:4px;display:flex;align-items:center;gap:4px}
     .line{flex:1;border:none;border-bottom:1px solid #b0bcc8;height:12px;display:inline-block}
 
