@@ -29,8 +29,12 @@ body{font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var
 #mobile-block p{color:#9aaabb;font-size:.92rem;line-height:1.6;max-width:360px}
 
 #app{display:flex;flex-direction:column;height:100vh}
-header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-header h1{font-size:1.15rem;font-weight:800;color:var(--primary-dark)}
+header{background:#2d3ae8;border-bottom:none;padding:10px 32px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px}
+header h1{font-size:1.1rem;font-weight:800;color:#fff}
+header .sub{font-size:.75rem;color:rgba(255,255,255,.7);margin-top:2px}
+.header-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:.78rem;font-weight:600;padding:5px 12px;border-radius:20px;white-space:nowrap}
+.header-badge .lock-icon{font-size:.85rem}
+header h1{font-size:1.1rem;font-weight:800;color:#fff}
 header .sub{font-size:.8rem;color:var(--text-muted);margin-top:2px}
 
 #step-progress{display:flex;align-items:center;justify-content:center;gap:6px;background:var(--surface);border-bottom:1px solid var(--border);padding:14px;flex-shrink:0}
@@ -193,9 +197,11 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
   <header>
     <div>
       <h1>🏫 스마트 반편성 (신입생용)</h1>
-      <div class="sub">면접 결과 취합 → 검토 → 반편성용 자료 내보내기</div>
     </div>
-    <button class="btn btn-ghost btn-sm" onclick="if(confirm('현재 작업 내용이 모두 초기화됩니다. 계속할까요?'))resetAll()">전체 초기화</button>
+    <div class="header-badge">
+      <span class="lock-icon">🔒</span>개인정보 미저장 · 작업 후 엑셀로 내보내세요
+    </div>
+    <button style="padding:7px 14px;border-radius:8px;border:1.5px solid rgba(255,255,255,.6);background:transparent;color:#fff;font-weight:700;font-size:.82rem;cursor:pointer;white-space:nowrap" onclick="if(confirm('현재 작업 내용이 모두 초기화됩니다. 계속할까요?'))resetAll()">■ 전체초기화</button>
   </header>
 
   <div id="step-progress"></div>
