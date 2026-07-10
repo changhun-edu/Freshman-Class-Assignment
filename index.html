@@ -436,8 +436,8 @@ function goStep(name){
   if(name==='review'){computeScores();renderFilters();renderReviewList();}
   if(name==='assign'){renderClassNameInputs();renderAssignResults();}
 }
-const SESSION_KEY='sinip_myeojeup_session_v1';
-function resetAll(){sessionStorage.removeItem(SESSION_KEY);uploadedFiles=[];students={};conflicts=[];conflictsAck=false;selectedId=null;ROSTER=[];rosterLocked=false;unregistered=[];ASSIGN={numClasses:5,classNames:[],classes:[],violations:[],assigned:false};location.reload();}
+const SESSION_KEY='sinip_myeojeup_v2';
+function resetAll(){localStorage.removeItem(SESSION_KEY);uploadedFiles=[];students={};conflicts=[];conflictsAck=false;selectedId=null;ROSTER=[];rosterLocked=false;unregistered=[];ASSIGN={numClasses:5,classNames:[],classes:[],violations:[],assigned:false};location.reload();}
 
 /* ===================== 명단 등록 ===================== */
 function rosterNo(idx){
@@ -708,18 +708,22 @@ const SURVEY_Q=[
   {label:'검사·상담·치료 경험',domain:null,q:'이전에 발달검사, 언어검사, 심리검사, 병원 진료, 상담, 언어치료, 놀이치료, 감각통합치료 등을 받은 경험이 있나요?',opts:['없음','있음'],note:true},
 ];
 function surveyPageHTML(s,items){
-  const opts=(o,multi)=>o.map(x=>`<span class="opt">${multi?'□':'○'} ${x}</span>`).join('　');
+  const opts=(o,multi)=>o.map(x=>`<span class="opt">${multi?'□':'○'}&nbsp;${x}</span>`).join('');
   const qHtml=items.map((item,i)=>`
     <div class="q-block">
       <div class="q-label">${i+1}. ${item.label}</div>
       <div class="q-text">${item.q}</div>
       <div class="q-opts">${opts(item.opts,item.multi)}</div>
-      ${item.note?'<div class="q-note">구체적인 내용: <span class="line"></span></div>':''}
+      ${item.note?'<div class="q-note"><span>구체적인 내용:</span><span class="line"></span></div>':''}
     </div>`).join('');
   return `<section class="survey-page">
     <div class="s-head">
       <h2>신입생 학부모 확인 설문</h2>
-      <div class="s-ids"><span>관리번호 <b>${s.no}</b></span><span>이름 <b>${s.name}</b></span><span>성별 ${s.gender||''}</span></div>
+      <div class="s-ids">
+        <div class="s-id-item"><span class="s-id-label">관리번호</span><span class="s-id-line"></span></div>
+        <div class="s-id-item"><span class="s-id-label">이름</span><span class="s-id-line wide"></span></div>
+        <div class="s-id-item"><span class="s-id-label">성별</span><span class="s-id-line"></span></div>
+      </div>
     </div>
     <p class="s-guide">이 조사는 신입생의 안정적인 학교 적응과 균형 있는 학급 편성을 위한 참고자료입니다. 응답 내용은 학생의 학교생활 지원을 위해 활용되며, 학급 편성은 학교의 교육적 판단에 따라 이루어집니다.</p>
     <div class="q-grid">
@@ -727,7 +731,7 @@ function surveyPageHTML(s,items){
     <div class="q-block full">
       <div class="q-label">${items.length+1}. 입학 초기 배려 사항</div>
       <div class="q-text">입학 초기 담임교사가 꼭 알아야 할 내용이 있다면 적어 주세요. (예: 낯선 환경에서 긴장함, 큰 소리에 민감함, 특정 상황에서 불안해함, 친구 관계에서 도움이 필요함 등)</div>
-      <div class="care-lines"><span class="line"></span><span class="line"></span></div>
+      <div class="care-lines"><div class="care-line-row"></div><div class="care-line-row"></div></div>
     </div>
     </div>
   </section>`;
@@ -746,31 +750,56 @@ function printParentSurvey(subset){
   }
   const pages=list.map(r=>surveyPageHTML(r,items)).join('');
   const html=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>학부모 설문지</title><style>
-    @page{size:A4 portrait;margin:10mm 12mm}
+    @page{size:A4 portrait;margin:12mm 14mm 10mm}
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#1a2233;font-size:10.5px;line-height:1.4}
-    .toolbar{position:fixed;top:8px;right:8px;z-index:9}
-    .toolbar button{padding:6px 14px;background:#2563eb;color:#fff;border:none;border-radius:6px;font-weight:700;cursor:pointer;font-size:11px}
-    .survey-page{page-break-after:always}
-    .s-head{border-bottom:2px solid #1a2233;padding-bottom:6px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:baseline}
-    .s-head h2{font-size:1.05rem;font-weight:800}
-    .s-ids{font-size:.88rem}
-    .s-ids span{margin-left:14px}
-    .s-guide{font-size:.75rem;color:#5a6a82;background:#f4f6f9;padding:5px 8px;border-radius:4px;margin-bottom:7px;line-height:1.45}
-    /* 2열 그리드 */
-    .q-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
-    .q-block{margin-bottom:7px;break-inside:avoid}
-    .q-label{font-weight:800;font-size:.88rem;margin-bottom:1px}
-    .q-text{font-size:.8rem;color:#334155;margin-bottom:3px}
-    .q-opts{font-size:.8rem;line-height:1.7}
-    .opt{white-space:nowrap;margin-right:6px}
-    .q-note{font-size:.75rem;color:#5a6a82;margin-top:2px}
-    .line{display:inline-block;border-bottom:1px solid #9aaabb;width:65%;margin-left:4px;vertical-align:middle}
-    /* 배려사항은 전체 너비 */
+
+    /* ── 화면 미리보기 ── */
+    body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#1a2233;background:#f0f2f5;padding:24px}
+    .toolbar{position:fixed;top:12px;right:16px;z-index:99;display:flex;gap:8px;align-items:center}
+    .toolbar button{padding:7px 18px;background:#2563eb;color:#fff;border:none;border-radius:7px;font-weight:700;cursor:pointer;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+    .survey-page{background:#fff;border-radius:4px;box-shadow:0 2px 12px rgba(0,0,0,.10);padding:24px 28px;max-width:794px;margin:0 auto 32px}
+
+    /* ── 헤더 ── */
+    .s-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid #1a2233;padding-bottom:7px;margin-bottom:8px}
+    .s-head h2{font-size:1.08rem;font-weight:900;letter-spacing:-.01em}
+    .s-ids{display:flex;gap:0;align-items:center;font-size:.85rem}
+    .s-id-item{display:flex;align-items:center;gap:4px;margin-left:18px}
+    .s-id-label{color:#5a6a82;font-size:.78rem}
+    .s-id-line{display:inline-block;border-bottom:1.5px solid #1a2233;width:64px;height:14px}
+    .s-id-line.wide{width:100px}
+
+    /* ── 안내문 ── */
+    .s-guide{font-size:.77rem;color:#5a6a82;background:#f4f6f9;border-left:3px solid #bfdbfe;padding:5px 10px;border-radius:0 4px 4px 0;margin-bottom:10px;line-height:1.5}
+
+    /* ── 2열 그리드 ── */
+    .q-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
+    .q-block{padding:7px 0 7px;border-bottom:1px solid #e8ecf2;break-inside:avoid}
+    .q-block:last-child{border-bottom:none}
     .q-block.full{grid-column:1/-1}
-    .care-lines{display:flex;flex-direction:column;gap:10px;margin-top:4px}
-    .care-lines .line{width:100%;margin-left:0}
-    @media print{.toolbar{display:none}}
+
+    /* ── 문항 내용 ── */
+    .q-label{font-weight:800;font-size:.86rem;color:#1a2233;margin-bottom:3px}
+    .q-text{font-size:.79rem;color:#334155;margin-bottom:5px;line-height:1.45}
+    .q-opts{font-size:.8rem;line-height:1.9;color:#1a2233}
+    .opt{white-space:nowrap;margin-right:10px;display:inline-block}
+
+    /* ── 구체적 내용 ── */
+    .q-note{font-size:.75rem;color:#5a6a82;margin-top:4px;display:flex;align-items:center;gap:4px}
+    .line{flex:1;border:none;border-bottom:1px solid #b0bcc8;height:12px;display:inline-block}
+
+    /* ── 배려사항 서술란 ── */
+    .care-lines{display:flex;flex-direction:column;gap:14px;margin-top:7px}
+    .care-line-row{border-bottom:1px solid #b0bcc8;height:18px}
+
+    /* ── 인쇄 ── */
+    @media print{
+      body{background:none;padding:0}
+      .toolbar{display:none}
+      .survey-page{box-shadow:none;border-radius:0;padding:0;margin:0;max-width:none}
+      .q-block{padding:5px 0 5px}
+      .q-opts{line-height:1.75}
+      .care-lines{gap:11px}
+    }
   </style></head><body>
   <div class="toolbar"><button onclick="window.print()">🖨️ 인쇄 / PDF로 저장</button></div>
   ${pages}
@@ -794,14 +823,14 @@ function downloadTemplate(){
 const dz=()=>document.getElementById('drop-zone');
 function saveSession(){
   try{
-    sessionStorage.setItem(SESSION_KEY,JSON.stringify({
+    localStorage.setItem(SESSION_KEY,JSON.stringify({
       ROSTER,rosterLocked,domains:CONFIG.domains,specialEd:CONFIG.specialEd
     }));
-  }catch(e){/* 저장 공간 부족 등은 무시 - 세션 복원은 편의 기능일 뿐입니다 */}
+  }catch(e){/* 저장 공간 부족 등은 무시 */}
 }
 function restoreSession(){
   let saved=null;
-  try{saved=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');}catch(e){saved=null;}
+  try{saved=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');}catch(e){saved=null;}
   if(!saved||!Array.isArray(saved.ROSTER))return false;
   ROSTER=saved.ROSTER;
   rosterLocked=!!saved.rosterLocked;
@@ -826,14 +855,22 @@ document.addEventListener('DOMContentLoaded',()=>{
   ['dragover','dragenter'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.add('drag');}));
   ['dragleave','drop'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.remove('drag');}));
   zone.addEventListener('drop',e=>{handleFiles(e.dataTransfer.files);});
-  if(restored&&rosterLocked&&ROSTER.length){
-    goStep('upload');
+  if(restored&&ROSTER.length){
+    // 명단 복원 안내 배너 — 준비 화면 상단에 표시
     const banner=document.createElement('div');
-    banner.className='summary-banner';
-    banner.style.margin='0 28px 12px';
-    banner.innerHTML=`<span class="pill-stat pill-ok">✅ 이전에 등록한 명단(${ROSTER.length}명)을 이어서 불러왔습니다</span>`;
-    document.querySelector('main').prepend(banner);
-    setTimeout(()=>banner.remove(),6000);
+    banner.id='restore-banner';
+    banner.style.cssText='background:#f0fdf4;border:1px solid #bbf7d0;color:#16a34a;border-radius:8px;padding:11px 16px;margin-bottom:14px;font-size:.85rem;display:flex;justify-content:space-between;align-items:center;gap:12px';
+    const msg=rosterLocked
+      ? `✅ 이전 작업을 이어서 불러왔습니다 — 명단 <b>${ROSTER.length}명</b> (확정 완료)`
+      : `✅ 이전에 입력한 명단 <b>${ROSTER.length}명</b>을 불러왔습니다`;
+    banner.innerHTML=`<span>${msg}</span>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        ${rosterLocked?`<button class="btn btn-primary btn-sm" onclick="goStep('upload');document.getElementById('restore-banner').remove()">→ 업로드 화면으로 이동</button>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('restore-banner').remove()">닫기</button>
+      </div>`;
+    // prep 패널 첫 번째 자식 앞에 삽입
+    const prepPanel=document.getElementById('panel-prep');
+    prepPanel.insertBefore(banner,prepPanel.firstChild);
   }
 });
 
