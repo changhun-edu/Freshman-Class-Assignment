@@ -263,7 +263,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
     <section class="panel" id="panel-upload">
       <div class="card">
         <h3><span class="icon">📄</span>면접 결과 업로드</h3>
-        <p style="font-size:.82rem;color:var(--text-sub);margin-bottom:12px">학생 면접은 교사가 엑셀에 입력하지만, 학부모 설문은 학부모가 직접 응답하는 자료입니다. 걷은 뒤에는 담당자가 면접용 서식의 '학부모확인' 시트에 일괄로 옮겨 적어 업로드하면 됩니다. 서식·설문지는 준비 단계에서 받을 수 있습니다.</p>
+        <p style="font-size:.82rem;color:var(--text-sub);margin-bottom:12px">학생 면접은 교사가 엑셀에 입력하고, 학부모 설문은 담당자가 면접용 서식의 '학부모설문' 시트에 옮겨 적어 업로드하면 됩니다. 서식·설문지는 준비 단계에서 받을 수 있습니다.</p>
         <div style="margin-bottom:14px">
           <button class="btn btn-ghost btn-sm" onclick="downloadTemplate()">⬇ 빈 템플릿 (명단 미사용시, 전체 영역 포함)</button>
         </div>
@@ -664,54 +664,175 @@ async function buildInterviewWorkbook(prefill){
   const habitOn=CONFIG.domains['기본생활·안전'];
   const specialEdOn=CONFIG.specialEd.enabled;
 
-  const wb=new ExcelJS.Workbook();
-  const ws1=wb.addWorksheet('학생면접');
+  // ── 공통 스타일 헬퍼 ──
+  const headerFill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1E3A5F'}};
+  const headerFont={bold:true,color:{argb:'FFFFFFFF'},size:10};
+  const subHeaderFill={type:'pattern',pattern:'solid',fgColor:{argb:'FFD6E4F0'}};
+  const subHeaderFont={bold:true,color:{argb:'FF1E3A5F'},size:9};
+  const noteFill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFFDE7'}};
+  const borderThin={style:'thin',color:{argb:'FFBFCFDD'}};
+  const allBorder={top:borderThin,left:borderThin,bottom:borderThin,right:borderThin};
+  const centerAlign={horizontal:'center',vertical:'middle',wrapText:true};
+  const leftAlign={horizontal:'left',vertical:'middle',wrapText:true};
+
+  function styleHeaderRow(ws,rowNum,colCount){
+    const row=ws.getRow(rowNum);
+    for(let c=1;c<=colCount;c++){
+      const cell=ws.getCell(rowNum,c);
+      cell.fill=headerFill;cell.font=headerFont;cell.border=allBorder;
+      cell.alignment=centerAlign;
+    }
+    row.height=32;
+  }
+  function styleDataRow(ws,rowNum,colCount,isOdd){
+    const fill=isOdd
+      ?{type:'pattern',pattern:'solid',fgColor:{argb:'FFF7FAFD'}}
+      :{type:'pattern',pattern:'solid',fgColor:{argb:'FFFFFFFF'}};
+    for(let c=1;c<=colCount;c++){
+      const cell=ws.getCell(rowNum,c);
+      if(!cell.value&&cell.type===0)cell.fill=fill;
+      else cell.fill=fill;
+      cell.border=allBorder;
+      cell.alignment=leftAlign;
+    }
+    ws.getRow(rowNum).height=20;
+  }
+
+  // ── 학생면접 헤더/컬럼 계산 ──
   const h1=['접수번호','이름','성별','면접교사',...(specialEdOn?['특수교육']:[]),...stuFields.map((f,i)=>`${i+1}.${f.label}(0~2)`),'합계','분리대상(관리번호)','동반대상(관리번호)','특이사항(서술)'];
-  ws1.mergeCells(1,1,1,Math.max(h1.length,2));
-  ws1.getCell(1,1).value='※ 본인이 면접한 학생 행만 입력하세요. 점수 문항은 드롭다운(0/1/2)에서 선택합니다.'+(specialEdOn?' 이미 특수교육 대상으로 파악된 학생은 \'특수교육\' 칸에 O로 표시하세요.':'');
-  ws1.addRow(h1);ws1.getRow(2).font={bold:true};ws1.getRow(2).alignment={wrapText:true,vertical:'middle'};
   const specialEdCol=specialEdOn?5:null;
   const scoreStart=4+(specialEdOn?1:0)+1,scoreEnd=scoreStart+stuFields.length-1,sumCol=scoreEnd+1;
-  stuFields.forEach((f,i)=>{ws1.getCell(2,scoreStart+i).note=f.cmt;});
-  if(specialEdCol)ws1.getCell(2,specialEdCol).note='면접 점수와 무관하게, 학교가 이미 파악한 특수교육 대상이면 O로 표시하세요.';
-  let scoreStartLetter,scoreEndLetter;
+  const widths=[11,10,7,10,...(specialEdOn?[9]:[]),...stuFields.map(()=>12),9,18,18,34];
+  let scoreStartLetter='',scoreEndLetter='';
+
+  const wb=new ExcelJS.Workbook();
+  wb.creator='신입생면접자료정리';wb.created=new Date();
+
+  // ══════════════════════════════════════════
+  //  학생면접 시트
+  // ══════════════════════════════════════════
+  const ws1=wb.addWorksheet('학생면접');
+
+  // 1행: 안내문
+  const guideText='※ 본인이 면접한 학생 행만 입력하세요. 점수 문항은 0·1·2 중 직접 입력합니다.'
+    +(specialEdOn?' 특수교육 대상은 해당 칸에 O를 입력하세요.':'');
+  ws1.mergeCells(1,1,1,Math.max(h1.length,2));
+  const guideCell=ws1.getCell(1,1);
+  guideCell.value=guideText;
+  guideCell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEBF5FB'}};
+  guideCell.font={italic:true,color:{argb:'FF2C5F8A'},size:9};
+  guideCell.alignment={horizontal:'left',vertical:'middle',wrapText:true};
+  guideCell.border=allBorder;
+  ws1.getRow(1).height=28;
+
+  // 2행: 헤더
+  ws1.addRow(h1);
+  styleHeaderRow(ws1,2,h1.length);
+  // 점수 문항 헤더 툴팁
+  stuFields.forEach((f,i)=>{ws1.getCell(2,scoreStart+i).note={texts:[{text:f.cmt}]};});
   if(stuFields.length){scoreStartLetter=ws1.getColumn(scoreStart).letter;scoreEndLetter=ws1.getColumn(scoreEnd).letter;}
+  if(specialEdCol){
+    ws1.getCell(2,specialEdCol).note={texts:[{text:'이미 파악한 특수교육 대상이면 O를 입력하세요.'}]};
+    // 특수교육: 드롭다운 제거, 텍스트 자유 입력
+  }
+
+  // 데이터 행
   const n=prefill?ROSTER.length:200;
   for(let i=0;i<n;i++){
-    const rowVals=prefill?[ROSTER[i].no,ROSTER[i].name,ROSTER[i].gender,'',...(specialEdOn?['']:[]),...stuFields.map(()=>''),'','','','']:[];
+    const rowVals=prefill
+      ?[ROSTER[i].no,ROSTER[i].name,ROSTER[i].gender,'',...(specialEdOn?['']:[]),...stuFields.map(()=>''),'','','','']
+      :[];
     const row=ws1.addRow(rowVals);
     const r=row.number;
-    for(let c=scoreStart;c<=scoreEnd;c++)ws1.getCell(r,c).dataValidation={type:'list',formula1:'"0,1,2"',allowBlank:true};
+    styleDataRow(ws1,r,h1.length,i%2===0);
+    // 점수 문항: 0/1/2 드롭다운
+    for(let c=scoreStart;c<=scoreEnd;c++){
+      ws1.getCell(r,c).dataValidation={type:'list',formula1:'"0,1,2"',allowBlank:true,showErrorMessage:true,errorTitle:'입력 오류',error:'0, 1, 2 중 하나를 선택하세요.'};
+      ws1.getCell(r,c).alignment=centerAlign;
+    }
+    // 성별 드롭다운
     ws1.getCell(r,3).dataValidation={type:'list',formula1:'"남,여"',allowBlank:true};
-    if(specialEdCol)ws1.getCell(r,specialEdCol).dataValidation={type:'list',formula1:'"O"',allowBlank:true};
+    ws1.getCell(r,3).alignment=centerAlign;
+    // 특수교육: 드롭다운 없이 텍스트 직접 입력 (2번 수정)
+    if(specialEdCol)ws1.getCell(r,specialEdCol).alignment=centerAlign;
+    // 합계 수식
     if(stuFields.length)ws1.getCell(r,sumCol).value={formula:`SUM(${scoreStartLetter}${r}:${scoreEndLetter}${r})`};
+    ws1.getCell(r,sumCol).alignment=centerAlign;
+    ws1.getCell(r,sumCol).font={bold:true};
   }
-  const widths=[11,10,7,10,...(specialEdOn?[9]:[]),...stuFields.map(()=>12),9,18,18,34];
-  ws1.columns.forEach((c,i)=>c.width=widths[i]||12);
 
-  const ws2=wb.addWorksheet('학부모확인');
-  const h2=['접수번호','이름'];
-  const dropdowns={};
-  let col=3;
-  parFields.forEach((f,i)=>{h2.push(`${i+1}.${f.label}`,`${f.label} 구체적인 내용`);dropdowns[col]=f.opts;col+=2;});
+  // 열 너비 + 열 고정
+  ws1.columns.forEach((c,i)=>c.width=(widths[i]||12));
+  ws1.views=[{state:'frozen',xSplit:2,ySplit:2}]; // 접수번호·이름 고정
+
+  // ══════════════════════════════════════════
+  //  학부모설문 시트 (3번: 시트명 변경)
+  // ══════════════════════════════════════════
+  const ws2=wb.addWorksheet('학부모설문');
+
+  // 학부모 설문 헤더 재설계 (4번: 문항·컬럼 재검토)
+  // PAR_FIELDS 기반 + 기본생활습관 체크 + 건강안전 체크 + 검사경험 + 배려사항
+  const h2Base=['접수번호','이름'];
+  const par2Dropdowns={};
+  let col2=3;
+
+  parFields.forEach((f,i)=>{
+    h2Base.push(`${i+1}.${f.label}`);
+    par2Dropdowns[col2]=f.opts;
+    col2++;
+    h2Base.push(`${f.label} 구체내용`);
+    col2++;
+  });
+
   if(habitOn){
-    PAR_HABIT.forEach(h=>{h2.push(h);dropdowns[col]=['O'];col++;});
-    PAR_HEALTH.forEach(h=>{h2.push(h);dropdowns[col]=['O'];col++;});
-    h2.push('건강관련 구체내용');col++;
+    // 기본생활습관: 각 항목 별도 열 (O 체크)
+    h2Base.push('7.기본생활-화장실사용','7.기본생활-식사','7.기본생활-옷입고벗기',
+                '7.기본생활-정리정돈','7.기본생활-물건챙기기','7.기본생활-등하교적응','기본생활 구체내용');
+    for(let k=0;k<6;k++){par2Dropdowns[col2]=['O'];col2++;}
+    col2++; // 구체내용
+    // 건강및안전: 각 항목 별도 열
+    h2Base.push('8.건강-알레르기','8.건강-투약','8.건강-음식제한','8.건강-시력청력','8.건강-기타유의','건강 구체내용');
+    for(let k=0;k<5;k++){par2Dropdowns[col2]=['O'];col2++;}
+    col2++; // 구체내용
   }
-  h2.push('검사상담치료경험');dropdowns[col]=['없음','있음'];col++;
-  h2.push('검사상담치료경험 내용');col++;
-  h2.push('입학초기 배려사항(서술)');col++;
 
-  ws2.mergeCells(1,1,1,h2.length);
-  ws2.getCell(1,1).value='※ 학부모가 응답하거나 보호자 구두 확인 내용을 기록합니다.';
-  ws2.addRow(h2);ws2.getRow(2).font={bold:true};ws2.getRow(2).alignment={wrapText:true,vertical:'middle'};
+  h2Base.push('9.검사상담치료경험');par2Dropdowns[col2]=['없음','있음'];col2++;
+  h2Base.push('검사경험 내용');col2++;
+  h2Base.push('10.입학초기 배려사항');col2++;
+
+  // 1행 안내
+  ws2.mergeCells(1,1,1,h2Base.length);
+  const g2=ws2.getCell(1,1);
+  g2.value='※ 학부모 설문지 응답 내용을 옮겨 적습니다. 체크 항목은 해당 칸에 O를 입력하세요.';
+  g2.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEBF5FB'}};
+  g2.font={italic:true,color:{argb:'FF2C5F8A'},size:9};
+  g2.alignment={horizontal:'left',vertical:'middle'};
+  g2.border=allBorder;
+  ws2.getRow(1).height=24;
+
+  // 2행 헤더
+  ws2.addRow(h2Base);
+  styleHeaderRow(ws2,2,h2Base.length);
+
+  // 데이터 행
   for(let i=0;i<n;i++){
     const row=ws2.addRow(prefill?[ROSTER[i].no,ROSTER[i].name]:[]);
     const r=row.number;
-    Object.entries(dropdowns).forEach(([c,opts])=>{ws2.getCell(r,+c).dataValidation={type:'list',formula1:`"${opts.join(',')}"`,allowBlank:true};});
+    styleDataRow(ws2,r,h2Base.length,i%2===0);
+    Object.entries(par2Dropdowns).forEach(([c,opts])=>{
+      ws2.getCell(r,+c).dataValidation={type:'list',formula1:`"${opts.join(',')}"`,allowBlank:true};
+      ws2.getCell(r,+c).alignment=centerAlign;
+    });
   }
-  ws2.columns.forEach(c=>c.width=13);
+
+  // 열 너비 설정
+  ws2.getColumn(1).width=11;ws2.getColumn(2).width=10;
+  for(let c=3;c<=h2Base.length;c++){
+    const label=h2Base[c-1]||'';
+    ws2.getColumn(c).width=label.length>10?18:13;
+  }
+  ws2.views=[{state:'frozen',xSplit:2,ySplit:2}];
+
   return wb;
 }
 async function downloadRosterTemplate(){
@@ -745,7 +866,7 @@ function surveyPageHTML(s,items){
     </div>`).join('');
   return `<section class="survey-page">
     <div class="s-head">
-      <h2>신입생 학부모 확인 설문</h2>
+      <h2>신입생 학부모 설문</h2>
       <div class="s-ids">
         <div class="s-id-item"><span class="s-id-label">관리번호</span><span class="s-id-line"></span></div>
         <div class="s-id-item"><span class="s-id-label">이름</span><span class="s-id-line wide"></span></div>
@@ -775,7 +896,9 @@ function printParentSurvey(subset){
     // 명단 없음 → 관리번호·이름 빈 칸짜리 1장 출력
     list=[{no:'________',name:'________________',gender:''}];
   }
-  const pages=list.map(r=>surveyPageHTML(r,items)).join('');
+  // 학생 수와 무관하게 빈 양식 1장만 출력
+  const blankPage=[{no:'________',name:'________________',gender:''}];
+  const pages=blankPage.map(r=>surveyPageHTML(r,items)).join('');
   const html=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>학부모 설문지</title><style>
     @page{size:A4 portrait;margin:22mm 14mm 12mm}
     *{box-sizing:border-box;margin:0;padding:0}
@@ -1054,8 +1177,9 @@ function handleFiles(fileList){
         const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
         let stuCount=0,parCount=0;
         if(wb.Sheets['학생면접']){const recs=parseStuSheet(wb.Sheets['학생면접']);stuCount=recs.length;mergeStu(recs,f.name);}
-        if(wb.Sheets['학부모확인']){const recs=parseParSheet(wb.Sheets['학부모확인']);parCount=recs.length;mergePar(recs,f.name);}
-        if(!stuCount&&!parCount){conflicts.push({id:'-',type:'형식 오류',detail:`${f.name}: 학생면접/학부모확인 시트를 찾을 수 없습니다. 템플릿을 확인하세요.`});}
+        const parSheet=wb.Sheets['학부모설문']||wb.Sheets['학부모확인'];
+        if(parSheet){const recs=parseParSheet(parSheet);parCount=recs.length;mergePar(recs,f.name);}
+        if(!stuCount&&!parCount){conflicts.push({id:'-',type:'형식 오류',detail:`${f.name}: 학생면접/학부모설문 시트를 찾을 수 없습니다. 템플릿을 확인하세요.`});}
         uploadedFiles.push({name:f.name,stuCount,parCount});
       }catch(err){conflicts.push({id:'-',type:'읽기 오류',detail:`${f.name}: ${err.message}`});}
       remaining--;
