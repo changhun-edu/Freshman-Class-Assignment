@@ -142,6 +142,16 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 .qprev-list{margin:5px 0 0 16px;font-size:.78rem;color:var(--text-sub);line-height:1.6}
 .qprev-common{font-size:.78rem;color:var(--text-muted);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
 
+/* 학생 문항 미리보기 */
+.stu-preview-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.stu-preview-item:last-child{border-bottom:none}
+.stu-preview-num{flex-shrink:0;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;margin-top:1px}
+.stu-preview-body{flex:1;min-width:0}
+.stu-preview-domain{font-size:.7rem;font-weight:700;margin-bottom:2px}
+.stu-preview-label{font-size:.85rem;font-weight:800;color:var(--text);margin-bottom:3px}
+.stu-preview-q{font-size:.82rem;color:var(--text-sub);margin-bottom:3px}
+.stu-preview-cmt{font-size:.74rem;color:var(--text-muted);line-height:1.5;background:var(--surface2);padding:4px 8px;border-radius:4px}
+
 /* 배치 */
 .classname-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-top:10px}
 .classname-grid input{padding:6px 8px;font-size:.85rem}
@@ -176,10 +186,11 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
   <div id="step-progress"></div>
 
   <main>
-    <!-- 0. 준비 (명단 등록 + 관찰 영역 선택) -->
+    <!-- 0. 준비 (관찰 영역 선택 + 명단 등록) -->
     <section class="panel active" id="panel-prep">
       <div class="prep-grid">
-        <!-- 왼쪽: STEP1 -->
+
+        <!-- 왼쪽: STEP1 — 관찰 영역 선택 + 학부모 설문 출력 -->
         <div>
           <div class="card">
             <span class="step-badge">STEP 1</span>
@@ -187,14 +198,26 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
             <p style="font-size:.8rem;color:var(--text-sub);margin-bottom:10px">선택한 영역의 문항만 면접 서식·설문지에 포함되고, 검토·배치·내보내기에도 선택한 영역만 반영됩니다.</p>
             <div id="domain-toggles" class="domain-toggle-grid"></div>
             <div id="specialed-toggle" style="margin-top:6px"></div>
-            <details class="adv" style="margin-top:12px">
-              <summary>선택 결과 미리보기 (추가/제외되는 문항 확인)</summary>
-              <div id="question-preview" style="margin-top:10px"></div>
-            </details>
+          </div>
+
+          <!-- 학생 문항 미리보기 (항상 표시) -->
+          <div class="card" id="card-stu-preview">
+            <h3 style="margin-bottom:8px">👁 학생 면접 문항 미리보기</h3>
+            <p style="font-size:.78rem;color:var(--text-sub);margin-bottom:10px">선택한 영역에 포함되는 학생 면접 문항입니다. 문항을 확인하고 관찰 영역을 조정하세요.</p>
+            <div id="stu-question-preview"></div>
+          </div>
+
+          <!-- 학부모 설문 출력 (STEP 1 하단) -->
+          <div class="card">
+            <h3 style="margin-bottom:8px">🖨 학부모 설문 출력</h3>
+            <p style="font-size:.78rem;color:var(--text-sub);margin-bottom:10px">관찰 영역 선택이 완료되면 바로 출력할 수 있습니다. 명단 등록(STEP 2) 전에 먼저 출력해도 됩니다.</p>
+            <div class="summary-pill" id="prep-summary-pill">📌 현재 설정: 관찰 영역 8개 사용 · 명단 0명 (미확정)</div>
+            <button class="btn-big-green" style="margin-top:10px" onclick="printParentSurvey()">🖨️ 학부모 설문지 인쇄 / PDF 저장</button>
+            <div class="steps-text">① 출력 → ② 면접 당일 학부모에게 배부 → ③ 회수 후 담당자가 취합</div>
           </div>
         </div>
 
-        <!-- 오른쪽: STEP2 명단 등록 + 서식 받기 -->
+        <!-- 오른쪽: STEP2 — 명단 등록 + 면접용 서식 다운로드 -->
         <div>
           <div class="card">
             <span class="step-badge">STEP 2</span>
@@ -216,16 +239,14 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
           </div>
 
           <div class="card">
-            <h3 style="margin-bottom:12px">⬇ 면접 서식 받기</h3>
-            <div class="summary-pill" id="prep-summary-pill">📌 현재 설정: 학급 5개 · 관찰 영역 8개 사용 · 명단 0명 (미확정)</div>
+            <h3 style="margin-bottom:8px">⬇ 면접용 서식 다운로드</h3>
+            <p style="font-size:.78rem;color:var(--text-sub);margin-bottom:10px">명단을 확정하면 관리번호가 포함된 면접용 엑셀 서식을 받을 수 있습니다.</p>
             <button class="btn-big-green" id="btn-download-main" onclick="downloadRosterTemplate()" disabled>⬇ 면접용 서식 다운로드 (명단 번호 포함)</button>
             <div class="steps-text">① 다운로드 → ② 면접교사에게 배부 → ③ 작성 후 업로드로 이동</div>
-
-            <button class="btn btn-ghost btn-sm" id="btn-print-survey" style="width:100%;margin-bottom:10px" onclick="printParentSurvey()" disabled>🖨️ 학부모 설문지 인쇄</button>
-
-            <button class="goto-upload" id="btn-to-upload" onclick="goStep('upload')" disabled>→ 작성 완료 후 업로드로 이동</button>
+            <button class="goto-upload" id="btn-to-upload" onclick="goStep('upload')" disabled style="margin-top:10px">→ 작성 완료 후 업로드로 이동</button>
           </div>
         </div>
+
       </div>
     </section>
 
@@ -341,7 +362,7 @@ const DOMAIN_COLORS={
   특수교육:{bg:'#f5f3ff',fg:'#6d28d9'},
 };
 const STU_FIELDS=[
-  {idx:0,label:'이름말하기',domain:'의사소통',q:'"안녕하세요. 이름이 뭐예요?"',cmt:'0 인사하거나 이름을 자연스럽게 말함 / 1 작은 목소리·단답형 / 2 대답을 어려워함'},
+  {idx:0,label:'이름말하기',domain:'생활적응',q:'"안녕하세요. 이름이 뭐예요?"',cmt:'0 인사하거나 이름을 자연스럽게 말함 / 1 작은 목소리·단답형 / 2 대답을 어려워함'},
   {idx:1,label:'기분말하기',domain:'정서표현·감정조절',q:'"오늘 학교에 와 보니 기분이 어때요?"',cmt:'0 자신의 기분을 간단히 표현 / 1 단답형·유도질문 필요 / 2 불안·울음·회피로 표현 어려움'},
   {idx:2,label:'좋아하는놀이',domain:'의사소통',q:'"좋아하는 놀이는 뭐예요? 왜 그 놀이를 좋아해요?"',cmt:'0 생각을 말함 / 1 짧게 대답·추가질문 필요 / 2 지속적 도움 필요'},
   {idx:3,label:'그림설명',domain:'의사소통',q:'(그림 제시) "이 그림에서 무슨 일이 일어나고 있나요?"',cmt:'0 단어·문장으로 설명 / 1 일부만 말함 / 2 설명을 어려워함'},
@@ -359,12 +380,14 @@ const PAR_FIELDS=[
   {key:'inst',label:'지시따르기',domain:'지시따르기',opts:['없음','반복안내필요','개별도움필요']},
   {key:'emo',label:'정서표현',domain:'정서표현·감정조절',opts:['말로표현','울음으로표현','행동으로표현','표현하지않고참음','상황에따라다름']},
   {key:'wait',label:'기다리기·차례지키기',domain:'주의집중행동·행동조절',opts:['어려움없음','약간어려워함','많이어려워함']},
+  {key:'learn',label:'학습활동집중',domain:'기초학습준비도',opts:['없음','약간있음','많이있음']},
 ];
 const PAR_HABIT=['화장실사용','식사','옷입고벗기','정리정돈','물건챙기기','등하교적응'];
 const PAR_HEALTH=['알레르기','투약','음식제한','시력청력','기타건강유의'];
 const SEVERITY_MAP={
   sep:{없음:0,약간있음:1,많이있음:2}, comm:{없음:0,가끔있음:1,자주있음:2},
   inst:{없음:0,반복안내필요:1,개별도움필요:2}, wait:{어려움없음:0,약간어려워함:1,많이어려워함:2},
+  learn:{없음:0,약간있음:1,많이있음:2},
   peer:{적극적으로어울림:0,조용히참여함:0,상황에따라다름:0,혼자놀이선호:1,갈등잦은편:2},
   emo:{말로표현:0,상황에따라다름:0,울음으로표현:1,행동으로표현:1,표현하지않고참음:1},
 };
@@ -464,7 +487,7 @@ function renderRosterLockArea(needNote){
     el.innerHTML=`<button class="btn btn-primary" ${disabled} onclick="lockRoster()">명단 확정하고 관리번호 발급 →</button>
       ${needNote?'<div style="font-size:.8rem;color:var(--amber);margin-top:6px">동명이인 구분 메모를 모두 입력해야 확정할 수 있습니다.</div>':''}`;
   }
-  ['btn-download-main','btn-print-survey','btn-to-upload'].forEach(id=>{
+  ['btn-download-main','btn-to-upload'].forEach(id=>{
     const b=document.getElementById(id);if(b)b.disabled=!rosterLocked;
   });
   renderPrepSummary();
@@ -507,21 +530,55 @@ function renderQuestionPreview(){
     </div>`;
   }).join('')+`<div class="qprev-common">항상 포함: [학부모] 검사·상담·치료 경험, 입학초기 배려사항(서술)</div>`;
 }
+function renderStuQuestionPreview(){
+  const el=document.getElementById('stu-question-preview');if(!el)return;
+  const enabled=DOMAIN_LIST.filter(d=>CONFIG.domains[d]);
+  if(!enabled.length){
+    el.innerHTML='<div style="color:var(--text-muted);font-size:.82rem;padding:10px 0">선택된 관찰 영역이 없습니다.</div>';
+    return;
+  }
+  let num=0;
+  let html=enabled.map(d=>{
+    const fields=STU_FIELDS.filter(f=>f.domain===d);
+    if(!fields.length)return '';
+    const dc=DOMAIN_COLORS[d]||{bg:'#eee',fg:'#333'};
+    return fields.map(f=>{
+      num++;
+      return `<div class="stu-preview-item">
+        <div class="stu-preview-num" style="background:${dc.bg};color:${dc.fg}">${num}</div>
+        <div class="stu-preview-body">
+          <div class="stu-preview-domain" style="color:${dc.fg}">${DOMAIN_ICONS[d]} ${d}</div>
+          <div class="stu-preview-label">${f.label}</div>
+          <div class="stu-preview-q">${f.q}</div>
+          <div class="stu-preview-cmt">${f.cmt}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }).join('');
+  if(!html){html='<div style="color:var(--text-muted);font-size:.82rem;padding:10px 0">선택된 영역에 학생 문항이 없습니다.</div>';}
+  el.innerHTML=html;
+}
 function renderDomainToggles(){
   const el=document.getElementById('domain-toggles');
   el.innerHTML=DOMAIN_LIST.map(d=>{
     const on=CONFIG.domains[d];
     const stuCnt=STU_FIELDS.filter(f=>f.domain===d).length;
-    const parQCnt=PAR_FIELDS.filter(f=>f.domain===d).length+(d==='기본생활·안전'?2:0); // 기본생활·안전은 7번(생활습관)+8번(건강안전) 2문항
+    const parQCnt=PAR_FIELDS.filter(f=>f.domain===d).length+(d==='기본생활·안전'?2:0);
     const checkCnt=d==='기본생활·안전'?PAR_HABIT.length+PAR_HEALTH.length:0;
     const parLabel=parQCnt?`학부모 문항 ${parQCnt}개${checkCnt?` (체크항목 ${checkCnt}개)`:''}`:'';
-    return `<div class="rule-row">
+    // 어느 한쪽이 0개이면 경고 (기본생활·안전은 학생 문항 없는 게 설계 의도이므로 제외)
+    const warnStu=on&&stuCnt===0&&d!=='기본생활·안전';
+    const warnPar=on&&parQCnt===0;
+    const warn=warnStu||warnPar;
+    const warnMsg=warnStu?'학생 문항 없음':warnPar?'학부모 문항 없음':'';
+    return `<div class="rule-row" style="${warn?'border-color:#fcd34d;background:#fffbeb':''}">
       <input type="checkbox" ${on?'checked':''} onchange="CONFIG.domains['${d}']=this.checked;renderDomainToggles();renderPrepSummary();renderQuestionPreview();">
       <span class="rlabel">${DOMAIN_ICONS[d]} ${d}</span>
-      <span style="font-size:.75rem;color:var(--text-muted)">학생 문항 ${stuCnt}개${parLabel?` · ${parLabel}`:''}</span>
+      <span style="font-size:.75rem;color:${warn?'var(--amber)':'var(--text-muted)'}">학생 문항 ${stuCnt}개${parLabel?` · ${parLabel}`:''}${warn?` ⚠ ${warnMsg}`:''}</span>
     </div>`;
   }).join('');
   renderQuestionPreview();
+  renderStuQuestionPreview();
 }
 function onSpecialEdChange(enabled){
   CONFIG.specialEd.enabled=enabled;
@@ -616,6 +673,7 @@ const SURVEY_Q=[
   {label:'지시 따르기',domain:'지시따르기',q:'어른의 간단한 지시를 듣고 따르는 데 어려움이 있나요?',opts:['없음','반복 안내가 필요함','개별적인 도움이 필요함'],note:true},
   {label:'정서 표현과 감정 조절',domain:'정서표현·감정조절',q:'아이가 속상하거나 화가 났을 때 주로 어떻게 표현하나요?',opts:['말로 표현함','울음으로 표현함','행동으로 표현함','표현하지 않고 참는 편임','상황에 따라 다름'],note:true},
   {label:'기다리기와 차례 지키기',domain:'주의집중행동·행동조절',q:'아이가 기다리기, 차례 지키기, 활동 멈추기 등을 어려워하나요?',opts:['어려움 없음','약간 어려워함','많이 어려워함'],note:true},
+  {label:'학습 활동 집중',domain:'기초학습준비도',q:'아이가 앉아서 한 가지 활동(그림 그리기, 책 보기 등)을 10분 정도 지속하는 데 어려움이 있나요?',opts:['없음','약간 있음','많이 있음'],note:true},
   {label:'기본 생활 습관',domain:'기본생활·안전',q:'다음 중 도움이 필요한 부분이 있나요? (해당 항목 모두 표시)',opts:['화장실 사용','식사','옷 입고 벗기','정리정돈','물건 챙기기','등하교 적응','해당 없음'],note:true,multi:true},
   {label:'건강 및 안전',domain:'기본생활·안전',q:'건강상 학교에서 꼭 알아야 할 내용이 있나요? (해당 항목 모두 표시)',opts:['없음','알레르기','투약','음식 제한','시력·청력 관련','기타 건강상 유의 사항'],note:true,multi:true},
   {label:'검사·상담·치료 경험',domain:null,q:'이전에 발달검사, 언어검사, 심리검사, 병원 진료, 상담, 언어치료, 놀이치료, 감각통합치료 등을 받은 경험이 있나요?',opts:['없음','있음'],note:true},
