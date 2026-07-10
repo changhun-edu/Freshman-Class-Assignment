@@ -126,6 +126,8 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 .rule-row .rlabel{font-weight:700;font-size:.85rem;flex:1;display:flex;align-items:center;gap:6px}
 .rule-row .weight-input{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--text-sub);white-space:nowrap}
 .rule-row .weight-input input{width:44px;padding:4px 6px;text-align:center}
+.domain-toggle-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.domain-toggle-grid .rule-row{margin-bottom:8px}
 .summary-pill{background:var(--primary-light);color:var(--primary-dark);border:1px solid #bfdbfe;border-radius:var(--r);padding:9px 14px;font-size:.82rem;font-weight:600;margin-bottom:12px}
 .btn-big-green{width:100%;padding:14px;border-radius:8px;font-size:.92rem;font-weight:800;background:var(--green);color:#fff;border:none;cursor:pointer;margin-bottom:10px}
 .btn-big-green:hover{background:#128a4a}
@@ -181,13 +183,13 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
           <div class="card">
             <span class="step-badge">STEP 1</span>
             <h3>✅ 관찰 영역 선택</h3>
-            <p style="font-size:.8rem;color:var(--text-sub);margin-bottom:10px">선택한 영역의 문항만 면접 서식·설문지에 포함되고, 검토·내보내기에도 선택한 영역만 표시됩니다. 점수가 높은(주의가 필요한) 학생을 각 영역별로 표시해두면, 실제 반 배치에서 고루 나눠 배치하는 건 스마트 반편성 앱이 맡습니다.</p>
-            <div id="domain-toggles"></div>
+            <p style="font-size:.8rem;color:var(--text-sub);margin-bottom:10px">선택한 영역의 문항만 면접 서식·설문지에 포함되고, 검토·배치·내보내기에도 선택한 영역만 반영됩니다.</p>
+            <div id="domain-toggles" class="domain-toggle-grid"></div>
             <div id="specialed-toggle" style="margin-top:6px"></div>
-            <div style="margin-top:14px">
-              <div class="sec-title" style="margin:0 0 6px">선택 결과 미리보기 — 추가/제외되는 문항</div>
-              <div id="question-preview"></div>
-            </div>
+            <details class="adv" style="margin-top:12px">
+              <summary>선택 결과 미리보기 (추가/제외되는 문항 확인)</summary>
+              <div id="question-preview" style="margin-top:10px"></div>
+            </details>
           </div>
         </div>
 
@@ -404,7 +406,8 @@ function goStep(name){
   if(name==='review'){computeScores();renderFilters();renderReviewList();}
   if(name==='assign'){renderClassNameInputs();renderAssignResults();}
 }
-function resetAll(){uploadedFiles=[];students={};conflicts=[];conflictsAck=false;selectedId=null;ROSTER=[];rosterLocked=false;unregistered=[];ASSIGN={numClasses:5,classNames:[],classes:[],violations:[],assigned:false};location.reload();}
+const SESSION_KEY='sinip_myeojeup_session_v1';
+function resetAll(){sessionStorage.removeItem(SESSION_KEY);uploadedFiles=[];students={};conflicts=[];conflictsAck=false;selectedId=null;ROSTER=[];rosterLocked=false;unregistered=[];ASSIGN={numClasses:5,classNames:[],classes:[],violations:[],assigned:false};location.reload();}
 
 /* ===================== 명단 등록 ===================== */
 function rosterNo(idx){
@@ -431,7 +434,7 @@ function renderRosterTable(){
     const dup=r.name&&keyCount[(r.name||'')+'|'+(r.gender||'')]>1;
     const unresolved=dup&&!r.note;
     return `<tr class="${unresolved?'dup-row':''}">
-      <td><span class="roster-no">${rosterNo(i)}</span></td>
+      <td><span class="roster-no">${r.no||rosterNo(i)}</span></td>
       <td><input value="${r.name}" ${rosterLocked?'disabled':''} onchange="updateRosterField(${i},'name',this.value)"></td>
       <td><input value="${r.gender}" ${rosterLocked?'disabled':''} placeholder="남/여" onchange="updateRosterField(${i},'gender',this.value)"></td>
       <td><input value="${r.note}" ${rosterLocked?'disabled':''} placeholder="${unresolved?'동명이인 - 구분 메모 필요':''}" onchange="updateRosterField(${i},'note',this.value)"></td>
@@ -453,7 +456,7 @@ function renderRosterTable(){
 function renderRosterLockArea(needNote){
   const el=document.getElementById('roster-lock-area');
   if(rosterLocked){
-    el.innerHTML=`<div class="lock-banner">✅ 명단이 확정되었습니다 (${ROSTER.length}명, 관리번호 ${rosterNo(0)}~${rosterNo(ROSTER.length-1)})
+    el.innerHTML=`<div class="lock-banner">✅ 명단이 확정되었습니다 (${ROSTER.length}명, 관리번호 ${ROSTER[0].no||rosterNo(0)}~${ROSTER[ROSTER.length-1].no||rosterNo(ROSTER.length-1)})
       <button class="btn btn-ghost btn-sm" onclick="unlockRoster()">명단 다시 열기</button></div>`;
   }else{
     const disabled=(ROSTER.length===0||needNote)?'disabled':'';
@@ -469,6 +472,7 @@ function renderPrepSummary(){
   const pill=document.getElementById('prep-summary-pill');if(!pill)return;
   const enabledCnt=DOMAIN_LIST.filter(d=>CONFIG.domains[d]).length;
   pill.textContent=`📌 현재 설정: 관찰 영역 ${enabledCnt}개 사용${CONFIG.specialEd.enabled?` · 특수교육(가중치 1명=${CONFIG.specialEd.weight}명) 반영`:''} · 명단 ${ROSTER.length}명${rosterLocked?' (확정됨)':' (미확정)'}`;
+  saveSession();
 }
 function lockRoster(){
   rosterLocked=true;
@@ -687,14 +691,49 @@ function downloadTemplate(){
 
 /* ===================== 업로드/파싱/병합 ===================== */
 const dz=()=>document.getElementById('drop-zone');
+function saveSession(){
+  try{
+    sessionStorage.setItem(SESSION_KEY,JSON.stringify({
+      ROSTER,rosterLocked,domains:CONFIG.domains,specialEd:CONFIG.specialEd
+    }));
+  }catch(e){/* 저장 공간 부족 등은 무시 - 세션 복원은 편의 기능일 뿐입니다 */}
+}
+function restoreSession(){
+  let saved=null;
+  try{saved=JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null');}catch(e){saved=null;}
+  if(!saved||!Array.isArray(saved.ROSTER))return false;
+  ROSTER=saved.ROSTER;
+  rosterLocked=!!saved.rosterLocked;
+  if(saved.domains)Object.assign(CONFIG.domains,saved.domains);
+  if(saved.specialEd)CONFIG.specialEd=saved.specialEd;
+  if(rosterLocked){
+    ROSTER.forEach(r=>{
+      if(!r.no)return;
+      students[r.no]=newStudent(r.no);
+      students[r.no].name=r.name;students[r.no].gender=r.gender;
+    });
+  }
+  return true;
+}
+
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('roster-year').value=String(new Date().getFullYear()).slice(-2);
+  const restored=restoreSession();
   renderRosterTable();
   renderStepProgress();renderDomainToggles();renderSpecialEdToggle();onConfigChange();
   const zone=dz();
   ['dragover','dragenter'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.add('drag');}));
   ['dragleave','drop'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.remove('drag');}));
   zone.addEventListener('drop',e=>{handleFiles(e.dataTransfer.files);});
+  if(restored&&rosterLocked&&ROSTER.length){
+    goStep('upload');
+    const banner=document.createElement('div');
+    banner.className='summary-banner';
+    banner.style.margin='0 28px 12px';
+    banner.innerHTML=`<span class="pill-stat pill-ok">✅ 이전에 등록한 명단(${ROSTER.length}명)을 이어서 불러왔습니다</span>`;
+    document.querySelector('main').prepend(banner);
+    setTimeout(()=>banner.remove(),6000);
+  }
 });
 
 function newStudent(id){return{id,name:'',gender:'',stu:null,par:null,tagsInitialized:false,tags:[],specialEdMark:false};}
