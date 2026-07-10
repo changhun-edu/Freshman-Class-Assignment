@@ -126,8 +126,9 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 .rule-row .rlabel{font-weight:700;font-size:.85rem;flex:1;display:flex;align-items:center;gap:6px}
 .rule-row .weight-input{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--text-sub);white-space:nowrap}
 .rule-row .weight-input input{width:44px;padding:4px 6px;text-align:center}
-.domain-toggle-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
-.domain-toggle-grid .rule-row{margin-bottom:8px}
+.domain-toggle-grid{max-height:280px;overflow-y:auto;padding-right:4px}
+.domain-toggle-grid .rule-row{margin-bottom:6px}
+.rlabel{word-break:keep-all}
 .summary-pill{background:var(--primary-light);color:var(--primary-dark);border:1px solid #bfdbfe;border-radius:var(--r);padding:9px 14px;font-size:.82rem;font-weight:600;margin-bottom:12px}
 .btn-big-green{width:100%;padding:14px;border-radius:8px;font-size:.92rem;font-weight:800;background:var(--green);color:#fff;border:none;cursor:pointer;margin-bottom:10px}
 .btn-big-green:hover{background:#128a4a}
