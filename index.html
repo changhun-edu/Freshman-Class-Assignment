@@ -176,7 +176,23 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 .acc-item-q{font-size:.8rem;color:var(--text-sub);margin-bottom:3px}
 .acc-item-cmt{font-size:.72rem;color:var(--text-muted);line-height:1.5;background:var(--surface2);padding:3px 8px;border-radius:4px}
 
-/* 배치 */
+/* 가이드 모달 */
+.guide-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center}
+.guide-modal-bg.open{display:flex}
+.guide-modal{background:#fff;border-radius:14px;padding:28px;max-width:520px;width:92%;max-height:88vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.22)}
+.guide-modal h3{font-size:1rem;font-weight:800;margin-bottom:4px;color:var(--primary-dark)}
+.guide-modal .sub{font-size:.78rem;color:var(--text-muted);margin-bottom:16px}
+.guide-step{display:flex;gap:12px;margin-bottom:14px;align-items:flex-start}
+.guide-step-num{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--primary);color:#fff;font-weight:800;font-size:.82rem;display:flex;align-items:center;justify-content:center}
+.guide-step-body{flex:1}
+.guide-step-title{font-weight:700;font-size:.86rem;margin-bottom:3px}
+.guide-step-desc{font-size:.79rem;color:var(--text-sub);line-height:1.5}
+.guide-step-code{background:#f1f5f9;border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:.75rem;font-family:monospace;margin-top:5px;word-break:break-all;cursor:pointer;color:#1e3a5f}
+.guide-step-code:hover{background:#e2e8f0}
+.guide-modal-footer{display:flex;gap:8px;margin-top:18px}
+.guide-modal-footer button{flex:1;padding:10px;border-radius:8px;font-weight:700;font-size:.84rem;cursor:pointer;border:none}
+.guide-btn-primary{background:var(--primary);color:#fff}
+.guide-btn-ghost{background:var(--surface2);color:var(--text)}
 .classname-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-top:10px}
 .classname-grid input{padding:6px 8px;font-size:.85rem}
 .assign-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-top:14px}
@@ -244,11 +260,11 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
             <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
               <div style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:2px">🌐 온라인 설문 방식</div>
               <p style="font-size:.75rem;color:var(--text-sub);margin-bottom:8px">외부 도구(구글폼·네이버폼 등) 또는 직접 배포용 웹 설문을 생성합니다.</p>
-              <div style="display:flex;gap:6px;margin-bottom:6px">
-                <button class="btn btn-ghost btn-sm" id="btn-copy-google" onclick="copyForGoogleForm()" disabled style="flex:1">📋 구글폼용 문항 복사</button>
-                <button class="btn btn-ghost btn-sm" id="btn-copy-naver" onclick="copyForNaverForm()" disabled style="flex:1">📋 네이버폼용 문항 복사</button>
+              <div style="display:flex;gap:6px;margin-bottom:4px">
+                <button class="btn btn-ghost btn-sm" id="btn-copy-google" onclick="showGoogleGuide()" disabled style="flex:1">📋 구글폼 스크립트 생성</button>
+                <button class="btn btn-ghost btn-sm" id="btn-copy-naver" onclick="generateNaverFormExcel()" disabled style="flex:1">📥 네이버폼 엑셀 생성</button>
               </div>
-              <div class="steps-text" style="margin-bottom:10px">복사 후 구글폼/네이버폼에 붙여넣기 → 링크 배포 → 결과 CSV → 업로드 탭에서 가져오기</div>
+              <div class="steps-text" style="margin-bottom:10px">구글폼: 스크립트 실행으로 자동 생성 · 네이버폼: 엑셀 가져오기로 자동 생성</div>
               <button class="btn-big-green" id="btn-gen-websurvey" onclick="generateWebSurvey()" disabled style="background:#7c3aed">⚡ 배포용 웹 설문 HTML 생성</button>
               <div class="steps-text">생성된 HTML을 학교 서버·구글 드라이브에 업로드 → QR코드로 학부모 배포 → 응답 CSV를 이 사이트에 업로드</div>
             </div>
@@ -385,6 +401,43 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
     </section>
   </main>
   <footer style="text-align:center;padding:10px;font-size:.72rem;color:var(--text-muted);border-top:1px solid var(--border);flex-shrink:0">만든이 2026 최창훈</footer>
+</div>
+
+<!-- 구글폼 가이드 모달 -->
+<div class="guide-modal-bg" id="google-guide-modal">
+  <div class="guide-modal">
+    <h3>📋 구글폼 자동 생성 안내</h3>
+    <div class="sub">Apps Script를 이용해 구글폼을 자동으로 만듭니다. 3단계만 따라하세요.</div>
+    <div class="guide-step">
+      <div class="guide-step-num">1</div>
+      <div class="guide-step-body">
+        <div class="guide-step-title">스크립트 코드 복사</div>
+        <div class="guide-step-desc">아래 버튼을 눌러 코드를 클립보드에 복사하세요.</div>
+        <button class="btn btn-primary btn-sm" style="margin-top:6px" onclick="copyGoogleScript()">📋 스크립트 코드 복사</button>
+        <div id="copy-confirm" style="font-size:.75rem;color:var(--green);margin-top:4px;display:none">✅ 복사되었습니다!</div>
+      </div>
+    </div>
+    <div class="guide-step">
+      <div class="guide-step-num">2</div>
+      <div class="guide-step-body">
+        <div class="guide-step-title">Google Apps Script 열기</div>
+        <div class="guide-step-desc">아래 링크를 클릭해 새 탭에서 스크립트 편집기를 여세요.</div>
+        <div class="guide-step-code" onclick="window.open('https://script.google.com/create','_blank')">🔗 script.google.com/create → 클릭하여 열기</div>
+      </div>
+    </div>
+    <div class="guide-step">
+      <div class="guide-step-num">3</div>
+      <div class="guide-step-body">
+        <div class="guide-step-title">붙여넣기 → 실행</div>
+        <div class="guide-step-desc">편집기의 기존 내용을 모두 지우고 복사한 코드를 붙여넣은 뒤 ▶ 실행 버튼을 누르세요. 잠시 후 내 구글 드라이브에 완성된 설문지가 생성됩니다.</div>
+        <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:6px;padding:7px 10px;font-size:.75rem;margin-top:6px;color:#92400e">⚠ 처음 실행 시 Google 권한 허용 팝업이 뜹니다. "허용"을 눌러주세요.</div>
+      </div>
+    </div>
+    <div class="guide-modal-footer">
+      <button class="guide-btn-ghost" onclick="closeGuideModal('google-guide-modal')">닫기</button>
+      <button class="guide-btn-primary" onclick="window.open('https://script.google.com/create','_blank')">Apps Script 열기 →</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1087,34 +1140,138 @@ function printInterviewQuestions(){
 function getActiveItems(){
   return SURVEY_Q.filter(item=>item.domain===null||CONFIG.domains[item.domain]);
 }
+
+/* ── 안 B: 구글폼 Apps Script 자동 생성 ── */
+function buildGoogleScript(){
+  const items=getActiveItems();
+  let code='function createForm(){\n';
+  code+='  var form=FormApp.create("신입생 학부모 설문");\n';
+  code+='  form.setDescription("이 조사는 신입생의 안정적인 학교 적응과 균형 있는 학급 편성을 위한 참고자료입니다. 응답 내용은 학생의 학교생활 지원을 위해 활용되며, 학급 편성은 학교의 교육적 판단에 따라 이루어집니다.");\n';
+  code+='  form.setCollectEmail(false);\n\n';
+  items.forEach((item,i)=>{
+    if(item.multi){
+      code+=`  var q${i}=form.addCheckboxItem();\n`;
+      code+=`  q${i}.setTitle("${i+1}. ${item.label}\\n${item.q}");\n`;
+      const choices=item.opts.map((o,j)=>{
+        const sub=item.subNums?item.subNums[j]:'';
+        return `"${sub?sub+'. ':''}${o}"`;
+      }).join(',');
+      code+=`  q${i}.setChoiceValues([${choices}]);\n`;
+    } else {
+      code+=`  var q${i}=form.addMultipleChoiceItem();\n`;
+      code+=`  q${i}.setTitle("${i+1}. ${item.label}\\n${item.q}");\n`;
+      const choices=item.opts.map((o,j)=>{
+        const num=item.optNums?item.optNums[j]:'';
+        return `"${num?num+' ':''}${o}"`;
+      }).join(',');
+      code+=`  q${i}.setChoiceValues([${choices}]);\n`;
+    }
+    code+=`  q${i}.setRequired(false);\n`;
+    if(item.note){
+      const ni=`n${i}`;
+      code+=`  var ${ni}=form.addTextItem();\n`;
+      code+=`  ${ni}.setTitle("${i+1}-구체적 내용 (선택사항)");\n`;
+    }
+    code+='\n';
+  });
+  const last=items.length;
+  code+=`  var q${last}=form.addParagraphTextItem();\n`;
+  code+=`  q${last}.setTitle("${last+1}. 입학 초기 배려 사항\\n입학 초기 담임교사가 꼭 알아야 할 내용이 있다면 적어 주세요.");\n`;
+  code+=`  q${last}.setRequired(false);\n\n`;
+  code+='  var url=form.getPublishedUrl();\n';
+  code+='  Logger.log("설문 링크: "+url);\n';
+  code+='  Browser.msgBox("✅ 구글폼이 생성되었습니다!\\n\\n설문 링크:\\n"+url+"\\n\\n[실행 로그]에서도 확인할 수 있습니다.");\n';
+  code+='}\n';
+  return code;
+}
+
 function copyForGoogleForm(){
-  const items=getActiveItems();
-  let t='※ 아래 내용을 구글폼에 문항별로 붙여넣으세요.\n';
-  t+='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
-  t+='[안내 문구]\n이 조사는 신입생의 안정적인 학교 적응과 균형 있는 학급 편성을 위한 참고자료입니다.\n응답 내용은 학생의 학교생활 지원을 위해 활용됩니다.\n\n';
-  items.forEach((item,i)=>{
-    t+=`[문항 ${i+1}] ${item.label}\n질문: ${item.q}\n유형: ${item.multi?'체크박스(복수선택)':'객관식(단일선택)'}\n선택지:\n`;
-    if(item.subNums) item.opts.forEach((o,j)=>t+=`  ${item.subNums[j]}. ${o}\n`);
-    else if(item.optNums) item.opts.forEach((o,j)=>t+=`  ${item.optNums[j]} ${o}\n`);
-    else item.opts.forEach(o=>t+=`  - ${o}\n`);
-    if(item.note) t+='※ 구체적인 내용 (단답형 추가 권장)\n';
-    t+='\n';
+  const code=buildGoogleScript();
+  navigator.clipboard.writeText(code).then(()=>{
+    document.getElementById('copy-confirm').style.display='block';
+    setTimeout(()=>{const el=document.getElementById('copy-confirm');if(el)el.style.display='none';},3000);
   });
-  t+=`[마지막 문항] 입학 초기 배려 사항\n질문: 입학 초기 담임교사가 꼭 알아야 할 내용이 있다면 적어 주세요.\n유형: 장문형\n`;
-  navigator.clipboard.writeText(t).then(()=>alert('구글폼용 문항이 클립보드에 복사되었습니다!\n\n구글폼(forms.google.com)에서 문항을 하나씩 만들며 붙여넣으세요.'));
 }
-function copyForNaverForm(){
+
+function copyGoogleScript(){
+  copyForGoogleForm();
+}
+
+function showGoogleGuide(){
+  document.getElementById('google-guide-modal').classList.add('open');
+}
+function closeGuideModal(id){
+  document.getElementById(id).classList.remove('open');
+}
+
+/* ── 안 D: 네이버폼 가져오기용 엑셀 생성 ── */
+async function generateNaverFormExcel(){
   const items=getActiveItems();
-  let t='※ 아래 내용을 네이버폼에 문항별로 붙여넣으세요.\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+  const wb=new ExcelJS.Workbook();
+  const ws=wb.addWorksheet('네이버폼_문항');
+
+  // 헤더 스타일
+  const hFill={type:'pattern',pattern:'solid',fgColor:{argb:'FF03C75A'}};// 네이버 그린
+  const hFont={bold:true,color:{argb:'FFFFFFFF'},size:10};
+  const border={style:'thin',color:{argb:'FFCCCCCC'}};
+  const allBorder={top:border,left:border,bottom:border,right:border};
+
+  // 네이버폼 가져오기 형식: 질문 / 유형 / 필수여부 / 선택지1 / 선택지2 ...
+  const maxOpts=Math.max(...items.map(i=>i.opts.length),0)+1; // +1 for 배려사항
+  const headers=['질문','유형','필수여부',...Array.from({length:maxOpts},(_,i)=>`선택지${i+1}`)];
+
+  ws.addRow(headers);
+  const hRow=ws.getRow(1);
+  hRow.height=22;
+  hRow.eachCell(cell=>{cell.fill=hFill;cell.font=hFont;cell.border=allBorder;cell.alignment={horizontal:'center',vertical:'middle'};});
+
+  // 안내 행
+  const guideRow=ws.addRow(['※ 네이버폼 → 설문 만들기 → 문항 가져오기 → 이 파일 업로드','','','']);
+  ws.mergeCells(2,1,2,headers.length);
+  guideRow.getCell(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF9C4'}};
+  guideRow.getCell(1).font={italic:true,color:{argb:'FF856404'},size:9};
+  guideRow.getCell(1).alignment={horizontal:'left',vertical:'middle'};
+  guideRow.height=18;
+
+  // 문항 데이터 행
   items.forEach((item,i)=>{
-    t+=`${i+1}. ${item.q}\n[${item.multi?'복수선택':'단일선택'}]\n`;
-    if(item.subNums) item.opts.forEach((o,j)=>t+=`${item.subNums[j]}. ${o}\n`);
-    else item.opts.forEach((o,j)=>t+=`${item.optNums?item.optNums[j]:(j+1)} ${o}\n`);
-    t+='\n';
+    const type=item.multi?'체크박스':'객관식';
+    const title=`${i+1}. ${item.q}`;
+    const opts=item.opts.map((o,j)=>{
+      const sub=item.subNums?item.subNums[j]:(item.optNums?item.optNums[j]:'');
+      return sub?`${sub}. ${o}`:o;
+    });
+    const row=ws.addRow([title,type,'아니오',...opts]);
+    row.height=20;
+    row.eachCell(cell=>{cell.border=allBorder;cell.alignment={horizontal:'left',vertical:'middle',wrapText:true};});
+    row.getCell(1).font={bold:true};
+    // 구체적 내용 서술형 추가 (note 있는 문항)
+    if(item.note){
+      const noteRow=ws.addRow([`${i+1}-구체적 내용`,'단답형','아니오']);
+      noteRow.height=18;
+      noteRow.eachCell(cell=>{cell.border=allBorder;cell.alignment={horizontal:'left',vertical:'middle'};});
+      noteRow.getCell(1).font={color:{argb:'FF5a6a82'},italic:true};
+    }
   });
-  t+=`${items.length+1}. 입학 초기 담임교사가 꼭 알아야 할 내용이 있다면 적어 주세요.\n[주관식]\n`;
-  navigator.clipboard.writeText(t).then(()=>alert('네이버폼용 문항이 클립보드에 복사되었습니다!\n\n네이버폼(form.naver.com)에서 붙여넣으세요.'));
+  // 배려사항
+  const lastNum=items.length+1;
+  const careRow=ws.addRow([`${lastNum}. 입학 초기 담임교사가 꼭 알아야 할 내용이 있다면 적어 주세요.`,'장문형','아니오']);
+  careRow.height=20;
+  careRow.eachCell(cell=>{cell.border=allBorder;cell.alignment={horizontal:'left',vertical:'middle',wrapText:true};});
+  careRow.getCell(1).font={bold:true};
+
+  // 열 너비
+  ws.getColumn(1).width=48;ws.getColumn(2).width=12;ws.getColumn(3).width=10;
+  for(let c=4;c<=headers.length;c++)ws.getColumn(c).width=18;
+
+  // 다운로드
+  const buf=await wb.xlsx.writeBuffer();
+  const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='네이버폼_문항가져오기.xlsx';a.click();
+  setTimeout(()=>alert('네이버폼 가져오기용 엑셀이 생성되었습니다!\n\n사용 방법:\n① 네이버폼(form.naver.com) → 설문 만들기\n② 문항 가져오기 버튼 클릭\n③ 다운받은 엑셀 파일 업로드\n④ 문항 자동 생성 확인 후 배포'),400);
 }
+
 
 /* ===================== 안 D: 배포용 웹 설문 HTML 생성 ===================== */
 function generateWebSurvey(){
