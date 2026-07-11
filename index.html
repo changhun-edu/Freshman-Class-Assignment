@@ -428,8 +428,13 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
     <div class="guide-step">
       <div class="guide-step-num">3</div>
       <div class="guide-step-body">
-        <div class="guide-step-title">붙여넣기 → 실행</div>
-        <div class="guide-step-desc">편집기의 기존 내용을 모두 지우고 복사한 코드를 붙여넣은 뒤 ▶ 실행 버튼을 누르세요. 잠시 후 내 구글 드라이브에 완성된 설문지가 생성됩니다.</div>
+        <div class="guide-step-title">붙여넣기 → 실행 → 링크 확인</div>
+        <div class="guide-step-desc">편집기의 기존 내용을 모두 지우고 복사한 코드를 붙여넣은 뒤 ▶ 실행 버튼을 누르세요. 완료 후 하단 <b>실행 로그</b>에서 설문 배포 링크를 확인하세요.</div>
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:7px 10px;font-size:.75rem;margin-top:6px;color:#166534">
+          ✅ 실행 로그 예시:<br>
+          설문 배포 링크: https://docs.google.com/forms/d/e/…/viewform<br>
+          <span style="color:#5a6a82">→ 이 링크를 복사해 학부모에게 공유하거나 QR코드로 변환하세요.</span>
+        </div>
         <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:6px;padding:7px 10px;font-size:.75rem;margin-top:6px;color:#92400e">⚠ 처음 실행 시 Google 권한 허용 팝업이 뜹니다. "허용"을 눌러주세요.</div>
       </div>
     </div>
@@ -1179,8 +1184,11 @@ function buildGoogleScript(){
   code+=`  q${last}.setTitle("${last+1}. 입학 초기 배려 사항\\n입학 초기 담임교사가 꼭 알아야 할 내용이 있다면 적어 주세요.");\n`;
   code+=`  q${last}.setRequired(false);\n\n`;
   code+='  var url=form.getPublishedUrl();\n';
-  code+='  Logger.log("설문 링크: "+url);\n';
-  code+='  Browser.msgBox("✅ 구글폼이 생성되었습니다!\\n\\n설문 링크:\\n"+url+"\\n\\n[실행 로그]에서도 확인할 수 있습니다.");\n';
+  code+='  var editUrl=form.getEditUrl();\n';
+  code+='  Logger.log("✅ 구글폼 생성 완료!");\n';
+  code+='  Logger.log("설문 배포 링크: "+url);\n';
+  code+='  Logger.log("설문 편집 링크: "+editUrl);\n';
+  code+='  Logger.log("※ 위 배포 링크를 학부모에게 공유하세요.");\n';
   code+='}\n';
   return code;
 }
