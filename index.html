@@ -2012,9 +2012,21 @@ function downloadTemplate(){
 const dz=()=>document.getElementById('drop-zone');
 function saveSession(){
   try{
-    localStorage.setItem(SESSION_KEY,JSON.stringify({
-      ROSTER,rosterLocked,domains:CONFIG.domains,specialEd:CONFIG.specialEd
-    }));
+    const data={
+      ROSTER,rosterLocked,
+      domains:CONFIG.domains,specialEd:CONFIG.specialEd,
+      students,uploadedFiles,
+      ASSIGN:{
+        numClasses:ASSIGN.numClasses,
+        classNames:ASSIGN.classNames,
+        classes:ASSIGN.classes,
+        violations:ASSIGN.violations,
+        assigned:ASSIGN.assigned,
+        confirmed:ASSIGN.confirmed
+      },
+      currentStep
+    };
+    localStorage.setItem(SESSION_KEY,JSON.stringify(data));
   }catch(e){/* 저장 공간 부족 등은 무시 */}
 }
 function restoreSession(){
@@ -2025,7 +2037,21 @@ function restoreSession(){
   rosterLocked=!!saved.rosterLocked;
   if(saved.domains)Object.assign(CONFIG.domains,saved.domains);
   if(saved.specialEd)CONFIG.specialEd=saved.specialEd;
-  if(rosterLocked){
+  // 업로드 데이터 복원
+  if(saved.students&&typeof saved.students==='object'){
+    Object.assign(students,saved.students);
+    studentsRanked=Object.values(students).filter(s=>s.stu||s.par)
+      .sort((a,b)=>(b.tags.length-a.tags.length)||a.id.localeCompare(b.id));
+  }
+  if(Array.isArray(saved.uploadedFiles)) uploadedFiles=saved.uploadedFiles;
+  // 배치 결과 복원
+  if(saved.ASSIGN){
+    Object.assign(ASSIGN,saved.ASSIGN);
+  }
+  // 현재 단계 복원
+  if(saved.currentStep) currentStep=saved.currentStep;
+  // 명단만 있을 때 students 보정
+  if(rosterLocked&&Object.keys(students).length===0){
     ROSTER.forEach(r=>{
       if(!r.no)return;
       students[r.no]=newStudent(r.no);
@@ -2039,6 +2065,24 @@ document.addEventListener('DOMContentLoaded',()=>{
   const restored=restoreSession();
   renderRosterTable();
   renderStepProgress();renderDomainToggles();renderSpecialEdToggle();onConfigChange();
+  // 업로드 데이터·배치 결과 복원 시 화면 갱신
+  if(restored){
+    if(uploadedFiles.length) renderFileList();
+    if(Object.keys(students).length>0){
+      computeScores();renderFilters();
+    }
+    if(ASSIGN.assigned){
+      renderClassNameInputs();
+      renderAssignResults();
+    }
+    // 복원된 단계로 이동
+    if(currentStep&&currentStep!=='prep'){
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      const panel=document.getElementById('panel-'+currentStep);
+      if(panel) panel.classList.add('active');
+      renderStepProgress();
+    }
+  }
   const zone=dz();
   ['dragover','dragenter'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.add('drag');}));
   ['dragleave','drop'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.remove('drag');}));
@@ -2210,7 +2254,7 @@ function handleFiles(fileList){
         uploadedFiles.push({name:f.name,stuCount,parCount});
       }catch(err){conflicts.push({id:'-',type:'읽기 오류',detail:`${f.name}: ${err.message}`});}
       remaining--;
-      if(remaining===0){renderFileList();computeUnregistered();renderSuggestions();renderUploadSummary();}
+      if(remaining===0){renderFileList();computeUnregistered();renderSuggestions();renderUploadSummary();saveSession();}
     };
     reader.readAsArrayBuffer(f);
   });
@@ -2516,6 +2560,7 @@ function runAutoAssign(){
   ASSIGN.assigned=true;
   computeViolationsLive();
   renderAssignResults();
+  saveSession();
 }
 function computeViolationsLive(){
   const assignmentMap={};
@@ -2581,11 +2626,13 @@ function undoAssign(){
   computeViolationsLive();renderAssignResults();
 }
 function rerunAutoAssign(){
+  // 현재 상태를 먼저 스냅샷으로 저장 (되돌리기용)
+  if(ASSIGN.assigned) saveAssignSnapshot();
+  // 배치 상태 완전 초기화 후 재실행
   ASSIGN.confirmed=false;
   ASSIGN.assigned=false;
   ASSIGN.classes=[];
   ASSIGN.violations=[];
-  saveAssignSnapshot();
   runAutoAssign();
 }
 function confirmAssign(){
