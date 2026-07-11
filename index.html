@@ -505,11 +505,11 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
       <div class="card">
         <h3><span class="icon">📄</span>면접 결과 업로드</h3>
         <p style="font-size:.82rem;color:var(--text-sub);margin-bottom:12px">학생 면접 결과는 교사가 면접용 서식(학생면접 시트)에 입력해 업로드하세요. 학부모 설문은 <b>종이 설문지</b>를 수거 후 담당자가 학부모설문 시트에 옮겨 적거나, <b>온라인 설문</b>(구글폼·네이버폼·웹설문)을 이용해 수집한 CSV를 업로드할 수 있습니다. 서식·설문지는 준비 단계에서 받으세요.</p>
-        <div id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <div id="drop-zone">
           <div class="big">📁</div>
           <div style="margin-top:8px;font-weight:700">엑셀 파일을 여기로 끌어다 놓으세요</div>
           <div style="font-size:.82rem;margin-top:4px;color:var(--text-muted)">여러 파일을 한 번에 올릴 수 있습니다</div>
-          <button class="btn btn-primary btn-sm" style="margin-top:14px" onclick="event.stopPropagation();document.getElementById('file-input').click()">📂 파일 찾아보기</button>
+          <button class="btn btn-primary btn-sm" style="margin-top:14px" onclick="document.getElementById('file-input').click()">📂 파일 찾아보기</button>
         </div>
         <input type="file" id="file-input" multiple accept=".xlsx" style="display:none" onchange="handleFiles(this.files)">
         <div id="file-list" style="margin-top:16px"></div>
@@ -2581,9 +2581,12 @@ function undoAssign(){
   computeViolationsLive();renderAssignResults();
 }
 function rerunAutoAssign(){
-  if(!ASSIGN.assigned){runAutoAssign();return;}
   ASSIGN.confirmed=false;
-  saveAssignSnapshot();runAutoAssign();
+  ASSIGN.assigned=false;
+  ASSIGN.classes=[];
+  ASSIGN.violations=[];
+  saveAssignSnapshot();
+  runAutoAssign();
 }
 function confirmAssign(){
   if(!ASSIGN.assigned){alert('먼저 자동 배치를 실행하세요.');return;}
