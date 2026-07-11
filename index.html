@@ -284,7 +284,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
           <div class="card">
             <span class="step-badge">STEP 1</span>
             <h3>✅ 관찰 영역 선택</h3>
-            <p style="font-size:.8rem;color:var(--text-sub);margin-bottom:10px">선택한 영역의 문항만 면접 서식·설문지에 포함되고, 검토·배치·내보내기에도 선택한 영역만 반영됩니다.</p>
+            <p style="font-size:.8rem;color:var(--text-sub);margin-bottom:10px">선택한 영역의 문항만 면접 서식·설문지에 포함되고, 검토·배치에도 선택한 영역만 반영됩니다.</p>
             <div id="domain-toggles" class="domain-toggle-grid"></div>
             <div id="specialed-toggle" style="margin-top:6px"></div>
             <div id="domain-lock-area" style="margin-top:10px"></div>
@@ -453,35 +453,10 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 
       <div class="footer-nav">
         <button class="btn btn-ghost" onclick="goStep('review')">← 이전</button>
-        <button class="btn btn-primary" onclick="goStep('export')">다음: 내보내기 →</button>
-      </div>
-    </section>
-
-    <!-- 4. 내보내기 -->
-    <section class="panel" id="panel-export">
-      <div class="card">
-        <h3><span class="icon">📤</span>내보내기</h3>
-        <div class="export-card">
-          <div class="ic">🏫</div>
-          <div class="info"><b>학급별 최종 명렬표<span class="sensitive-tag sens-no">민감정보 없음</span></b><span>배치 단계에서 확정한 반별 명단(번호·이름·성별·확정 관찰영역). 담임 배정용 최종 결과물입니다.</span></div>
-          <button class="btn btn-primary btn-sm" onclick="exportClassApp()">다운로드</button>
-        </div>
-        <div class="export-card">
-          <div class="ic">🗂️</div>
-          <div class="info"><b>담임 인계 자료<span class="sensitive-tag sens-yes">민감정보 포함</span></b><span>배정 반, 확정 관찰영역, 영역별 점수, 서술, 건강·검사경험 포함. 반 배정 후 새 담임에게만 전달하세요.</span></div>
-          <button class="btn btn-primary btn-sm" onclick="exportHandoff()">다운로드</button>
-        </div>
-        <div class="export-card">
-          <div class="ic">🔒</div>
-          <div class="info"><b>원본 백업<span class="sensitive-tag sens-yes">민감정보 포함</span></b><span>업로드된 전체 원자료. 보관용으로만 사용하고 공유하지 마세요.</span></div>
-          <button class="btn btn-ghost btn-sm" onclick="exportBackup()">다운로드</button>
-        </div>
-      </div>
-      <div class="footer-nav">
-        <button class="btn btn-ghost" onclick="goStep('assign')">← 이전</button>
         <span></span>
       </div>
     </section>
+
   </main>
   <footer style="text-align:center;padding:10px;font-size:.72rem;color:var(--text-muted);border-top:1px solid var(--border);flex-shrink:0">만든이 2026 최창훈</footer>
 </div>
@@ -630,8 +605,8 @@ const SEVERITY_MAP={
 function severity(key,val){return (SEVERITY_MAP[key]&&SEVERITY_MAP[key][val])||0;}
 
 /* ===================== 설정/상태 ===================== */
-const STEPS=['prep','upload','review','assign','export'];
-const STEP_LABELS={prep:'준비',upload:'업로드',review:'검토',assign:'배치',export:'내보내기'};
+const STEPS=['prep','upload','review','assign'];
+const STEP_LABELS={prep:'준비',upload:'업로드',review:'검토',assign:'배치'};
 let currentStep='prep';
 const CLASS_NAMES_DEFAULT=['가반','나반','다반','라반','마반','바반','사반','아반','자반','차반','카반','타반','파반','하반','거반'];
 let ASSIGN={numClasses:5,classNames:[],classes:[],violations:[],assigned:false};
@@ -2158,7 +2133,11 @@ function clusterScore(ids){
   return{tagSum,weight,size:ids.length};
 }
 function runAutoAssign(){
-  if(!rosterLocked){alert('먼저 명단을 확정해 주세요.');return;}
+  const hasStudents=Object.keys(students).length>0;
+  const hasRoster=rosterLocked&&ROSTER.length>0;
+  if(!hasStudents&&!hasRoster){
+    alert('배치할 학생 데이터가 없습니다.\n업로드 탭에서 면접 결과 엑셀을 먼저 올려주세요.');return;
+  }
   computeScores();
   resolveSepPair();
   renderClassNameInputs();
@@ -2284,8 +2263,7 @@ function confirmAssign(){
   if(!ASSIGN.assigned){alert('먼저 자동 배치를 실행하세요.');return;}
   const unassigned=Object.values(students).filter(s=>!ASSIGN.classes.some(c=>c.ids.includes(s.id)));
   if(unassigned.length&&!confirm(`${unassigned.length}명이 배정되지 않았습니다. 그래도 확정하시겠습니까?`))return;
-  alert('✅ 배치가 확정되었습니다. 내보내기 탭에서 결과를 저장하세요.');
-  goStep('export');
+  alert('✅ 배치가 확정되었습니다. 엑셀 출력 버튼으로 결과를 저장하세요.');
 }
 function showAssignStats(){
   if(!ASSIGN.assigned){alert('먼저 배치를 실행하세요.');return;}
