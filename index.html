@@ -244,17 +244,13 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
             <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
               <div style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:2px">🌐 온라인 설문 방식</div>
               <p style="font-size:.75rem;color:var(--text-sub);margin-bottom:8px">외부 도구(구글폼·네이버폼 등) 또는 직접 배포용 웹 설문을 생성합니다.</p>
-
-              <!-- 안 A: 문항 복사 -->
               <div style="display:flex;gap:6px;margin-bottom:6px">
                 <button class="btn btn-ghost btn-sm" id="btn-copy-google" onclick="copyForGoogleForm()" disabled style="flex:1">📋 구글폼용 문항 복사</button>
                 <button class="btn btn-ghost btn-sm" id="btn-copy-naver" onclick="copyForNaverForm()" disabled style="flex:1">📋 네이버폼용 문항 복사</button>
               </div>
-              <div class="steps-text" style="margin-bottom:10px">복사 후 구글폼/네이버폼에 붙여넣기 → 링크 배포 → 결과 CSV 다운로드 → 업로드 탭에서 가져오기</div>
-
-              <!-- 안 D: 웹 설문 HTML 생성 -->
+              <div class="steps-text" style="margin-bottom:10px">복사 후 구글폼/네이버폼에 붙여넣기 → 링크 배포 → 결과 CSV → 업로드 탭에서 가져오기</div>
               <button class="btn-big-green" id="btn-gen-websurvey" onclick="generateWebSurvey()" disabled style="background:#7c3aed">⚡ 배포용 웹 설문 HTML 생성</button>
-              <div class="steps-text">생성된 HTML을 학교 서버·구글 드라이브에 업로드 → QR코드로 학부모 배포 → 응답 결과를 이 사이트에 업로드</div>
+              <div class="steps-text">생성된 HTML을 학교 서버·구글 드라이브에 업로드 → QR코드로 학부모 배포 → 응답 CSV를 이 사이트에 업로드</div>
             </div>
           </div>
         </div>
@@ -429,6 +425,31 @@ const PAR_FIELDS=[
 ];
 const PAR_HABIT=['화장실사용','식사','옷입고벗기','정리정돈','물건챙기기','등하교적응'];
 const PAR_HEALTH=['알레르기','투약','음식제한','시력청력','기타건강유의'];
+
+const SURVEY_Q=[
+  {label:'분리 적응',domain:'생활적응',q:'아이가 보호자와 떨어져 새로운 공간에 적응하는 데 어려움이 있나요?',
+    opts:['없음','약간 있음','많이 있음'],optNums:['①','②','③'],note:true},
+  {label:'또래 관계',domain:'또래관계',q:'아이가 또래와 놀이할 때 주로 어떤 편인가요?',
+    opts:['적극적으로 어울림','조용히 참여함','혼자 놀이를 선호함','갈등이 잦은 편임','상황에 따라 다름'],optNums:['①','②','③','④','⑤'],note:true},
+  {label:'의사소통',domain:'의사소통',q:'아이가 자신의 생각이나 요구를 말로 표현하는 데 어려움이 있나요?',
+    opts:['없음','가끔 있음','자주 있음'],optNums:['①','②','③'],note:true},
+  {label:'지시 따르기',domain:'지시따르기',q:'어른의 간단한 지시를 듣고 따르는 데 어려움이 있나요?',
+    opts:['없음','반복 안내가 필요함','개별적인 도움이 필요함'],optNums:['①','②','③'],note:true},
+  {label:'정서 표현과 감정 조절',domain:'정서표현·감정조절',q:'아이가 속상하거나 화가 났을 때 주로 어떻게 표현하나요?',
+    opts:['말로 표현함','울음으로 표현함','행동으로 표현함','표현하지 않고 참는 편임','상황에 따라 다름'],optNums:['①','②','③','④','⑤'],note:true},
+  {label:'기다리기와 차례 지키기',domain:'주의집중행동·행동조절',q:'아이가 기다리기, 차례 지키기, 활동 멈추기 등을 어려워하나요?',
+    opts:['어려움 없음','약간 어려워함','많이 어려워함'],optNums:['①','②','③'],note:true},
+  {label:'학습 활동 집중',domain:'기초학습준비도',q:'아이가 앉아서 한 가지 활동(그림 그리기, 책 보기 등)을 10분 정도 지속하는 데 어려움이 있나요?',
+    opts:['없음','약간 있음','많이 있음'],optNums:['①','②','③'],note:true},
+  {label:'기본 생활 습관',domain:'기본생활·안전',q:'다음 중 도움이 필요한 부분이 있나요? (해당 항목 모두 표시)',
+    opts:['화장실 사용','식사','옷 입고 벗기','정리정돈','물건 챙기기','등하교 적응','해당 없음'],
+    subNums:['8-1','8-2','8-3','8-4','8-5','8-6','8-7'],note:true,multi:true},
+  {label:'건강 및 안전',domain:'기본생활·안전',q:'건강상 학교에서 꼭 알아야 할 내용이 있나요? (해당 항목 모두 표시)',
+    opts:['없음','알레르기','투약','음식 제한','시력·청력 관련','기타 건강상 유의 사항'],
+    subNums:['9-1','9-2','9-3','9-4','9-5','9-6'],note:true,multi:true},
+  {label:'검사·상담·치료 경험',domain:null,q:'이전에 발달검사, 언어검사, 심리검사, 병원 진료, 상담, 언어치료, 놀이치료, 감각통합치료 등을 받은 경험이 있나요?',
+    opts:['없음','있음'],optNums:['①','②'],note:true},
+];
 const SEVERITY_MAP={
   sep:{없음:0,약간있음:1,많이있음:2}, comm:{없음:0,가끔있음:1,자주있음:2},
   inst:{없음:0,반복안내필요:1,개별도움필요:2}, wait:{어려움없음:0,약간어려워함:1,많이어려워함:2},
@@ -619,11 +640,10 @@ function renderDomainLockArea(){
   ['btn-print-interview','btn-print-survey','btn-copy-google','btn-copy-naver','btn-gen-websurvey'].forEach(id=>{
     const b=document.getElementById(id);if(b)b.disabled=!domainsLocked;
   });
-  // 색상 복원
   const ps=document.getElementById('btn-print-survey');
   if(ps&&domainsLocked)ps.style.background='var(--teal)';
-  const ws=document.getElementById('btn-gen-websurvey');
-  if(ws&&domainsLocked)ws.style.background='#7c3aed';
+  const gs=document.getElementById('btn-gen-websurvey');
+  if(gs&&domainsLocked)gs.style.background='#7c3aed';
 }
 function lockDomains(){
   const enabledCnt=DOMAIN_LIST.filter(d=>CONFIG.domains[d]).length;
@@ -1024,235 +1044,7 @@ function printInterviewQuestions(){
   win.document.write(html);win.document.close();
 }
 
-/* ===================== 안 A: 외부 설문 도구용 문항 복사 ===================== */
-function getActiveItems(){
-  return SURVEY_Q.filter(item=>item.domain===null||CONFIG.domains[item.domain]);
-}
-
-function copyForGoogleForm(){
-  const items=getActiveItems();
-  let text='※ 아래 내용을 구글폼에 문항별로 붙여넣으세요.\n';
-  text+='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
-  text+='[안내 문구]\n이 조사는 신입생의 안정적인 학교 적응과 균형 있는 학급 편성을 위한 참고자료입니다.\n응답 내용은 학생의 학교생활 지원을 위해 활용됩니다.\n\n';
-  items.forEach((item,i)=>{
-    text+=`[문항 ${i+1}] ${item.label}\n`;
-    text+=`질문: ${item.q}\n`;
-    text+=`유형: ${item.multi?'체크박스(복수선택)':'객관식(단일선택)'}\n`;
-    text+=`선택지:\n`;
-    if(item.subNums){
-      item.opts.forEach((o,j)=>text+=`  ${item.subNums[j]}. ${o}\n`);
-    } else if(item.optNums){
-      item.opts.forEach((o,j)=>text+=`  ${item.optNums[j]} ${o}\n`);
-    } else {
-      item.opts.forEach(o=>text+=`  - ${o}\n`);
-    }
-    if(item.note)text+=`※ 구체적인 내용 (단답형 추가 권장)\n`;
-    text+='\n';
-  });
-  text+=`[마지막 문항] 입학 초기 배려 사항\n`;
-  text+=`질문: 입학 초기 담임교사가 꼭 알아야 할 내용이 있다면 적어 주세요.\n`;
-  text+=`유형: 장문형\n`;
-  navigator.clipboard.writeText(text).then(()=>{
-    alert('구글폼용 문항이 클립보드에 복사되었습니다!\n\n구글폼(forms.google.com)에서 문항을 하나씩 만들며 붙여넣으세요.');
-  });
-}
-
-function copyForNaverForm(){
-  const items=getActiveItems();
-  let text='※ 아래 내용을 네이버폼에 문항별로 붙여넣으세요.\n';
-  text+='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
-  items.forEach((item,i)=>{
-    text+=`${i+1}. ${item.q}\n`;
-    text+=`[${item.multi?'복수선택':'단일선택'}]\n`;
-    if(item.subNums){
-      item.opts.forEach((o,j)=>text+=`${item.subNums[j]}. ${o}\n`);
-    } else {
-      item.opts.forEach((o,j)=>{
-        const n=item.optNums?item.optNums[j]:`${j+1}`;
-        text+=`${n} ${o}\n`;
-      });
-    }
-    text+='\n';
-  });
-  text+=`${items.length+1}. 입학 초기 담임교사가 꼭 알아야 할 내용이 있다면 적어 주세요.\n[주관식]\n`;
-  navigator.clipboard.writeText(text).then(()=>{
-    alert('네이버폼용 문항이 클립보드에 복사되었습니다!\n\n네이버폼(form.naver.com)에서 붙여넣으세요.');
-  });
-}
-
-
-function generateWebSurvey(){
-  const items=getActiveItems();
-  const itemsJson=JSON.stringify(items.map((item,i)=>({
-    num:i+1,label:item.label,q:item.q,
-    opts:item.opts,multi:!!item.multi,
-    subNums:item.subNums||null,optNums:item.optNums||null,note:!!item.note
-  })));
-
-  const esc=s=>s.replace(/`/g,'\\`').replace(/\\${/g,'\\${');
-  const html=`<!DOCTYPE html>
-<html lang="ko"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>신입생 학부모 설문</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:#f4f6fa;color:#1a2233;padding:0 0 70px}
-.top{background:#2d3ae8;color:#fff;padding:18px 20px 14px}
-.top h1{font-size:1.05rem;font-weight:800}.top p{font-size:.76rem;opacity:.85;margin-top:4px;line-height:1.5}
-.container{max-width:640px;margin:0 auto;padding:14px}
-.guide{background:#e8f4fd;border-left:4px solid #2563eb;padding:10px 14px;border-radius:0 6px 6px 0;font-size:.79rem;color:#1e40af;margin-bottom:14px;line-height:1.6}
-.q-card{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:15px;margin-bottom:10px}
-.q-num{display:inline-block;background:#2d3ae8;color:#fff;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:10px;margin-bottom:7px}
-.q-label{font-weight:800;font-size:.88rem;margin-bottom:4px}
-.q-text{font-size:.81rem;color:#334155;margin-bottom:9px;line-height:1.5}
-.q-hint{font-size:.71rem;color:#2563eb;font-style:italic;margin-bottom:7px}
-.opts{display:flex;flex-direction:column;gap:6px}
-.opt-row{display:flex;align-items:center;gap:8px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:7px;padding:9px 12px;cursor:pointer;transition:.12s;font-size:.83rem;user-select:none}
-.opt-row:hover{border-color:#93c5fd;background:#eff6ff}
-.opt-row.selected{border-color:#2563eb;background:#eff6ff;font-weight:700}
-.opt-row input{accent-color:#2563eb;flex-shrink:0}
-.sub-label{font-size:.68rem;font-weight:800;color:#2563eb;background:#dbeafe;padding:1px 5px;border-radius:4px;flex-shrink:0}
-.note-input{width:100%;margin-top:8px;border:1.5px solid #e2e8f0;border-radius:7px;padding:8px 10px;font-size:.81rem;font-family:inherit;resize:vertical;min-height:44px}
-.note-input:focus{outline:none;border-color:#93c5fd}
-.care-input{width:100%;border:1.5px solid #e2e8f0;border-radius:7px;padding:10px;font-size:.83rem;font-family:inherit;resize:vertical;min-height:70px}
-.care-input:focus{outline:none;border-color:#93c5fd}
-.submit-wrap{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e2e8f0;padding:10px 16px}
-.submit-btn{width:100%;max-width:640px;margin:0 auto;display:block;padding:13px;background:#2d3ae8;color:#fff;border:none;border-radius:10px;font-size:.93rem;font-weight:800;cursor:pointer}
-.submit-btn:hover{background:#1e2fd6}
-.done-screen{display:none;text-align:center;padding:60px 20px;max-width:640px;margin:0 auto}
-.done-screen h2{font-size:1.2rem;margin-bottom:12px}
-.done-screen p{color:#5a6a82;font-size:.86rem;line-height:1.7}
-.dl-btn{margin-top:20px;padding:13px 28px;background:#059669;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;display:block;width:100%;max-width:320px;margin:20px auto 0}
-</style>
-</head><body>
-<div class="top">
-  <h1>🏫 신입생 학부모 설문</h1>
-  <p>이 조사는 신입생의 안정적인 학교 적응과 균형 있는 학급 편성을 위한 참고자료입니다.<br>응답 내용은 학생의 학교생활 지원을 위해 활용되며, 학급 편성은 학교의 교육적 판단에 따라 이루어집니다.</p>
-</div>
-<div class="container" id="survey-body">
-  <div class="guide">📌 해당하는 항목을 선택해 주세요. 복수 선택이 가능한 문항은 모두 선택하세요.<br>제출 후 저장 버튼을 누르면 파일이 다운로드됩니다.</div>
-  <div id="q-list"></div>
-  <div class="q-card">
-    <span class="q-num">마지막</span>
-    <div class="q-label">입학 초기 배려 사항</div>
-    <div class="q-text">입학 초기 담임교사가 꼭 알아야 할 내용이 있다면 적어 주세요.<br><span style="color:#5a6a82;font-size:.77rem">(예: 낯선 환경에서 긴장함, 큰 소리에 민감함, 친구 관계에서 도움이 필요함 등)</span></div>
-    <textarea class="care-input" id="care-input" placeholder="내용을 입력해 주세요 (없으면 비워두세요)"></textarea>
-  </div>
-</div>
-<div class="done-screen" id="done-screen">
-  <div style="font-size:3rem">✅</div>
-  <h2>설문이 완료되었습니다</h2>
-  <p>아래 버튼을 눌러 응답 파일을 저장하고<br>담당 선생님께 전달해 주세요.</p>
-  <button class="dl-btn" onclick="downloadResult()">📥 응답 결과 파일 저장</button>
-</div>
-<div class="submit-wrap" id="submit-wrap">
-  <button class="submit-btn" onclick="submitSurvey()">✅ 설문 제출하기</button>
-</div>
-<script>
-const ITEMS=${esc(itemsJson)};
-const answers={};
-function renderQuestions(){
-  const el=document.getElementById('q-list');
-  el.innerHTML=ITEMS.map((item,i)=>{
-    const optsHtml=item.opts.map((o,j)=>{
-      const sub=item.subNums?item.subNums[j]:(item.optNums?item.optNums[j]:'');
-      const t=item.multi?'checkbox':'radio';
-      return '<label class="opt-row" onclick="selectOpt(event,'+i+','+j+')">'
-        +'<input type="'+t+'" name="q'+i+'" value="'+j+'">'
-        +(sub?'<span class="sub-label">'+sub+'</span>':'')
-        +'<span>'+o+'</span></label>';
-    }).join('');
-    const hint=item.multi?'<div class="q-hint">※ 해당 항목을 모두 선택하세요</div>':'';
-    const note=item.note?'<textarea class="note-input" id="note-'+i+'" placeholder="구체적인 내용 (선택사항)" oninput="answers[\''+i+'_note\']=this.value"></textarea>':'';
-    return '<div class="q-card"><span class="q-num">'+item.num+'</span>'
-      +'<div class="q-label">'+item.label+'</div>'
-      +'<div class="q-text">'+item.q+'</div>'
-      +hint+'<div class="opts">'+optsHtml+'</div>'+note+'</div>';
-  }).join('');
-}
-function selectOpt(e,qi,oi){
-  const inp=document.querySelectorAll('input[name="q'+qi+'"]')[oi];
-  if(ITEMS[qi].multi){
-    inp.checked=!inp.checked;
-  } else {
-    document.querySelectorAll('input[name="q'+qi+'"]').forEach(r=>{r.checked=false;r.closest('.opt-row').classList.remove('selected');});
-    inp.checked=true;
-  }
-  inp.closest('.opt-row').classList.toggle('selected',inp.checked);
-  e.preventDefault();
-  recordAnswer(qi);
-}
-function recordAnswer(qi){
-  const item=ITEMS[qi];
-  if(item.multi){
-    const checked=[...document.querySelectorAll('input[name="q'+qi+'"]:checked')].map(r=>parseInt(r.value));
-    answers[qi]=checked.map(j=>item.subNums?item.subNums[j]:item.opts[j]);
-  } else {
-    const checked=document.querySelector('input[name="q'+qi+'"]:checked');
-    answers[qi]=checked?item.opts[parseInt(checked.value)]:'';
-  }
-}
-function submitSurvey(){
-  const unanswered=ITEMS.filter((_,i)=>answers[i]===undefined||answers[i]==='');
-  if(unanswered.length>0&&!confirm(unanswered.length+'개 문항에 응답하지 않았습니다. 그대로 제출하시겠습니까?'))return;
-  answers['care']=document.getElementById('care-input').value;
-  document.getElementById('survey-body').style.display='none';
-  document.getElementById('submit-wrap').style.display='none';
-  document.getElementById('done-screen').style.display='block';
-}
-function downloadResult(){
-  const headers=['문항번호','문항명','응답','구체적 내용'];
-  const rows=[headers];
-  ITEMS.forEach((item,i)=>{
-    const ans=Array.isArray(answers[i])?answers[i].join(','):(answers[i]||'');
-    rows.push([item.num,item.label,ans,answers[i+'_note']||'']);
-  });
-  rows.push(['마지막','입학초기배려사항',answers['care']||'','']);
-  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);a.download='학부모설문_응답.csv';a.click();
-}
-renderQuestions();
-</script></body></html>`;
-
-  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='신입생_학부모_웹설문.html';
-  a.click();
-  setTimeout(()=>{
-    alert('웹 설문 HTML이 생성되었습니다!\n\n배포 방법:\n① 생성된 파일을 구글 드라이브·학교 서버에 업로드\n② 공유 링크 또는 QR코드로 학부모에게 배포\n③ 학부모가 응답 후 저장한 CSV를 수집\n④ 이 사이트 업로드 탭에서 CSV를 가져오면 자동 반영됩니다');
-  },400);
-}
-
-/* ===================== 안 D: 배포용 웹 설문 HTML 생성 ===================== */
-/* generateWebSurvey 함수는 위 안 A 섹션 뒤에 삽입됨 */
-const SURVEY_Q=[
-  {label:'분리 적응',domain:'생활적응',q:'아이가 보호자와 떨어져 새로운 공간에 적응하는 데 어려움이 있나요?',
-    opts:['없음','약간 있음','많이 있음'],optNums:['①','②','③'],note:true},
-  {label:'또래 관계',domain:'또래관계',q:'아이가 또래와 놀이할 때 주로 어떤 편인가요?',
-    opts:['적극적으로 어울림','조용히 참여함','혼자 놀이를 선호함','갈등이 잦은 편임','상황에 따라 다름'],optNums:['①','②','③','④','⑤'],note:true},
-  {label:'의사소통',domain:'의사소통',q:'아이가 자신의 생각이나 요구를 말로 표현하는 데 어려움이 있나요?',
-    opts:['없음','가끔 있음','자주 있음'],optNums:['①','②','③'],note:true},
-  {label:'지시 따르기',domain:'지시따르기',q:'어른의 간단한 지시를 듣고 따르는 데 어려움이 있나요?',
-    opts:['없음','반복 안내가 필요함','개별적인 도움이 필요함'],optNums:['①','②','③'],note:true},
-  {label:'정서 표현과 감정 조절',domain:'정서표현·감정조절',q:'아이가 속상하거나 화가 났을 때 주로 어떻게 표현하나요?',
-    opts:['말로 표현함','울음으로 표현함','행동으로 표현함','표현하지 않고 참는 편임','상황에 따라 다름'],optNums:['①','②','③','④','⑤'],note:true},
-  {label:'기다리기와 차례 지키기',domain:'주의집중행동·행동조절',q:'아이가 기다리기, 차례 지키기, 활동 멈추기 등을 어려워하나요?',
-    opts:['어려움 없음','약간 어려워함','많이 어려워함'],optNums:['①','②','③'],note:true},
-  {label:'학습 활동 집중',domain:'기초학습준비도',q:'아이가 앉아서 한 가지 활동(그림 그리기, 책 보기 등)을 10분 정도 지속하는 데 어려움이 있나요?',
-    opts:['없음','약간 있음','많이 있음'],optNums:['①','②','③'],note:true},
-  {label:'기본 생활 습관',domain:'기본생활·안전',q:'다음 중 도움이 필요한 부분이 있나요? (해당 항목 모두 표시)',
-    opts:['화장실 사용','식사','옷 입고 벗기','정리정돈','물건 챙기기','등하교 적응','해당 없음'],
-    subNums:['8-1','8-2','8-3','8-4','8-5','8-6','8-7'],note:true,multi:true},
-  {label:'건강 및 안전',domain:'기본생활·안전',q:'건강상 학교에서 꼭 알아야 할 내용이 있나요? (해당 항목 모두 표시)',
-    opts:['없음','알레르기','투약','음식 제한','시력·청력 관련','기타 건강상 유의 사항'],
-    subNums:['9-1','9-2','9-3','9-4','9-5','9-6'],note:true,multi:true},
-  {label:'검사·상담·치료 경험',domain:null,q:'이전에 발달검사, 언어검사, 심리검사, 병원 진료, 상담, 언어치료, 놀이치료, 감각통합치료 등을 받은 경험이 있나요?',
-    opts:['없음','있음'],optNums:['①','②'],note:true},
-];
-function surveyPageHTML(s,items){
+/* ===================== 학부모 설문지 (인쇄용) ===================== */function surveyPageHTML(s,items){
   const opts=(item)=>{
     if(item.multi&&item.subNums){
       // 다항 선택형: □ 8-1.화장실 사용
@@ -1291,6 +1083,161 @@ function surveyPageHTML(s,items){
     </div>
   </section>`;
 }
+/* ===================== 안 A: 외부 설문 도구용 문항 복사 ===================== */
+function getActiveItems(){
+  return SURVEY_Q.filter(item=>item.domain===null||CONFIG.domains[item.domain]);
+}
+function copyForGoogleForm(){
+  const items=getActiveItems();
+  let t='※ 아래 내용을 구글폼에 문항별로 붙여넣으세요.\n';
+  t+='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+  t+='[안내 문구]\n이 조사는 신입생의 안정적인 학교 적응과 균형 있는 학급 편성을 위한 참고자료입니다.\n응답 내용은 학생의 학교생활 지원을 위해 활용됩니다.\n\n';
+  items.forEach((item,i)=>{
+    t+=`[문항 ${i+1}] ${item.label}\n질문: ${item.q}\n유형: ${item.multi?'체크박스(복수선택)':'객관식(단일선택)'}\n선택지:\n`;
+    if(item.subNums) item.opts.forEach((o,j)=>t+=`  ${item.subNums[j]}. ${o}\n`);
+    else if(item.optNums) item.opts.forEach((o,j)=>t+=`  ${item.optNums[j]} ${o}\n`);
+    else item.opts.forEach(o=>t+=`  - ${o}\n`);
+    if(item.note) t+='※ 구체적인 내용 (단답형 추가 권장)\n';
+    t+='\n';
+  });
+  t+=`[마지막 문항] 입학 초기 배려 사항\n질문: 입학 초기 담임교사가 꼭 알아야 할 내용이 있다면 적어 주세요.\n유형: 장문형\n`;
+  navigator.clipboard.writeText(t).then(()=>alert('구글폼용 문항이 클립보드에 복사되었습니다!\n\n구글폼(forms.google.com)에서 문항을 하나씩 만들며 붙여넣으세요.'));
+}
+function copyForNaverForm(){
+  const items=getActiveItems();
+  let t='※ 아래 내용을 네이버폼에 문항별로 붙여넣으세요.\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n';
+  items.forEach((item,i)=>{
+    t+=`${i+1}. ${item.q}\n[${item.multi?'복수선택':'단일선택'}]\n`;
+    if(item.subNums) item.opts.forEach((o,j)=>t+=`${item.subNums[j]}. ${o}\n`);
+    else item.opts.forEach((o,j)=>t+=`${item.optNums?item.optNums[j]:(j+1)} ${o}\n`);
+    t+='\n';
+  });
+  t+=`${items.length+1}. 입학 초기 담임교사가 꼭 알아야 할 내용이 있다면 적어 주세요.\n[주관식]\n`;
+  navigator.clipboard.writeText(t).then(()=>alert('네이버폼용 문항이 클립보드에 복사되었습니다!\n\n네이버폼(form.naver.com)에서 붙여넣으세요.'));
+}
+
+/* ===================== 안 D: 배포용 웹 설문 HTML 생성 ===================== */
+function generateWebSurvey(){
+  const items=getActiveItems();
+  const itemsData=JSON.stringify(items.map((item,i)=>({
+    num:i+1,label:item.label,q:item.q,
+    opts:item.opts,multi:!!item.multi,
+    subNums:item.subNums||null,optNums:item.optNums||null,note:!!item.note
+  })));
+
+  const css=`*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Malgun Gothic','Apple SD Gothic Neo',sans-serif;background:#f4f6fa;color:#1a2233;padding:0 0 70px}
+.top{background:#2d3ae8;color:#fff;padding:18px 20px 14px}
+.top h1{font-size:1.05rem;font-weight:800}.top p{font-size:.76rem;opacity:.85;margin-top:4px;line-height:1.5}
+.wrap{max-width:640px;margin:0 auto;padding:14px}
+.guide{background:#e8f4fd;border-left:4px solid #2563eb;padding:10px 14px;border-radius:0 6px 6px 0;font-size:.79rem;color:#1e40af;margin-bottom:14px;line-height:1.6}
+.q-card{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:15px;margin-bottom:10px}
+.qn{display:inline-block;background:#2d3ae8;color:#fff;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:10px;margin-bottom:7px}
+.ql{font-weight:800;font-size:.88rem;margin-bottom:4px}
+.qq{font-size:.81rem;color:#334155;margin-bottom:9px;line-height:1.5}
+.qh{font-size:.71rem;color:#2563eb;font-style:italic;margin-bottom:7px}
+.opts{display:flex;flex-direction:column;gap:6px}
+.opt{display:flex;align-items:center;gap:8px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:7px;padding:9px 12px;cursor:pointer;transition:.12s;font-size:.83rem;user-select:none}
+.opt:hover{border-color:#93c5fd;background:#eff6ff}
+.opt.on{border-color:#2563eb;background:#eff6ff;font-weight:700}
+.opt input{accent-color:#2563eb;flex-shrink:0}
+.sub{font-size:.68rem;font-weight:800;color:#2563eb;background:#dbeafe;padding:1px 5px;border-radius:4px;flex-shrink:0}
+.note{width:100%;margin-top:8px;border:1.5px solid #e2e8f0;border-radius:7px;padding:8px 10px;font-size:.81rem;font-family:inherit;resize:vertical;min-height:44px}
+.note:focus{outline:none;border-color:#93c5fd}
+.care{width:100%;border:1.5px solid #e2e8f0;border-radius:7px;padding:10px;font-size:.83rem;font-family:inherit;resize:vertical;min-height:70px}
+.care:focus{outline:none;border-color:#93c5fd}
+.foot{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e2e8f0;padding:10px 16px}
+.sub-btn{width:100%;max-width:640px;margin:0 auto;display:block;padding:13px;background:#2d3ae8;color:#fff;border:none;border-radius:10px;font-size:.93rem;font-weight:800;cursor:pointer}
+.done{display:none;text-align:center;padding:60px 20px;max-width:640px;margin:0 auto}
+.done h2{font-size:1.2rem;margin-bottom:12px}
+.done p{color:#5a6a82;font-size:.86rem;line-height:1.7}
+.dl{margin:20px auto 0;padding:13px 28px;background:#059669;color:#fff;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;display:block;width:100%;max-width:320px}`;
+
+  const js=`const D=${itemsData};
+const A={};
+function init(){
+  const el=document.getElementById('ql');
+  el.innerHTML=D.map((item,i)=>{
+    const os=item.opts.map((o,j)=>{
+      const sub=item.subNums?item.subNums[j]:(item.optNums?item.optNums[j]:'');
+      const t=item.multi?'checkbox':'radio';
+      return '<label class="opt" onclick="pick(event,'+i+','+j+')">'
+        +'<input type="'+t+'" name="q'+i+'" value="'+j+'">'
+        +(sub?'<span class="sub">'+sub+'</span>':'')
+        +'<span>'+o+'</span></label>';
+    }).join('');
+    const hint=item.multi?'<div class="qh">※ 해당 항목을 모두 선택하세요</div>':'';
+    const note=item.note?'<textarea class="note" id="n'+i+'" placeholder="구체적인 내용 (선택사항)" oninput="A[\\''+i+'_n\\']=this.value"></textarea>':'';
+    return '<div class="q-card"><span class="qn">'+item.num+'</span>'
+      +'<div class="ql">'+item.label+'</div>'
+      +'<div class="qq">'+item.q+'</div>'
+      +hint+'<div class="opts">'+os+'</div>'+note+'</div>';
+  }).join('');
+}
+function pick(e,qi,oi){
+  const inp=document.querySelectorAll('input[name="q'+qi+'"]')[oi];
+  if(D[qi].multi){inp.checked=!inp.checked;}
+  else{document.querySelectorAll('input[name="q'+qi+'"]').forEach(r=>{r.checked=false;r.closest('.opt').classList.remove('on');});inp.checked=true;}
+  inp.closest('.opt').classList.toggle('on',inp.checked);
+  e.preventDefault();
+  const item=D[qi];
+  if(item.multi){
+    A[qi]=[...document.querySelectorAll('input[name="q'+qi+'"]:checked')].map(r=>item.subNums?item.subNums[+r.value]:item.opts[+r.value]);
+  }else{
+    const c=document.querySelector('input[name="q'+qi+'"]:checked');
+    A[qi]=c?item.opts[+c.value]:'';
+  }
+}
+function submit(){
+  const ua=D.filter((_,i)=>A[i]===undefined||A[i]==='');
+  if(ua.length&&!confirm(ua.length+'개 문항에 응답하지 않았습니다. 그대로 제출하시겠습니까?'))return;
+  A.care=document.getElementById('care').value;
+  document.getElementById('sb').style.display='none';
+  document.getElementById('ft').style.display='none';
+  document.getElementById('dn').style.display='block';
+}
+function dl(){
+  const rows=[['문항번호','문항명','응답','구체적 내용']];
+  D.forEach((item,i)=>{const a=Array.isArray(A[i])?A[i].join(','):(A[i]||'');rows.push([item.num,item.label,a,A[i+'_n']||'']);});
+  rows.push(['마지막','입학초기배려사항',A.care||'','']);
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download='학부모설문_응답.csv';a.click();
+}
+init();`;
+
+  const html=`<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>신입생 학부모 설문</title>
+<style>${css}</style>
+</head><body>
+<div class="top"><h1>🏫 신입생 학부모 설문</h1>
+<p>이 조사는 신입생의 안정적인 학교 적응과 균형 있는 학급 편성을 위한 참고자료입니다.<br>응답 내용은 학생의 학교생활 지원을 위해 활용되며, 학급 편성은 학교의 교육적 판단에 따라 이루어집니다.</p></div>
+<div class="wrap" id="sb">
+<div class="guide">📌 해당하는 항목을 선택해 주세요. 복수 선택 가능한 문항은 모두 선택하세요.<br>제출 후 저장 버튼을 눌러 파일을 저장하세요.</div>
+<div id="ql"></div>
+<div class="q-card"><span class="qn">마지막</span>
+<div class="ql">입학 초기 배려 사항</div>
+<div class="qq">입학 초기 담임교사가 꼭 알아야 할 내용이 있다면 적어 주세요.<br><span style="color:#5a6a82;font-size:.77rem">(예: 낯선 환경에서 긴장함, 큰 소리에 민감함, 친구 관계에서 도움이 필요함 등)</span></div>
+<textarea class="care" id="care" placeholder="내용을 입력해 주세요 (없으면 비워두세요)"></textarea>
+</div></div>
+<div class="done" id="dn">
+<div style="font-size:3rem">✅</div><h2>설문이 완료되었습니다</h2>
+<p>아래 버튼을 눌러 응답 파일을 저장하고<br>담당 선생님께 전달해 주세요.</p>
+<button class="dl" onclick="dl()">📥 응답 결과 파일 저장</button>
+</div>
+<div class="foot" id="ft"><button class="sub-btn" onclick="submit()">✅ 설문 제출하기</button></div>
+<script>${js}<\/script>
+</body></html>`;
+
+  const blob=new Blob([html],{type:'text/html;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='신입생_학부모_웹설문.html';a.click();
+  setTimeout(()=>alert('웹 설문 HTML이 생성되었습니다!\n\n배포 방법:\n① 구글 드라이브·학교 서버에 업로드\n② 공유 링크 또는 QR코드로 학부모에게 배포\n③ 학부모 응답 후 저장한 CSV 수집\n④ 이 사이트 업로드 탭에서 가져오면 자동 반영'),400);
+}
+
 function printParentSurvey(subset){
   const items=SURVEY_Q.filter(item=>item.domain===null||CONFIG.domains[item.domain]);
   // 명단이 확정된 경우 명단 기반 출력, 아니면 빈 양식 1장 출력
