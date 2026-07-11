@@ -2501,7 +2501,7 @@ function clusterScore(ids){
   });
   return{tagSum,weight,size:ids.length};
 }
-function runAutoAssign(){
+function runAutoAssign(shuffle=false){
   const hasStudents=Object.keys(students).length>0;
   const hasRoster=rosterLocked&&ROSTER.length>0;
   if(!hasStudents&&!hasRoster){
@@ -2511,9 +2511,17 @@ function runAutoAssign(){
   resolveSepPair();
   renderClassNameInputs();
   const numClasses=ASSIGN.numClasses;
-  const classes=Array.from({length:numClasses},(_,i)=>({idx:i,name:ASSIGN.classNames[i],ids:[],genderCount:{},tagCount:{},weight:0}));
+  const classes=Array.from({length:numClasses},(_,i)=>({idx:i,name:ASSIGN.classNames[i],ids:[],genderCount:{},tagCount:{},weight:0,langCount:0,migrantCount:0}));
   const clusters=buildClusters().map(ids=>({ids,...clusterScore(ids)}));
-  clusters.sort((a,b)=>b.tagSum-a.tagSum||b.weight-a.weight||b.size-a.size);
+  // 재배치 시: 동점 클러스터를 먼저 섞어서 배치 순서에 무작위성 부여
+  if(shuffle){
+    clusters.sort((a,b)=>{
+      const diff=(b.tagSum-a.tagSum)||(b.weight-a.weight)||(b.size-a.size);
+      return diff!==0?diff:(Math.random()-0.5);
+    });
+  } else {
+    clusters.sort((a,b)=>b.tagSum-a.tagSum||b.weight-a.weight||b.size-a.size);
+  }
   const assignmentMap={};
   const forcedViolations=[];
   clusters.forEach(cl=>{
@@ -2525,14 +2533,24 @@ function runAutoAssign(){
     let candidates=classes.filter(c=>!blocked.has(c.idx));
     const forced=!candidates.length;
     if(forced)candidates=classes;
+    // 재배치 시 동점 반 사이 무작위 선택을 위해 후보 순서 섞기
+    if(shuffle) candidates=[...candidates].sort(()=>Math.random()-0.5);
     let best=null,bestScore=Infinity;
     candidates.forEach(c=>{
+      // ① 가중치 기반 인원 균등 (특수교육 포함)
       let score=c.weight*3;
+      // ② 순수 인원 균등 — 이미 많이 배정된 반 회피
+      score+=c.ids.length*2;
       cl.ids.forEach(no=>{
         const s=students[no];if(!s)return;
+        // ③ 성별 균형
         score+=(c.genderCount[s.gender]||0);
+        // ④ 태그별 균등 분산 (주의집중·행동조절 등 모든 관찰영역)
         (s.tags||[]).forEach(t=>{score+=(c.tagCount[t]||0)*2;});
-        // 이주배경 균등 분산: 해당 반의 이주배경 수 가중
+        // ⑤ 언어 어려움 학생 별도 우선 분산 (의사소통 태그와 별개로)
+        const langScore=(s.domains&&s.domains['의사소통'])?s.domains['의사소통'].score:0;
+        if(langScore>=1) score+=(c.langCount||0)*3;
+        // ⑥ 이주배경 균등 분산
         const r=ROSTER.find(x=>x.no===no);
         if(r&&r.migrant) score+=(c.migrantCount||0)*3;
       });
@@ -2543,6 +2561,9 @@ function runAutoAssign(){
       best.ids.push(no);assignmentMap[no]=best.idx;
       best.genderCount[s.gender]=(best.genderCount[s.gender]||0)+1;
       (s.tags||[]).forEach(t=>{best.tagCount[t]=(best.tagCount[t]||0)+1;});
+      // 언어 어려움 카운트 갱신
+      const langScore=(s.domains&&s.domains['의사소통'])?s.domains['의사소통'].score:0;
+      if(langScore>=1) best.langCount=(best.langCount||0)+1;
       const r=ROSTER.find(x=>x.no===no);
       if(r&&r.migrant) best.migrantCount=(best.migrantCount||0)+1;
       best.weight+=studentWeight(no);
@@ -2628,12 +2649,12 @@ function undoAssign(){
 function rerunAutoAssign(){
   // 현재 상태를 먼저 스냅샷으로 저장 (되돌리기용)
   if(ASSIGN.assigned) saveAssignSnapshot();
-  // 배치 상태 완전 초기화 후 재실행
+  // 배치 상태 완전 초기화 후 재실행 (shuffle=true: 무작위 재배치)
   ASSIGN.confirmed=false;
   ASSIGN.assigned=false;
   ASSIGN.classes=[];
   ASSIGN.violations=[];
-  runAutoAssign();
+  runAutoAssign(true);
 }
 function confirmAssign(){
   if(!ASSIGN.assigned){alert('먼저 자동 배치를 실행하세요.');return;}
