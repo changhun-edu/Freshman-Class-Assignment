@@ -137,13 +137,28 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 .domain-toggle-grid .rule-row{margin-bottom:6px}
 .rlabel{word-break:keep-all}
 .summary-pill{background:var(--primary-light);color:var(--primary-dark);border:1px solid #bfdbfe;border-radius:var(--r);padding:9px 14px;font-size:.82rem;font-weight:600;margin-bottom:12px}
-.btn-big-green{width:100%;padding:14px;border-radius:8px;font-size:.92rem;font-weight:800;background:var(--green);color:#fff;border:none;cursor:pointer;margin-bottom:10px}
+.btn-big-green{width:100%;padding:12px;border-radius:8px;font-size:.88rem;font-weight:800;background:var(--green);color:#fff;border:none;cursor:pointer;margin-bottom:8px;transition:.15s}
 .btn-big-green:hover{background:#128a4a}
 .btn-big-green:disabled{background:#c3ccd8;cursor:not-allowed;color:#fff}
 .btn-domain-confirm{width:100%;padding:11px;border-radius:8px;font-size:.88rem;font-weight:800;background:var(--primary);color:#fff;border:none;cursor:pointer;margin-top:10px;transition:.15s}
 .btn-domain-confirm:hover{background:var(--primary-dark)}
 .domain-lock-banner{background:var(--green-light);border:1px solid #bbf7d0;color:var(--green);padding:10px 14px;border-radius:var(--r);font-size:.84rem;display:flex;justify-content:space-between;align-items:center;margin-top:10px}
-.steps-text{font-size:.78rem;color:var(--text-muted);margin-bottom:10px}
+.steps-text{font-size:.76rem;color:var(--text-muted);margin-bottom:8px;padding-left:2px}
+/* ── 탭 UI ── */
+.survey-tabs{display:flex;gap:0;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px}
+.survey-tab{flex:1;padding:9px 6px;font-size:.78rem;font-weight:700;text-align:center;cursor:pointer;background:#fff;color:var(--text-muted);border:none;border-right:1px solid var(--border);transition:.15s;line-height:1.3}
+.survey-tab:last-child{border-right:none}
+.survey-tab:hover{background:var(--surface2);color:var(--text)}
+.survey-tab.active{background:var(--primary);color:#fff}
+.survey-tab-pane{display:none}
+.survey-tab-pane.active{display:block}
+/* ── 버튼 팔레트 ── */
+.btn-big-primary{width:100%;padding:12px;border-radius:8px;font-size:.88rem;font-weight:800;background:var(--primary);color:#fff;border:none;cursor:pointer;margin-bottom:8px;transition:.15s}
+.btn-big-primary:hover{background:var(--primary-dark)}
+.btn-big-primary:disabled{background:#c3ccd8;cursor:not-allowed}
+.btn-outline{width:100%;padding:10px;border-radius:8px;font-size:.85rem;font-weight:700;background:#fff;color:var(--text);border:1.5px solid var(--border);cursor:pointer;margin-bottom:6px;transition:.15s}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light)}
+.btn-outline:disabled{opacity:.45;cursor:not-allowed}
 .goto-upload{display:block;text-align:center;padding:10px;border:1px solid var(--border);border-radius:var(--r);font-size:.85rem;font-weight:700;color:var(--primary-dark);cursor:pointer;background:#fff}
 .goto-upload[disabled]{color:var(--text-muted);cursor:not-allowed}
 .qprev-block{padding:8px 10px;border-radius:var(--r);margin-bottom:6px;background:var(--surface2);border:1px solid var(--border)}
@@ -220,14 +235,30 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 .class-board-meta{font-size:.75rem;color:rgba(255,255,255,.9);text-align:right;line-height:1.5}
 .class-board-body{background:#fff;padding:8px;min-height:80px;transition:.12s}
 .class-board-body.drag-target{background:#f0fdf4;outline:2px dashed var(--green)}
-/* ── 학생 미니카드 3열 ── */
+/* ── 학생 상세 모달 ── */
+.student-detail-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center}
+.student-detail-modal-bg.open{display:flex}
+.student-detail-modal{background:#fff;border-radius:14px;padding:24px;width:340px;max-width:92vw;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+.sdm-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.sdm-name{font-size:1.1rem;font-weight:900;color:var(--text)}
+.sdm-id{font-size:.78rem;color:var(--text-muted);margin-top:2px}
+.sdm-close{background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text-muted);padding:0 4px}
+.sdm-section{margin-bottom:12px}
+.sdm-label{font-size:.74rem;font-weight:700;color:var(--text-sub);margin-bottom:5px}
+.sdm-tags{display:flex;flex-wrap:wrap;gap:4px}
+.sdm-move-select{width:100%;padding:8px;border-radius:8px;border:1.5px solid var(--border);font-size:.85rem;margin-top:4px}
+.sdm-btn{width:100%;padding:10px;border-radius:8px;font-size:.87rem;font-weight:800;cursor:pointer;border:none;background:var(--primary);color:#fff;margin-top:8px}
+.sdm-btn:hover{background:var(--primary-dark)}
 .student-mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
-.student-mini{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:7px;padding:7px 8px;cursor:grab;transition:.12s;position:relative;user-select:none}
+.student-mini{background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:7px;padding:7px 8px;cursor:pointer;transition:.12s;position:relative;user-select:none}
 .student-mini:hover{border-color:#93c5fd;background:#eff6ff}
 .student-mini.dragging{opacity:.35;border-style:dashed}
 .student-mini-seq{font-size:.66rem;color:var(--text-muted);margin-bottom:1px}
 .student-mini-name{font-size:.82rem;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .student-mini-id{font-size:.65rem;color:var(--text-muted);margin-top:1px}
+.student-mini-dots{display:flex;align-items:center;gap:2px;margin-top:4px;flex-wrap:wrap}
+.student-mini-tag-dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.student-mini-tag-more{font-size:.62rem;color:var(--text-muted);font-weight:700;margin-left:1px}
 .student-mini-tags{display:flex;flex-wrap:wrap;gap:2px;margin-top:3px}
 .student-mini-tag{font-size:.58rem;font-weight:800;padding:1px 5px;border-radius:4px;border:1px solid transparent}
 .student-mini.migrant-bg{background:#fefce8;border-color:#fde68a}
@@ -267,12 +298,12 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
     <!-- 0. 준비 (관찰 영역 선택 + 명단 등록) -->
     <section class="panel active" id="panel-prep">
       <!-- 이미 서식 보유자 빠른 진입 배너 -->
-      <div style="background:linear-gradient(135deg,#1e40af,#2d3ae8);border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div style="background:linear-gradient(135deg,#d97706,#f59e0b);border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;gap:12px">
         <div>
           <div style="font-size:.88rem;font-weight:800;color:#fff;margin-bottom:3px">📂 이미 면접 서식 파일이 있으신가요?</div>
-          <div style="font-size:.77rem;color:rgba(255,255,255,.8);line-height:1.5">면접 결과가 입력된 엑셀 파일이 있다면 아래 단계를 건너뛰고 바로 업로드하세요.</div>
+          <div style="font-size:.77rem;color:rgba(255,255,255,.9);line-height:1.5">면접 결과가 입력된 엑셀 파일이 있다면 아래 단계를 건너뛰고 바로 업로드하세요.</div>
         </div>
-        <button onclick="goStep('upload')" style="flex-shrink:0;background:#fff;color:#1e40af;border:none;border-radius:8px;padding:10px 18px;font-size:.84rem;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.15)">
+        <button onclick="goStep('upload')" style="flex-shrink:0;background:#fff;color:#d97706;border:none;border-radius:8px;padding:10px 18px;font-size:.84rem;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.15)">
           📤 바로 업로드 →
         </button>
       </div>
@@ -293,28 +324,44 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
           <!-- 학부모 설문 방식 결정 (STEP 2) -->
           <div class="card">
             <span class="step-badge">STEP 2</span>
-            <h3 style="margin-bottom:8px">📋 학생 문항 출력 &amp; 학부모 설문 방식 결정</h3>
-            <p style="font-size:.78rem;color:var(--text-sub);margin-bottom:10px">관찰 영역을 확정하면 출력·온라인 설문 기능이 활성화됩니다.</p>
+            <h3 style="margin-bottom:6px">📋 학생 문항 출력 &amp; 학부모 설문 방식 결정</h3>
             <div class="summary-pill" id="prep-summary-pill">📌 현재 설정: 관찰 영역 8개 선택됨</div>
 
-            <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-              <div style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:6px">📄 종이 설문지 방식</div>
-              <button class="btn-big-green" id="btn-print-interview" style="margin-top:4px" onclick="printInterviewQuestions()" disabled>🖨️ 학생 면접 문항 인쇄 / PDF 저장</button>
+            <!-- 탭 선택 -->
+            <div class="survey-tabs" style="margin-top:12px">
+              <button class="survey-tab active" onclick="switchSurveyTab('print',this)">🖨️ 종이 설문지</button>
+              <button class="survey-tab" onclick="switchSurveyTab('google',this)">📋 구글폼</button>
+              <button class="survey-tab" onclick="switchSurveyTab('naver',this)">📥 네이버폼</button>
+              <button class="survey-tab" onclick="switchSurveyTab('web',this)">⚡ 웹 설문</button>
+            </div>
+
+            <!-- 종이 설문지 탭 -->
+            <div class="survey-tab-pane active" id="tab-print">
+              <button class="btn-big-green" id="btn-print-interview" onclick="printInterviewQuestions()" disabled>🖨️ 학생 면접 문항 인쇄 / PDF 저장</button>
               <div class="steps-text">선택한 관찰 영역의 면접 문항 · 채점 기준표</div>
-              <button class="btn-big-green" id="btn-print-survey" style="margin-top:6px;background:var(--teal)" onclick="printParentSurvey()" disabled>🖨️ 학부모 설문지 인쇄 / PDF 저장</button>
+              <button class="btn-big-green" id="btn-print-survey" onclick="printParentSurvey()" disabled>🖨️ 학부모 설문지 인쇄 / PDF 저장</button>
               <div class="steps-text">① 출력 → ② 면접 당일 학부모에게 배부 → ③ 회수 후 담당자가 취합</div>
             </div>
 
-            <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
-              <div style="font-size:.8rem;font-weight:700;color:var(--text);margin-bottom:2px">🌐 온라인 설문 방식</div>
-              <p style="font-size:.75rem;color:var(--text-sub);margin-bottom:8px">외부 도구(구글폼·네이버폼 등) 또는 직접 배포용 웹 설문을 생성합니다.</p>
-              <div style="display:flex;gap:6px;margin-bottom:4px">
-                <button class="btn btn-ghost btn-sm" id="btn-copy-google" onclick="showGoogleGuide()" disabled style="flex:1">📋 구글폼 스크립트 생성</button>
-                <button class="btn btn-ghost btn-sm" id="btn-copy-naver" onclick="generateNaverFormExcel()" disabled style="flex:1">📥 네이버폼 엑셀 생성</button>
-              </div>
-              <div class="steps-text" style="margin-bottom:10px">구글폼: 스크립트 실행으로 자동 생성 · 네이버폼: 엑셀 가져오기로 자동 생성</div>
-              <button class="btn-big-green" id="btn-gen-websurvey" onclick="generateWebSurvey()" disabled style="background:#7c3aed">⚡ 배포용 웹 설문 HTML 생성</button>
-              <div class="steps-text">생성된 HTML을 학교 서버·구글 드라이브에 업로드 → QR코드로 학부모 배포 → 응답 CSV를 이 사이트에 업로드</div>
+            <!-- 구글폼 탭 -->
+            <div class="survey-tab-pane" id="tab-google">
+              <p style="font-size:.78rem;color:var(--text-sub);margin-bottom:10px;line-height:1.6">Apps Script를 이용해 구글폼을 자동으로 생성합니다. 생성된 폼 링크를 학부모에게 배포하세요.</p>
+              <button class="btn-big-primary" id="btn-copy-google" onclick="showGoogleGuide()" disabled>📋 구글폼 스크립트 생성 및 안내</button>
+              <div class="steps-text">스크립트 복사 → Apps Script에 붙여넣기 → 실행 → 폼 자동 생성</div>
+            </div>
+
+            <!-- 네이버폼 탭 -->
+            <div class="survey-tab-pane" id="tab-naver">
+              <p style="font-size:.78rem;color:var(--text-sub);margin-bottom:10px;line-height:1.6">네이버폼 "문항 가져오기" 기능을 이용해 설문을 자동으로 구성합니다.</p>
+              <button class="btn-big-primary" id="btn-copy-naver" onclick="generateNaverFormExcel()" disabled>📥 네이버폼 가져오기 엑셀 생성</button>
+              <div class="steps-text">엑셀 다운로드 → 네이버폼 가져오기 → 문항 자동 생성</div>
+            </div>
+
+            <!-- 웹 설문 탭 -->
+            <div class="survey-tab-pane" id="tab-web">
+              <p style="font-size:.78rem;color:var(--text-sub);margin-bottom:10px;line-height:1.6">서버 없이 배포 가능한 독립 HTML 설문지를 생성합니다. 구글 드라이브나 학교 서버에 올려 QR코드로 배포하세요.</p>
+              <button class="btn-big-primary" id="btn-gen-websurvey" onclick="generateWebSurvey()" disabled>⚡ 배포용 웹 설문 HTML 생성</button>
+              <div class="steps-text">HTML 다운로드 → 드라이브 업로드 → QR코드 배포 → 응답 CSV 수집 → 업로드</div>
             </div>
           </div>
         </div>
@@ -458,6 +505,31 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
     </section>
 
   </main>
+<!-- 학생 상세 모달 -->
+<div class="student-detail-modal-bg" id="student-detail-modal">
+  <div class="student-detail-modal" onclick="event.stopPropagation()">
+    <div class="sdm-header">
+      <div>
+        <div class="sdm-name" id="sdm-name"></div>
+        <div class="sdm-id" id="sdm-id"></div>
+      </div>
+      <button class="sdm-close" onclick="closeStudentModal()">✕</button>
+    </div>
+    <div class="sdm-section">
+      <div class="sdm-label">관찰 영역 태그</div>
+      <div class="sdm-tags" id="sdm-tags"></div>
+    </div>
+    <div class="sdm-section" id="sdm-migrant-row" style="display:none">
+      <span style="background:#fef9c3;border:1px solid #fde68a;border-radius:6px;padding:3px 10px;font-size:.78rem;color:#92400e;font-weight:700">🌏 이주배경 학생</span>
+    </div>
+    <div class="sdm-section">
+      <div class="sdm-label">반 이동</div>
+      <select class="sdm-move-select" id="sdm-class-select"></select>
+      <button class="sdm-btn" onclick="confirmMoveFromModal()">이 반으로 이동</button>
+    </div>
+  </div>
+</div>
+
   <footer style="text-align:center;padding:10px;font-size:.72rem;color:var(--text-muted);border-top:1px solid var(--border);flex-shrink:0">만든이 2026 최창훈</footer>
 </div>
 
@@ -769,6 +841,13 @@ function renderQuestionPreview(){
 /* 아코디언 열림 상태 유지 */
 const ACC_OPEN={};
 function toggleAcc(d){ACC_OPEN[d]=!ACC_OPEN[d];renderDomainToggles();}
+function switchSurveyTab(name,el){
+  document.querySelectorAll('.survey-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.survey-tab-pane').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-'+name).classList.add('active');
+}
+
 function renderDomainLockArea(){
   const el=document.getElementById('domain-lock-area');if(!el)return;
   const enabledCnt=DOMAIN_LIST.filter(d=>CONFIG.domains[d]).length;
@@ -788,9 +867,7 @@ function renderDomainLockArea(){
     const b=document.getElementById(id);if(b)b.disabled=!domainsLocked;
   });
   const ps=document.getElementById('btn-print-survey');
-  if(ps&&domainsLocked)ps.style.background='var(--teal)';
-  const gs=document.getElementById('btn-gen-websurvey');
-  if(gs&&domainsLocked)gs.style.background='#7c3aed';
+
 }
 function lockDomains(){
   const enabledCnt=DOMAIN_LIST.filter(d=>CONFIG.domains[d]).length;
@@ -1065,6 +1142,19 @@ async function buildInterviewWorkbook(prefill){
   // 2행 헤더
   ws2.addRow(h2Base);
   styleHeaderRow(ws2,2,h2Base.length);
+
+  // 다항 선택형 컬럼에 셀 노트 추가 (교사만 확인하는 안내)
+  let noteCol=3;
+  activeItems.forEach((item,qi)=>{
+    if(item.multi&&item.subNums){
+      const noteText=`입력 방법: 해당 번호를 쉼표로 구분해 입력하세요.\n예) ${item.subNums[0]},${item.subNums[2]}\n\n항목 번호:\n`+item.opts.map((o,j)=>`${item.subNums[j]}: ${o}`).join('\n');
+      ws2.getCell(2,noteCol).note={texts:[{font:{bold:false,size:9},text:noteText}]};
+      noteCol+=2;
+    } else {
+      noteCol+=2;
+    }
+  });
+
 
   // 데이터 행
   for(let i=0;i<n;i++){
@@ -1661,7 +1751,7 @@ function printParentSurvey(subset){
   const blankPage=[{no:'________',name:'________________',gender:''}];
   const pages=blankPage.map(r=>surveyPageHTML(r,items)).join('');
   const html=`<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><title>학부모 설문지</title><style>
-    @page{size:A4 portrait;margin:22mm 14mm 12mm}
+    @page{size:A4 portrait;margin:14mm 13mm 10mm}
     *{box-sizing:border-box;margin:0;padding:0}
 
     /* ── 화면 미리보기 ── */
@@ -1694,7 +1784,7 @@ function printParentSurvey(subset){
     .q-opts{font-size:.8rem;line-height:1.9;color:#1a2233}
     .opt{white-space:nowrap;margin-right:10px;display:inline-block}
 
-    /* ── 구체적 내용 ── */
+    /* ── 구체적 내용 / 힌트 ── */
     .q-hint{font-size:.7rem;color:#2563eb;margin-bottom:3px;font-style:italic}
     .q-note{font-size:.75rem;color:#5a6a82;margin-top:4px;display:flex;align-items:center;gap:4px}
     .line{flex:1;border:none;border-bottom:1px solid #b0bcc8;height:12px;display:inline-block}
@@ -1705,23 +1795,24 @@ function printParentSurvey(subset){
 
     /* ── 인쇄 ── */
     @media print{
-      body{background:none;padding:0;font-size:10px}
+      body{background:none;padding:0;font-size:9.5px}
       .toolbar{display:none}
       .survey-page{box-shadow:none;border-radius:0;padding:0;margin:0;max-width:none}
-      .s-head{padding-bottom:6px;margin-bottom:10px}
-      .s-head h2{font-size:.98rem}
-      .s-ids{font-size:.8rem}
-      .s-id-line{width:52px}
-      .s-id-line.wide{width:82px}
-      .s-guide{font-size:.72rem;padding:4px 8px;margin-bottom:12px;line-height:1.4}
-      .q-grid{gap:0 16px}
-      .q-block{padding:11px 0 11px}
-      .q-label{font-size:.81rem;margin-bottom:3px}
-      .q-text{font-size:.75rem;margin-bottom:5px;line-height:1.4}
-      .q-opts{font-size:.76rem;line-height:1.9}
-      .q-note{font-size:.71rem;margin-top:5px}
-      .care-lines{gap:18px;margin-top:10px}
-      .care-line-row{height:22px}
+      .s-head{padding-bottom:5px;margin-bottom:7px}
+      .s-head h2{font-size:.93rem}
+      .s-ids{font-size:.76rem}
+      .s-id-line{width:48px}
+      .s-id-line.wide{width:78px}
+      .s-guide{font-size:.69rem;padding:3px 7px;margin-bottom:8px;line-height:1.35}
+      .q-grid{gap:0 14px}
+      .q-block{padding:5px 0 5px}
+      .q-label{font-size:.78rem;margin-bottom:2px}
+      .q-text{font-size:.72rem;margin-bottom:3px;line-height:1.35}
+      .q-opts{font-size:.72rem;line-height:1.7}
+      .q-hint{display:none}
+      .q-note{font-size:.68rem;margin-top:3px}
+      .care-lines{gap:12px;margin-top:6px}
+      .care-line-row{height:18px}
     }
   </style></head><body>
   <div class="toolbar"><button onclick="window.print()">🖨️ 인쇄 / PDF로 저장</button></div>
@@ -2326,7 +2417,54 @@ function printAssign(){
   w.document.write(html);w.document.close();
 }
 
-// 드래그 앤 드롭
+/* ── 학생 상세 모달 ── */
+let modalTargetNo=null;
+function openStudentModal(no){
+  const s=students[no]||{};
+  const r=ROSTER.find(x=>x.no===no)||{};
+  modalTargetNo=no;
+  document.getElementById('sdm-name').textContent=s.name||no;
+  document.getElementById('sdm-id').textContent=no+(s.gender?` · ${s.gender}`:'');
+  // 태그
+  const tagsEl=document.getElementById('sdm-tags');
+  const tags=s.tags||[];
+  if(tags.length){
+    tagsEl.innerHTML=tags.map(t=>{
+      const dc=DOMAIN_COLORS[t]||{bg:'#e2e8f0',fg:'#5a6a82'};
+      return `<span style="background:${dc.bg};color:${dc.fg};padding:2px 8px;border-radius:6px;font-size:.78rem;font-weight:700">${t}</span>`;
+    }).join('');
+  } else {
+    tagsEl.innerHTML='<span style="color:var(--text-muted);font-size:.78rem">관찰 영역 없음</span>';
+  }
+  // 이주배경
+  document.getElementById('sdm-migrant-row').style.display=r.migrant?'block':'none';
+  // 반 선택
+  const curClass=ASSIGN.classes.find(c=>c.ids.includes(no));
+  document.getElementById('sdm-class-select').innerHTML=ASSIGN.classes.map(c=>
+    `<option value="${c.idx}"${c===curClass?' selected':''}>${c.name}${c===curClass?' (현재반)':''}</option>`
+  ).join('');
+  document.getElementById('student-detail-modal').classList.add('open');
+}
+function closeStudentModal(){
+  document.getElementById('student-detail-modal').classList.remove('open');
+  modalTargetNo=null;
+}
+function confirmMoveFromModal(){
+  if(!modalTargetNo)return;
+  const idx=parseInt(document.getElementById('sdm-class-select').value);
+  const curClass=ASSIGN.classes.find(c=>c.ids.includes(modalTargetNo));
+  const newClass=ASSIGN.classes.find(c=>c.idx===idx);
+  if(!curClass||!newClass||curClass.idx===newClass.idx){closeStudentModal();return;}
+  saveAssignSnapshot();
+  moveStudentToClass(modalTargetNo,idx);
+  closeStudentModal();
+}
+// 모달 배경 클릭 시 닫기
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('student-detail-modal').addEventListener('click',closeStudentModal);
+});
+
+
 let dragNo=null;
 function onDragStart(e,no){dragNo=no;e.currentTarget.classList.add('dragging');e.dataTransfer.effectAllowed='move';}
 function onDragEnd(e){e.currentTarget.classList.remove('dragging');dragNo=null;document.querySelectorAll('.class-board-body').forEach(b=>b.classList.remove('drag-target'));}
@@ -2366,17 +2504,32 @@ function renderAssignResults(){
     const cards=c.ids.map((no,i)=>{
       const s=students[no]||{};
       const r=ROSTER.find(x=>x.no===no)||{};
-      const tagHtml=(s.tags||[]).map(t=>{
+      const tags=s.tags||[];
+      const isMig=r.migrant;
+      const maxDots=4;
+      const dotHtml=tags.slice(0,maxDots).map(t=>{
         const dc=DOMAIN_COLORS[t]||{bg:'#e2e8f0',fg:'#5a6a82'};
-        return `<span class="student-mini-tag" style="background:${dc.bg};color:${dc.fg}">${t}</span>`;
+        return '<span class="student-mini-tag-dot" style="background:'+dc.fg+'" title="'+t+'"></span>';
       }).join('');
+      const moreHtml=tags.length>maxDots?'<span class="student-mini-tag-more">+' +(tags.length-maxDots)+'</span>':'';
+      return '<div class="student-mini'+(isMig?' migrant-bg':'')+'"'
+        +' data-name="'+(s.name||'')+'" data-no="'+no+'"'
+        +' draggable="true"'
+        +' ondragstart="onDragStart(event,\''+no+'\')"'
+        +' ondragend="onDragEnd(event)"'
+        +' onclick="openStudentModal(\''+no+'\')">'
+        +'<div class="student-mini-seq">'+(i+1)+'.'+(isMig?' 🌏':'')+'</div>'
+        +'<div class="student-mini-name">'+(s.name||no)+'</div>'
+        +'<div class="student-mini-id">'+no+'</div>'
+        +((dotHtml||moreHtml)?'<div class="student-mini-dots">'+dotHtml+moreHtml+'</div>':'')
+        +'</div>';
+    }).join('');
       const isMig=r.migrant;
       return `<div class="student-mini${isMig?' migrant-bg':''}"
         data-name="${s.name||''}" data-no="${no}"
         draggable="true"
         ondragstart="onDragStart(event,'${no}')"
         ondragend="onDragEnd(event)"
-        ondblclick="promptMoveStudent('${no}')">
         <div class="student-mini-seq">${i+1}.${isMig?' 🌏':''}</div>
         <div class="student-mini-name">${s.name||no}</div>
         <div class="student-mini-id">${no}</div>
@@ -2428,28 +2581,171 @@ async function exportClassApp(){
   const enabled=DOMAIN_LIST.filter(d=>CONFIG.domains[d]);
   const extra=CONFIG.specialEd.enabled?['특수교육']:[];
   const allCols=[...enabled,...extra];
+  const yy=document.getElementById('roster-year').value||'27';
+  const title=`20${yy}학년도 1학년 반편성 결과`;
+  const border={style:'thin',color:{argb:'FFBFCFDD'}};
+  const allBorder={top:border,left:border,bottom:border,right:border};
+  const CLASS_ARGB=['FF2563EB','FF059669','FF7C3AED','FFD97706','FFDC2626','FF0891B2','FFBE185D','FF15803D'];
   const wb=new ExcelJS.Workbook();
-  ASSIGN.classes.forEach(c=>{
+  wb.creator='스마트반편성(신입생용)';wb.created=new Date();
+
+  ASSIGN.classes.forEach((c,ci)=>{
     const ws=wb.addWorksheet(c.name);
+    const bgArgb=CLASS_ARGB[ci%CLASS_ARGB.length];
+    const totalCols=3+allCols.length;
+
+    // 1행: 타이틀
+    ws.mergeCells(1,1,1,totalCols);
+    const tc=ws.getCell(1,1);
+    tc.value=`${title} — ${c.name}`;
+    tc.fill={type:'pattern',pattern:'solid',fgColor:{argb:bgArgb}};
+    tc.font={bold:true,color:{argb:'FFFFFFFF'},size:13};
+    tc.alignment={horizontal:'center',vertical:'middle'};
+    ws.getRow(1).height=32;
+
+    // 2행: 안내문
+    ws.mergeCells(2,1,2,totalCols);
+    const guideCell=ws.getCell(2,1);
+    guideCell.value='※ O 표시: 학생 면접 및 학부모 설문 결과, 해당 영역에서 반복 안내 또는 개별 지원이 필요한 수준으로 판단된 영역입니다. O 개수가 많을수록 입학 초기 지원 계획 수립을 권장합니다.';
+    guideCell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFFDE7'}};
+    guideCell.font={italic:true,color:{argb:'FF856404'},size:9};
+    guideCell.alignment={horizontal:'left',vertical:'middle',wrapText:true};
+    guideCell.border={bottom:{style:'thin',color:{argb:'FFFDE68A'}}};
+    ws.getRow(2).height=28;
+
+    // 3행: 헤더
     ws.addRow(['번호','이름','성별',...allCols]);
-    ws.getRow(1).font={bold:true};
+    const hRow=ws.getRow(3);hRow.height=24;
+    hRow.eachCell(cell=>{
+      cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFD6E4F0'}};
+      cell.font={bold:true,color:{argb:'FF1E3A5F'},size:10};
+      cell.border=allBorder;cell.alignment={horizontal:'center',vertical:'middle'};
+    });
+
+    // 3행~: 데이터
     c.ids.forEach((no,i)=>{
       const s=students[no]||{};
-      ws.addRow([i+1,s.name||'',s.gender||'',...allCols.map(d=>(s.tags||[]).includes(d)?'O':'')]);
+      const row=ws.addRow([i+1,s.name||'',s.gender||'',...allCols.map(d=>(s.tags||[]).includes(d)?'O':'')]);
+      row.height=20;
+      row.eachCell((cell,col)=>{
+        cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:i%2===0?'FFF7FAFD':'FFFFFFFF'}};
+        cell.border=allBorder;
+        cell.alignment={horizontal:'center',vertical:'middle'};
+        if(col>3&&cell.value==='O')cell.font={bold:true,color:{argb:bgArgb}};
+      });
     });
-    ws.columns.forEach(col=>col.width=14);
+
+    // 빈 행
+    ws.addRow([]);ws.getRow(ws.rowCount).height=6;
+
+    // 통계 헤더
+    const stHN=ws.rowCount+1;
+    ws.mergeCells(stHN,1,stHN,totalCols);
+    const stHC=ws.getCell(stHN,1);
+    stHC.value='📊 통계';
+    stHC.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFD6E4F0'}};
+    stHC.font={bold:true,color:{argb:'FF1E3A5F'},size:10};
+    stHC.border=allBorder;stHC.alignment={horizontal:'left',vertical:'middle'};
+    ws.getRow(stHN).height=22;
+
+    // 통계 컬럼 헤더
+    const stCH=ws.addRow(['구분','전체','남','여','이주배경','관찰영역 현황']);
+    stCH.height=20;
+    stCH.eachCell(cell=>{
+      cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEBF5FB'}};
+      cell.font={bold:true,color:{argb:'FF1E3A5F'},size:9};
+      cell.border=allBorder;cell.alignment={horizontal:'center',vertical:'middle'};
+    });
+
+    // 통계 데이터
+    const male=c.genderCount['남']||0,female=c.genderCount['여']||0;
+    const mig=ROSTER.filter(r=>c.ids.includes(r.no)&&r.migrant).length;
+    const tagSummary=allCols.map(d=>{
+      const cnt=c.ids.filter(no=>(students[no]?.tags||[]).includes(d)).length;
+      return cnt?`${d} ${cnt}명`:'';
+    }).filter(Boolean).join(' · ')||'없음';
+    const stRow=ws.addRow([c.name,c.ids.length,male,female,mig||0,tagSummary]);
+    stRow.height=20;
+    stRow.eachCell((cell,col)=>{
+      cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFFFFF'}};
+      cell.border=allBorder;
+      cell.alignment={horizontal:'center',vertical:'middle',wrapText:col===6};
+      if(col===3)cell.font={bold:true,color:{argb:'FF2563EB'}};
+      if(col===4)cell.font={bold:true,color:{argb:'FFE11D48'}};
+    });
+
+    ws.getColumn(1).width=6;ws.getColumn(2).width=14;ws.getColumn(3).width=6;
+    allCols.forEach((_,i)=>{ws.getColumn(4+i).width=18;});
+    ws.views=[{state:'frozen',ySplit:3}];
   });
-  const wsSum=wb.addWorksheet('반별 요약');
-  wsSum.addRow(['반','인원','성별','관찰영역 인원']);
-  wsSum.getRow(1).font={bold:true};
-  ASSIGN.classes.forEach(c=>{
-    const genders=Object.entries(c.genderCount).map(([g,n])=>`${g} ${n}`).join(' · ');
-    const tags=Object.entries(c.tagCount).filter(([,n])=>n>0).map(([t,n])=>`${t} ${n}`).join(', ')||'없음';
-    wsSum.addRow([c.name,c.ids.length,genders,tags]);
+
+  // 전체 요약 시트
+  const wsSum=wb.addWorksheet('전체 요약');
+  const sumCols=5+allCols.length;
+  wsSum.mergeCells(1,1,1,sumCols);
+  const sumT=wsSum.getCell(1,1);
+  sumT.value=title;
+  sumT.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1E3A5F'}};
+  sumT.font={bold:true,color:{argb:'FFFFFFFF'},size:14};
+  sumT.alignment={horizontal:'center',vertical:'middle'};
+  wsSum.getRow(1).height=36;
+
+  // 2행: 안내문
+  wsSum.mergeCells(2,1,2,sumCols);
+  const sumGuide=wsSum.getCell(2,1);
+  sumGuide.value='※ 관찰영역 숫자: 해당 영역에서 반복 안내 또는 개별 지원이 필요한 수준으로 판단된 학생 수입니다.';
+  sumGuide.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFFDE7'}};
+  sumGuide.font={italic:true,color:{argb:'FF856404'},size:9};
+  sumGuide.alignment={horizontal:'left',vertical:'middle'};
+  sumGuide.border={bottom:{style:'thin',color:{argb:'FFFDE68A'}}};
+  wsSum.getRow(2).height=22;
+
+  wsSum.addRow(['반','전체','남','여','이주배경',...allCols]);
+  const sumH=wsSum.getRow(3);sumH.height=24;
+  sumH.eachCell(cell=>{
+    cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFD6E4F0'}};
+    cell.font={bold:true,color:{argb:'FF1E3A5F'},size:10};
+    cell.border={top:border,left:border,bottom:border,right:border};
+    cell.alignment={horizontal:'center',vertical:'middle'};
   });
-  wsSum.columns.forEach(c=>c.width=20);
+
+  ASSIGN.classes.forEach((c,ci)=>{
+    const bg=CLASS_ARGB[ci%CLASS_ARGB.length];
+    const m=c.genderCount['남']||0,f=c.genderCount['여']||0;
+    const mig=ROSTER.filter(r=>c.ids.includes(r.no)&&r.migrant).length;
+    const tCnts=allCols.map(d=>c.ids.filter(no=>(students[no]?.tags||[]).includes(d)).length);
+    const row=wsSum.addRow([c.name,c.ids.length,m,f,mig||0,...tCnts]);
+    row.height=22;
+    row.eachCell((cell,col)=>{
+      cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:col===1?bg:'FFFFFFFF'}};
+      cell.font={bold:col===1,color:{argb:col===1?'FFFFFFFF':col===3?'FF2563EB':col===4?'FFE11D48':'FF1A2233'},size:10};
+      cell.border={top:border,left:border,bottom:border,right:border};
+      cell.alignment={horizontal:'center',vertical:'middle'};
+    });
+  });
+
+  const tot=ASSIGN.classes.reduce((a,c)=>{
+    a.t+=c.ids.length;a.m+=(c.genderCount['남']||0);a.f+=(c.genderCount['여']||0);
+    a.mig+=ROSTER.filter(r=>c.ids.includes(r.no)&&r.migrant).length;
+    allCols.forEach((d,i)=>{a.tags[i]=(a.tags[i]||0)+c.ids.filter(no=>(students[no]?.tags||[]).includes(d)).length;});
+    return a;
+  },{t:0,m:0,f:0,mig:0,tags:[]});
+  const totRow=wsSum.addRow(['합계',tot.t,tot.m,tot.f,tot.mig||0,...tot.tags]);
+  totRow.height=24;
+  totRow.eachCell((cell,col)=>{
+    cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEBF5FB'}};
+    cell.font={bold:true,color:{argb:col===3?'FF2563EB':col===4?'FFE11D48':'FF1E3A5F'},size:10};
+    cell.border={top:{style:'medium',color:{argb:'FF1E3A5F'}},left:border,bottom:border,right:border};
+    cell.alignment={horizontal:'center',vertical:'middle'};
+  });
+
+  wsSum.getColumn(1).width=12;wsSum.getColumn(2).width=8;wsSum.getColumn(3).width=8;
+  wsSum.getColumn(4).width=8;wsSum.getColumn(5).width=10;
+  allCols.forEach((_,i)=>{wsSum.getColumn(6+i).width=18;});
+  wsSum.views=[{state:'frozen',ySplit:3}];
+
   const buf=await wb.xlsx.writeBuffer();
-  downloadBuffer(buf,'학급별_최종명렬표.xlsx');
+  downloadBuffer(buf,`${title.replace(/\s/g,'_')}.xlsx`);
 }
 async function exportHandoff(){
   const enabled=DOMAIN_LIST.filter(d=>CONFIG.domains[d]);
