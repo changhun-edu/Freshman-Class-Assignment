@@ -396,7 +396,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
             <textarea id="roster-paste" placeholder="김민준,남&#10;이서연,여&#10;김민준,남"></textarea>
             <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="addFromPaste()">명단에 추가</button>
             <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addRosterRow()">빈 행 추가</button>
-            <table class="roster-table" id="roster-table"><thead><tr><th style="width:90px">관리번호</th><th>이름</th><th style="width:70px">성별</th><th>구분 메모</th><th style="width:70px;text-align:center">이주배경</th><th style="width:40px"></th></tr></thead><tbody id="roster-tbody"></tbody></table>
+            <table class="roster-table" id="roster-table"><thead><tr><th style="width:90px">관리번호</th><th>이름</th><th style="width:70px">성별</th><th>구분 메모</th><th style="width:40px"></th></tr></thead><tbody id="roster-tbody"></tbody></table>
             <div id="roster-summary" style="margin-top:10px"></div>
             <div id="roster-lock-area" style="margin-top:14px"></div>
           </div>
@@ -743,7 +743,7 @@ function rosterNo(idx){
   const yy=document.getElementById('roster-year').value||String(new Date().getFullYear()).slice(-2);
   return `${yy}-${String(idx+1).padStart(3,'0')}`;
 }
-function addRosterRow(name='',gender='',note='',sep='',pair='',migrant=false){ROSTER.push({name,gender,note,sep,pair,migrant});renderRosterTable();}
+function addRosterRow(name='',gender='',note='',sep='',pair=''){ROSTER.push({name,gender,note,sep,pair});renderRosterTable();}
 function addFromPaste(){
   const raw=document.getElementById('roster-paste').value;
   raw.split('\n').map(l=>l.trim()).filter(Boolean).forEach(line=>{
@@ -766,8 +766,7 @@ function renderRosterTable(){
       <td><span class="roster-no">${r.no||rosterNo(i)}</span></td>
       <td><input value="${r.name}" ${rosterLocked?'disabled':''} onchange="updateRosterField(${i},'name',this.value)"></td>
       <td><input value="${r.gender}" ${rosterLocked?'disabled':''} placeholder="남/여" onchange="updateRosterField(${i},'gender',this.value)"></td>
-      <td><input value="${r.note}" ${rosterLocked?'disabled':''} placeholder="${unresolved?'동명이인 - 구분 메모 필요':''}" onchange="updateRosterField(${i},'note',this.value)"></td>
-      <td style="text-align:center"><input type="checkbox" ${r.migrant?'checked':''} ${rosterLocked?'disabled':''} title="이주배경 학생으로 체크하면 반 배정 시 균등 분산됩니다" onchange="updateRosterField(${i},'migrant',this.checked)"></td>
+      <td><input value="${r.note}" ${rosterLocked?'disabled':''} placeholder="${unresolved?'동명이인 - 구분 메모 권장':''}" onchange="updateRosterField(${i},'note',this.value)"></td>
       <td>${rosterLocked?'':`<span style="cursor:pointer;color:var(--text-muted)" onclick="removeRosterRow(${i})">✕</span>`}</td>
     </tr>`;
   }).join('');
@@ -777,8 +776,7 @@ function renderRosterTable(){
   document.getElementById('roster-summary').innerHTML=`
     <div class="summary-banner">
       <span class="pill-stat pill-ok">총 ${ROSTER.length}명</span>
-      ${ROSTER.filter(r=>r.migrant).length?`<span class="pill-stat pill-info">🌏 이주배경 ${ROSTER.filter(r=>r.migrant).length}명</span>`:''}
-      ${unresolvedCount?`<span class="pill-stat pill-warn">⚠ 동명이인 ${unresolvedCount}명 — 구분 메모를 입력해 주세요</span>`:(dupCount?`<span class="pill-stat pill-ok">✅ 동명이인 ${dupCount}명 (구분 메모 입력됨)</span>`:'')}
+      ${unresolvedCount?`<span class="pill-stat pill-warn">💡 동명이인 ${unresolvedCount}명 — 구분 메모 입력을 권장합니다</span>`:(dupCount?`<span class="pill-stat pill-ok">✅ 동명이인 ${dupCount}명 (구분 메모 입력됨)</span>`:'')}
     </div>`;
   renderRosterLockArea(needNote);
 }
@@ -788,9 +786,9 @@ function renderRosterLockArea(needNote){
     el.innerHTML=`<div class="lock-banner">✅ 명단이 확정되었습니다 (${ROSTER.length}명, 관리번호 ${ROSTER[0].no||rosterNo(0)}~${ROSTER[ROSTER.length-1].no||rosterNo(ROSTER.length-1)})
       <button class="btn btn-ghost btn-sm" onclick="unlockRoster()">명단 다시 열기</button></div>`;
   }else{
-    const disabled=(ROSTER.length===0||needNote)?'disabled':'';
+    const disabled=(ROSTER.length===0)?'disabled':'';
     el.innerHTML=`<button class="btn btn-primary" ${disabled} onclick="lockRoster()">명단 확정하고 관리번호 발급 →</button>
-      ${needNote?'<div style="font-size:.8rem;color:var(--amber);margin-top:6px">동명이인 구분 메모를 모두 입력해야 확정할 수 있습니다.</div>':''}`;
+      ${needNote?'<div style="font-size:.8rem;color:var(--amber);margin-top:6px">💡 동명이인이 있습니다. 구분 메모를 입력하면 관리에 도움이 됩니다. (입력하지 않아도 확정 가능)</div>':''}`;
   }
   // 서식 다운로드만 명단 확정 후 활성화, 업로드 이동 버튼은 항상 활성
   const dlBtn=document.getElementById('btn-download-main');
