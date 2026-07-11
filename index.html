@@ -2513,15 +2513,36 @@ function runAutoAssign(shuffle=false){
   const numClasses=ASSIGN.numClasses;
   const classes=Array.from({length:numClasses},(_,i)=>({idx:i,name:ASSIGN.classNames[i],ids:[],genderCount:{},tagCount:{},weight:0,langCount:0,migrantCount:0}));
   const clusters=buildClusters().map(ids=>({ids,...clusterScore(ids)}));
-  // 재배치 시: 동점 클러스터를 먼저 섞어서 배치 순서에 무작위성 부여
-  if(shuffle){
-    clusters.sort((a,b)=>{
-      const diff=(b.tagSum-a.tagSum)||(b.weight-a.weight)||(b.size-a.size);
-      return diff!==0?diff:(Math.random()-0.5);
+
+  // ── 배치 순서: 특수교육 포함 클러스터 먼저, 나머지 나중 ──
+  // 각 클러스터의 특수교육 여부 계산
+  clusters.forEach(cl=>{
+    cl.hasSpecialEd=cl.ids.some(no=>students[no]&&(students[no].tags||[]).includes('특수교육'));
+    cl.hasLangDiff=cl.ids.some(no=>{
+      const s=students[no];
+      return s&&s.domains&&s.domains['의사소통']&&s.domains['의사소통'].score>=1;
     });
-  } else {
-    clusters.sort((a,b)=>b.tagSum-a.tagSum||b.weight-a.weight||b.size-a.size);
+  });
+
+  function sortClusters(list){
+    if(shuffle){
+      list.sort((a,b)=>{
+        // 특수교육 먼저, 동점이면 무작위
+        if(a.hasSpecialEd!==b.hasSpecialEd) return a.hasSpecialEd?-1:1;
+        const diff=(b.weight-a.weight)||(b.tagSum-a.tagSum)||(b.size-a.size);
+        return diff!==0?diff:(Math.random()-0.5);
+      });
+    } else {
+      list.sort((a,b)=>{
+        // 특수교육 먼저
+        if(a.hasSpecialEd!==b.hasSpecialEd) return a.hasSpecialEd?-1:1;
+        // 그 다음 weight(특수교육 가중치) 내림차순
+        return (b.weight-a.weight)||(b.tagSum-a.tagSum)||(b.size-a.size);
+      });
+    }
+    return list;
   }
+  sortClusters(clusters);
   const assignmentMap={};
   const forcedViolations=[];
   clusters.forEach(cl=>{
@@ -2537,17 +2558,17 @@ function runAutoAssign(shuffle=false){
     if(shuffle) candidates=[...candidates].sort(()=>Math.random()-0.5);
     let best=null,bestScore=Infinity;
     candidates.forEach(c=>{
-      // ① 가중치 기반 인원 균등 (특수교육 포함)
-      let score=c.weight*3;
-      // ② 순수 인원 균등 — 이미 많이 배정된 반 회피
+      // ① 특수교육 가중치 기반 인원 균등 — 가장 강한 우선순위
+      let score=c.weight*5;
+      // ② 순수 인원 균등
       score+=c.ids.length*2;
       cl.ids.forEach(no=>{
         const s=students[no];if(!s)return;
         // ③ 성별 균형
         score+=(c.genderCount[s.gender]||0);
-        // ④ 태그별 균등 분산 (주의집중·행동조절 등 모든 관찰영역)
+        // ④ 태그별 균등 분산
         (s.tags||[]).forEach(t=>{score+=(c.tagCount[t]||0)*2;});
-        // ⑤ 언어 어려움 학생 별도 우선 분산 (의사소통 태그와 별개로)
+        // ⑤ 언어 어려움 학생 별도 분산
         const langScore=(s.domains&&s.domains['의사소통'])?s.domains['의사소통'].score:0;
         if(langScore>=1) score+=(c.langCount||0)*3;
         // ⑥ 이주배경 균등 분산
