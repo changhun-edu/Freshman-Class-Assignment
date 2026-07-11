@@ -396,7 +396,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
             <textarea id="roster-paste" placeholder="김민준,남&#10;이서연,여&#10;김민준,남"></textarea>
             <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="addFromPaste()">명단에 추가</button>
             <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="addRosterRow()">빈 행 추가</button>
-            <table class="roster-table" id="roster-table"><thead><tr><th style="width:90px">관리번호</th><th>이름</th><th style="width:70px">성별</th><th>구분 메모</th><th style="width:70px;text-align:center">이주배경<br><span style="font-weight:400;font-size:.68rem">해당시 체크</span></th><th style="width:40px"></th></tr></thead><tbody id="roster-tbody"></tbody></table>
+            <table class="roster-table" id="roster-table"><thead><tr><th style="width:90px">관리번호</th><th>이름</th><th style="width:70px">성별</th><th>구분 메모</th><th style="width:70px;text-align:center">이주배경</th><th style="width:40px"></th></tr></thead><tbody id="roster-tbody"></tbody></table>
             <div id="roster-summary" style="margin-top:10px"></div>
             <div id="roster-lock-area" style="margin-top:14px"></div>
           </div>
@@ -1836,7 +1836,7 @@ const dz=()=>document.getElementById('drop-zone');
 function saveSession(){
   try{
     localStorage.setItem(SESSION_KEY,JSON.stringify({
-      ROSTER,rosterLocked,domainsLocked,domains:CONFIG.domains,specialEd:CONFIG.specialEd
+      ROSTER,rosterLocked,domains:CONFIG.domains,specialEd:CONFIG.specialEd
     }));
   }catch(e){/* 저장 공간 부족 등은 무시 */}
 }
@@ -1846,7 +1846,6 @@ function restoreSession(){
   if(!saved||!Array.isArray(saved.ROSTER))return false;
   ROSTER=saved.ROSTER;
   rosterLocked=!!saved.rosterLocked;
-  domainsLocked=!!saved.domainsLocked;
   if(saved.domains)Object.assign(CONFIG.domains,saved.domains);
   if(saved.specialEd)CONFIG.specialEd=saved.specialEd;
   if(rosterLocked){
