@@ -866,8 +866,6 @@ function renderDomainLockArea(){
   ['btn-print-interview','btn-print-survey','btn-copy-google','btn-copy-naver','btn-gen-websurvey'].forEach(id=>{
     const b=document.getElementById(id);if(b)b.disabled=!domainsLocked;
   });
-  const ps=document.getElementById('btn-print-survey');
-
 }
 function lockDomains(){
   const enabledCnt=DOMAIN_LIST.filter(d=>CONFIG.domains[d]).length;
@@ -2524,18 +2522,6 @@ function renderAssignResults(){
         +((dotHtml||moreHtml)?'<div class="student-mini-dots">'+dotHtml+moreHtml+'</div>':'')
         +'</div>';
     }).join('');
-      const isMig=r.migrant;
-      return `<div class="student-mini${isMig?' migrant-bg':''}"
-        data-name="${s.name||''}" data-no="${no}"
-        draggable="true"
-        ondragstart="onDragStart(event,'${no}')"
-        ondragend="onDragEnd(event)"
-        <div class="student-mini-seq">${i+1}.${isMig?' 🌏':''}</div>
-        <div class="student-mini-name">${s.name||no}</div>
-        <div class="student-mini-id">${no}</div>
-        ${tagHtml?`<div class="student-mini-tags">${tagHtml}</div>`:''}
-      </div>`;
-    }).join('');
     return `<div class="class-board-card">
       <div class="class-board-header cc-${ci%10}" style="background:${bg}">
         <h4>${c.name}</h4>
@@ -2544,7 +2530,7 @@ function renderAssignResults(){
       <div class="class-board-body" id="board-body-${c.idx}"
         ondragover="onDragOver(event,${c.idx})"
         ondrop="onDrop(event,${c.idx})">
-        <div class="student-mini-grid">${cards||'<div style="font-size:.8rem;color:var(--text-muted);padding:8px;grid-column:1/-1">배정된 학생 없음</div>'}</div>
+        <div class="student-mini-grid">${cards||'<div style="font-size:.8rem;color:var(--text-muted);padding:8px;grid-column:1 / -1">배정된 학생 없음</div>'}</div>
       </div>
     </div>`;
   }).join('');
