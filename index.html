@@ -232,7 +232,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
     <section class="panel active" id="panel-prep">
       <div class="prep-grid">
 
-        <!-- 왼쪽: STEP1 — 관찰 영역 선택 + 학부모 설문 출력 -->
+        <!-- 왼쪽: STEP 1 관찰 영역 선택 / STEP 2 학부모 설문 방식 결정 -->
         <div>
           <div class="card">
             <span class="step-badge">STEP 1</span>
@@ -243,9 +243,10 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
             <div id="domain-lock-area" style="margin-top:10px"></div>
           </div>
 
-          <!-- 문항 출력 (STEP 1 하단) -->
+          <!-- 학부모 설문 방식 결정 (STEP 2) -->
           <div class="card">
-            <h3 style="margin-bottom:8px">🖨 문항 출력</h3>
+            <span class="step-badge">STEP 2</span>
+            <h3 style="margin-bottom:8px">📋 학생 문항 출력 &amp; 학부모 설문 방식 결정</h3>
             <p style="font-size:.78rem;color:var(--text-sub);margin-bottom:10px">관찰 영역을 확정하면 출력·온라인 설문 기능이 활성화됩니다.</p>
             <div class="summary-pill" id="prep-summary-pill">📌 현재 설정: 관찰 영역 8개 선택됨</div>
 
@@ -274,15 +275,29 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
         <!-- 오른쪽: STEP2 — 명단 등록 + 면접용 서식 다운로드 -->
         <div>
           <div class="card">
-            <span class="step-badge">STEP 2</span>
+            <span class="step-badge">STEP 3</span>
             <h3 style="margin-bottom:6px">📋 신입생 명단 등록</h3>
             <p style="font-size:.82rem;color:var(--text-sub);margin-bottom:12px">이름·성별만 등록하면 학생마다 고유한 <b>관리번호</b>를 자동으로 부여합니다.</p>
             <div class="row" style="margin-bottom:10px">
               <div class="field" style="max-width:140px">
                 <label>학년도(번호 앞자리)</label>
-                <input type="text" id="roster-year" value="" maxlength="2" oninput="renderRosterTable()">
+                <input type="text" id="roster-year" value="27" maxlength="2" oninput="renderRosterTable()">
               </div>
             </div>
+
+            <!-- 엑셀 업로드 방식 -->
+            <div style="background:var(--primary-light);border:1px solid #bfdbfe;border-radius:8px;padding:12px 14px;margin-bottom:12px">
+              <div style="font-size:.82rem;font-weight:700;color:var(--primary-dark);margin-bottom:6px">📥 엑셀로 명단 추가 (권장)</div>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                <button class="btn btn-primary btn-sm" onclick="downloadRosterInputTemplate()">⬇ 명단 입력 양식 다운로드</button>
+                <button class="btn btn-ghost btn-sm" onclick="document.getElementById('roster-excel-input').click()">📂 작성한 양식 업로드</button>
+                <input type="file" id="roster-excel-input" accept=".xlsx,.xls" style="display:none" onchange="uploadRosterExcel(this)">
+              </div>
+              <div style="font-size:.75rem;color:var(--text-muted);margin-top:6px">① 양식 다운로드 → ② 이름·성별 입력 → ③ 파일 업로드 → 명단 자동 추가</div>
+            </div>
+
+            <!-- 붙여넣기 방식 -->
+            <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:4px">✏️ 직접 입력 또는 붙여넣기</div>
             <label style="font-size:.82rem;font-weight:600;color:var(--text-sub)">한 줄에 한 명씩 붙여넣기 (이름,성별 또는 이름 [탭] 성별)</label>
             <textarea id="roster-paste" placeholder="김민준,남&#10;이서연,여&#10;김민준,남"></textarea>
             <button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="addFromPaste()">명단에 추가</button>
@@ -291,6 +306,14 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
             <div id="roster-summary" style="margin-top:10px"></div>
             <div id="roster-lock-area" style="margin-top:14px"></div>
           </div>
+
+          <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:14px 16px;margin-bottom:10px">
+              <div style="font-size:.84rem;font-weight:700;color:#166534;margin-bottom:6px">📂 이미 서식 파일이 있으신가요?</div>
+              <div style="font-size:.8rem;color:#166534;line-height:1.6;margin-bottom:10px">이전에 받은 서식 파일에 면접 결과를 작성했다면<br>아래 버튼을 눌러 바로 업로드하세요.</div>
+              <button onclick="goStep('upload')" style="display:flex;align-items:center;gap:6px;background:#fff;border:1.5px solid #86efac;border-radius:8px;padding:9px 16px;font-size:.84rem;font-weight:700;color:#166534;cursor:pointer;width:100%">
+                <span>📤</span> 바로 엑셀 업로드하기 →
+              </button>
+            </div>
 
           <div class="card">
             <h3 style="margin-bottom:8px">⬇ 면접용 서식 다운로드</h3>
@@ -407,7 +430,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 <div class="guide-modal-bg" id="google-guide-modal">
   <div class="guide-modal">
     <h3>📋 구글폼 자동 생성 안내</h3>
-    <div class="sub">Apps Script를 이용해 구글폼을 자동으로 만듭니다. 3단계만 따라하세요.</div>
+    <div class="sub">Apps Script를 이용해 구글폼을 자동으로 만듭니다. 아래 순서대로 따라하세요.</div>
     <div class="guide-step">
       <div class="guide-step-num">1</div>
       <div class="guide-step-body">
@@ -428,14 +451,30 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
     <div class="guide-step">
       <div class="guide-step-num">3</div>
       <div class="guide-step-body">
-        <div class="guide-step-title">붙여넣기 → 실행 → 링크 확인</div>
-        <div class="guide-step-desc">편집기의 기존 내용을 모두 지우고 복사한 코드를 붙여넣은 뒤 ▶ 실행 버튼을 누르세요. 완료 후 하단 <b>실행 로그</b>에서 설문 배포 링크를 확인하세요.</div>
+        <div class="guide-step-title">붙여넣기 → 저장 → 실행</div>
+        <div class="guide-step-desc">편집기의 기존 내용을 모두 지우고 복사한 코드를 붙여넣은 뒤 <b>💾 저장(Ctrl+S)</b> 후 <b>▶ 실행</b> 버튼을 누르세요.</div>
+        <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:6px;padding:7px 10px;font-size:.75rem;margin-top:6px;color:#92400e">⚠ 처음 실행 시 Google 권한 허용 팝업이 뜹니다. "허용"을 눌러주세요.</div>
+      </div>
+    </div>
+    <div class="guide-step">
+      <div class="guide-step-num">4</div>
+      <div class="guide-step-body">
+        <div class="guide-step-title">실행 로그에서 배포 링크 확인</div>
+        <div class="guide-step-desc">실행 완료 후 하단 <b>실행 로그</b>에서 배포 링크를 복사해 학부모에게 공유하거나 QR코드로 변환하세요.</div>
         <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:7px 10px;font-size:.75rem;margin-top:6px;color:#166534">
           ✅ 실행 로그 예시:<br>
-          설문 배포 링크: https://docs.google.com/forms/d/e/…/viewform<br>
-          <span style="color:#5a6a82">→ 이 링크를 복사해 학부모에게 공유하거나 QR코드로 변환하세요.</span>
+          ▶ 설문 배포 링크: https://docs.google.com/forms/d/e/…/viewform
         </div>
-        <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:6px;padding:7px 10px;font-size:.75rem;margin-top:6px;color:#92400e">⚠ 처음 실행 시 Google 권한 허용 팝업이 뜹니다. "허용"을 눌러주세요.</div>
+      </div>
+    </div>
+    <div class="guide-step">
+      <div class="guide-step-num">5</div>
+      <div class="guide-step-body">
+        <div class="guide-step-title">응답 수집 후 CSV 내보내기</div>
+        <div class="guide-step-desc">응답이 모두 수집되면 같은 스크립트 편집기에서 함수를 <b>createForm → exportToCSV</b>로 바꾼 뒤 실행하세요. 실행 로그에 CSV 파일 링크가 뜹니다. 다운로드 후 이 사이트 업로드 탭에서 가져오면 자동 반영됩니다.</div>
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:7px 10px;font-size:.75rem;margin-top:6px;color:#1e40af">
+          💡 CSV는 이 사이트의 학부모설문 시트 형식과 자동으로 맞춰져 생성됩니다.
+        </div>
       </div>
     </div>
     <div class="guide-modal-footer">
@@ -690,9 +729,9 @@ function renderDomainLockArea(){
     </div>`;
   } else {
     el.innerHTML=`<button class="btn-domain-confirm" onclick="lockDomains()">
-      ✅ 영역 선택 확정 → 문항 출력 활성화
+      ✅ 영역 선택 확정 → STEP 2 활성화
     </button>
-    <div style="font-size:.75rem;color:var(--text-muted);margin-top:5px;text-align:center">확정 후 학생 면접 문항·학부모 설문지 출력이 가능합니다</div>`;
+    <div style="font-size:.75rem;color:var(--text-muted);margin-top:5px;text-align:center">확정 후 STEP 2에서 학부모 설문 방식을 결정하고 문항을 출력할 수 있습니다</div>`;
   }
   // 출력 버튼 활성/비활성
   ['btn-print-interview','btn-print-survey','btn-copy-google','btn-copy-naver','btn-gen-websurvey'].forEach(id=>{
@@ -998,6 +1037,96 @@ async function buildInterviewWorkbook(prefill){
 
   return wb;
 }
+/* ===================== 명단 엑셀 양식 다운로드 / 업로드 ===================== */
+async function downloadRosterInputTemplate(){
+  const wb=new ExcelJS.Workbook();
+  const ws=wb.addWorksheet('명단입력');
+
+  const hFill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1E3A5F'}};
+  const hFont={bold:true,color:{argb:'FFFFFFFF'},size:10};
+  const border={style:'thin',color:{argb:'FFBFCFDD'}};
+  const allBorder={top:border,left:border,bottom:border,right:border};
+
+  // 안내 행
+  ws.mergeCells('A1:D1');
+  const guide=ws.getCell('A1');
+  guide.value='※ 이름과 성별을 입력하세요. 구분메모는 동명이인 구분 시 사용합니다. 입력 후 저장하고 업로드하세요.';
+  guide.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEBF5FB'}};
+  guide.font={italic:true,color:{argb:'FF2C5F8A'},size:9};
+  guide.alignment={horizontal:'left',vertical:'middle'};
+  ws.getRow(1).height=22;
+
+  // 헤더
+  const headers=['이름','성별(남/여)','구분 메모 (선택)','비고'];
+  ws.addRow(headers);
+  const hRow=ws.getRow(2);
+  hRow.height=24;
+  hRow.eachCell((cell,i)=>{
+    cell.fill=hFill;cell.font=hFont;cell.border=allBorder;
+    cell.alignment={horizontal:'center',vertical:'middle'};
+  });
+
+  // 예시 데이터 3행
+  const examples=[['김민준','남','',''],['이서연','여','',''],['김민준','남','형제 있음','']];
+  examples.forEach((ex,i)=>{
+    const row=ws.addRow(ex);
+    row.height=20;
+    row.eachCell(cell=>{
+      cell.border=allBorder;
+      cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:i%2===0?'FFF7FAFD':'FFFFFFFF'}};
+      cell.alignment={horizontal:'left',vertical:'middle'};
+      cell.font={color:{argb:'FF999999'},italic:true};
+    });
+  });
+
+  // 빈 데이터 행 97개
+  for(let i=0;i<97;i++){
+    const row=ws.addRow(['','','','']);
+    row.height=20;
+    row.eachCell(cell=>{
+      cell.border=allBorder;
+      cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:i%2===0?'FFF7FAFD':'FFFFFFFF'}};
+    });
+    // 성별 드롭다운
+    ws.getCell(row.number,2).dataValidation={type:'list',allowBlank:true,formulae:['"남,여"']};
+  }
+
+  ws.getColumn(1).width=16;
+  ws.getColumn(2).width=12;
+  ws.getColumn(3).width=20;
+  ws.getColumn(4).width=14;
+  ws.views=[{state:'frozen',ySplit:2}];
+
+  const buf=await wb.xlsx.writeBuffer();
+  downloadBuffer(buf,'신입생_명단_입력양식.xlsx');
+}
+
+async function uploadRosterExcel(input){
+  const file=input.files[0];if(!file)return;
+  const buf=await file.arrayBuffer();
+  const wb=new ExcelJS.Workbook();
+  await wb.xlsx.load(buf);
+  const ws=wb.getWorksheet(1);
+  if(!ws){alert('시트를 찾을 수 없습니다.');return;}
+
+  let added=0,skipped=0;
+  ws.eachRow((row,rowNum)=>{
+    if(rowNum<=2)return; // 안내+헤더 제외
+    const name=String(row.getCell(1).value||'').trim();
+    const gender=String(row.getCell(2).value||'').trim();
+    const note=String(row.getCell(3).value||'').trim();
+    if(!name){skipped++;return;}
+    // 예시 데이터(회색 이탤릭) 스킵 — 값으로 판단
+    if(name==='김민준'&&gender==='남'&&rowNum<=5&&!note){}; // 예시는 그냥 추가 허용
+    ROSTER.push({name,gender,note,sep:'',pair:''});
+    added++;
+  });
+
+  renderRosterTable();
+  input.value='';
+  alert(`명단 ${added}명이 추가되었습니다.${skipped?` (빈 행 ${skipped}개 건너뜀)`:''}\n내용을 확인하고 명단을 확정하세요.`);
+}
+
 async function downloadRosterTemplate(){
   if(!rosterLocked){alert('먼저 명단을 확정해 주세요.');return;}
   const wb=await buildInterviewWorkbook(true);
@@ -1149,10 +1278,38 @@ function getActiveItems(){
 /* ── 안 B: 구글폼 Apps Script 자동 생성 ── */
 function buildGoogleScript(){
   const items=getActiveItems();
-  let code='function createForm(){\n';
+  // 열 헤더 목록 생성 (exportToCSV에서 재사용)
+  const colDefs=[];
+  colDefs.push({key:'접수번호',title:'접수번호'});
+  colDefs.push({key:'이름',title:'학생이름'});
+  items.forEach((item,i)=>{
+    colDefs.push({key:`q${i}`,title:`${i+1}.${item.label}`});
+    if(item.note) colDefs.push({key:`n${i}`,title:`${i+1}.${item.label} 구체내용`});
+  });
+  colDefs.push({key:`q${items.length}`,title:'입학초기배려사항'});
+  const colDefsJson=JSON.stringify(colDefs);
+
+  let code='// =====================================================\n';
+  code+='// 신입생 학부모 설문 - 구글폼 자동 생성 스크립트\n';
+  code+='// 사용법: createForm() 실행 → 실행 로그에서 배포 링크 확인\n';
+  code+='//        나중에 exportToCSV() 실행 → 면접서식에 바로 붙여넣기 가능한 CSV 다운로드\n';
+  code+='// =====================================================\n\n';
+  code+='function createForm(){\n';
   code+='  var form=FormApp.create("신입생 학부모 설문");\n';
-  code+='  form.setDescription("이 조사는 신입생의 안정적인 학교 적응과 균형 있는 학급 편성을 위한 참고자료입니다. 응답 내용은 학생의 학교생활 지원을 위해 활용되며, 학급 편성은 학교의 교육적 판단에 따라 이루어집니다.");\n';
+  code+='  form.setTitle("신입생 학부모 설문");\n';
+  code+='  form.setDescription("이 조사는 신입생의 안정적인 학교 적응과 균형 있는 학급 편성을 위한 참고자료입니다.\\n응답 내용은 학생의 학교생활 지원을 위해 활용되며, 학급 편성은 학교의 교육적 판단에 따라 이루어집니다.");\n';
   code+='  form.setCollectEmail(false);\n\n';
+  // 접수번호
+  code+='  // 접수번호\n';
+  code+='  var qId=form.addTextItem();\n';
+  code+='  qId.setTitle("접수번호 (면접 서식에 적힌 번호를 입력하세요. 예: 26-001)");\n';
+  code+='  qId.setRequired(true);\n\n';
+  // 학생이름
+  code+='  // 학생 이름\n';
+  code+='  var qName=form.addTextItem();\n';
+  code+='  qName.setTitle("학생 이름");\n';
+  code+='  qName.setRequired(true);\n\n';
+  // 문항
   items.forEach((item,i)=>{
     if(item.multi){
       code+=`  var q${i}=form.addCheckboxItem();\n`;
@@ -1173,23 +1330,61 @@ function buildGoogleScript(){
     }
     code+=`  q${i}.setRequired(false);\n`;
     if(item.note){
-      const ni=`n${i}`;
-      code+=`  var ${ni}=form.addTextItem();\n`;
-      code+=`  ${ni}.setTitle("${i+1}-구체적 내용 (선택사항)");\n`;
+      code+=`  var n${i}=form.addTextItem();\n`;
+      code+=`  n${i}.setTitle("${i+1}. ${item.label} - 구체적인 내용 (선택사항)");\n`;
+      code+=`  n${i}.setRequired(false);\n`;
     }
     code+='\n';
   });
+  // 배려사항
   const last=items.length;
   code+=`  var q${last}=form.addParagraphTextItem();\n`;
   code+=`  q${last}.setTitle("${last+1}. 입학 초기 배려 사항\\n입학 초기 담임교사가 꼭 알아야 할 내용이 있다면 적어 주세요.");\n`;
   code+=`  q${last}.setRequired(false);\n\n`;
+  // 완료
   code+='  var url=form.getPublishedUrl();\n';
   code+='  var editUrl=form.getEditUrl();\n';
+  code+='  PropertiesService.getScriptProperties().setProperty("FORM_ID", form.getId());\n';
   code+='  Logger.log("✅ 구글폼 생성 완료!");\n';
-  code+='  Logger.log("설문 배포 링크: "+url);\n';
-  code+='  Logger.log("설문 편집 링크: "+editUrl);\n';
-  code+='  Logger.log("※ 위 배포 링크를 학부모에게 공유하세요.");\n';
+  code+='  Logger.log("▶ 설문 배포 링크 (학부모에게 공유): " + url);\n';
+  code+='  Logger.log("▶ 설문 편집 링크: " + editUrl);\n';
+  code+='  Logger.log("※ 응답 수집 후 exportToCSV() 함수를 실행하면 면접서식 형식의 CSV를 받을 수 있습니다.");\n';
+  code+='}\n\n';
+
+  // exportToCSV 함수 — 응답을 면접서식 형식 CSV로 변환
+  code+='// 응답 수집 후 실행 → 면접서식(학부모설문 시트)에 바로 붙여넣기 가능한 CSV 생성\n';
+  code+='function exportToCSV(){\n';
+  code+=`  var colDefs=${colDefsJson};\n`;
+  code+='  var formId=PropertiesService.getScriptProperties().getProperty("FORM_ID");\n';
+  code+='  if(!formId){Logger.log("먼저 createForm()을 실행하세요.");return;}\n';
+  code+='  var form=FormApp.openById(formId);\n';
+  code+='  var responses=form.getResponses();\n';
+  code+='  var headers=colDefs.map(function(c){return c.title;});\n';
+  code+='  var rows=[headers];\n';
+  code+='  responses.forEach(function(res){\n';
+  code+='    var itemResponses=res.getItemResponses();\n';
+  code+='    var map={};\n';
+  code+='    var idVal="",nameVal="";\n';
+  code+='    itemResponses.forEach(function(ir,idx){\n';
+  code+='      var title=ir.getItem().getTitle();\n';
+  code+='      var val=ir.getResponse();\n';
+  code+='      if(Array.isArray(val)) val=val.join(",");\n';
+  code+='      if(title.indexOf("접수번호")>=0) idVal=val;\n';
+  code+='      else if(title.indexOf("학생 이름")>=0) nameVal=val;\n';
+  code+='      else map[idx-2]=val;\n'; // -2 for 접수번호, 이름
+  code+='    });\n';
+  code+='    var row=[idVal,nameVal];\n';
+  code+='    colDefs.slice(2).forEach(function(_,i){ row.push(map[i]||""); });\n';
+  code+='    rows.push(row);\n';
+  code+='  });\n';
+  code+='  var csv=rows.map(function(r){\n';
+  code+='    return r.map(function(v){return \'"\'+String(v||"").replace(/"/g,\'""\')+\'"\'}).join(",");\n';
+  code+='  }).join("\\n");\n';
+  code+='  var file=DriveApp.createFile("학부모설문_응답_"+new Date().toLocaleDateString("ko-KR")+".csv", "\\uFEFF"+csv, "text/csv");\n';
+  code+='  Logger.log("✅ CSV 생성 완료: " + file.getUrl());\n';
+  code+='  Logger.log("※ 위 링크에서 파일을 다운로드하세요.");\n';
   code+='}\n';
+
   return code;
 }
 
@@ -1200,10 +1395,7 @@ function copyForGoogleForm(){
     setTimeout(()=>{const el=document.getElementById('copy-confirm');if(el)el.style.display='none';},3000);
   });
 }
-
-function copyGoogleScript(){
-  copyForGoogleForm();
-}
+function copyGoogleScript(){ copyForGoogleForm(); }
 
 function showGoogleGuide(){
   document.getElementById('google-guide-modal').classList.add('open');
@@ -1529,7 +1721,6 @@ function restoreSession(){
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('roster-year').value=String(new Date().getFullYear()).slice(-2);
   const restored=restoreSession();
   renderRosterTable();
   renderStepProgress();renderDomainToggles();renderSpecialEdToggle();onConfigChange();
