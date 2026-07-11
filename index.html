@@ -261,6 +261,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 .student-mini-tag-more{font-size:.62rem;color:var(--text-muted);font-weight:700;margin-left:1px}
 .student-mini-tags{display:flex;flex-wrap:wrap;gap:2px;margin-top:3px}
 .student-mini-tag{font-size:.58rem;font-weight:800;padding:1px 5px;border-radius:4px;border:1px solid transparent}
+.student-mini.confirmed-lock{cursor:default;opacity:.85}
 .student-mini.migrant-bg{background:#fefce8;border-color:#fde68a}
 /* ── 통계 하단 바 ── */
 .assign-footer-bar{display:flex;align-items:center;gap:14px;padding:10px 16px;background:var(--surface2);border-radius:10px;margin-top:12px;font-size:.82rem;flex-wrap:wrap}
@@ -418,10 +419,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
     <section class="panel" id="panel-upload">
       <div class="card">
         <h3><span class="icon">📄</span>면접 결과 업로드</h3>
-        <p style="font-size:.82rem;color:var(--text-sub);margin-bottom:12px">학생 면접은 교사가 엑셀에 입력하고, 학부모 설문은 담당자가 면접용 서식의 '학부모설문' 시트에 옮겨 적어 업로드하면 됩니다. 서식·설문지는 준비 단계에서 받을 수 있습니다.</p>
-        <div style="margin-bottom:14px">
-          <button class="btn btn-ghost btn-sm" onclick="downloadTemplate()">⬇ 빈 템플릿 (명단 미사용시, 전체 영역 포함)</button>
-        </div>
+        <p style="font-size:.82rem;color:var(--text-sub);margin-bottom:12px">학생 면접 결과는 교사가 면접용 서식(학생면접 시트)에 입력해 업로드하세요. 학부모 설문은 <b>종이 설문지</b>를 수거 후 담당자가 학부모설문 시트에 옮겨 적거나, <b>온라인 설문</b>(구글폼·네이버폼·웹설문)을 이용해 수집한 CSV를 업로드할 수 있습니다. 서식·설문지는 준비 단계에서 받으세요.</p>
         <div id="drop-zone" onclick="document.getElementById('file-input').click()">
           <div class="big">📁</div>
           <div style="margin-top:8px;font-weight:700">엑셀 파일을 여기로 끌어다 놓으세요</div>
@@ -2305,6 +2303,7 @@ function computeViolationsLive(){
   ASSIGN.violations=[...new Set(violations)];
 }
 function moveStudentToClass(no,newIdx){
+  if(ASSIGN.confirmed){alert('배치가 확정되었습니다. 수동 이동이 잠겼습니다.\n수정하려면 [재배치] 버튼을 사용하세요.');return;}
   newIdx=+newIdx;
   const oldC=ASSIGN.classes.find(c=>c.ids.includes(no));
   const newC=ASSIGN.classes[newIdx];
@@ -2349,13 +2348,16 @@ function undoAssign(){
 function rerunAutoAssign(){
   if(!ASSIGN.assigned){runAutoAssign();return;}
   if(!confirm('현재 배치를 초기화하고 다시 자동 배치합니다. 계속할까요?'))return;
+  ASSIGN.confirmed=false;
   saveAssignSnapshot();runAutoAssign();
 }
 function confirmAssign(){
   if(!ASSIGN.assigned){alert('먼저 자동 배치를 실행하세요.');return;}
   const unassigned=Object.values(students).filter(s=>!ASSIGN.classes.some(c=>c.ids.includes(s.id)));
   if(unassigned.length&&!confirm(`${unassigned.length}명이 배정되지 않았습니다. 그래도 확정하시겠습니까?`))return;
-  alert('✅ 배치가 확정되었습니다. 엑셀 출력 버튼으로 결과를 저장하세요.');
+  ASSIGN.confirmed=true;
+  renderAssignResults();
+  alert('✅ 배치가 확정되었습니다. 엑셀 출력 버튼으로 결과를 저장하세요.\n\n수동 이동이 잠겼습니다. 다시 수정하려면 [재배치] 버튼을 사용하세요.');
 }
 function showAssignStats(){
   if(!ASSIGN.assigned){alert('먼저 배치를 실행하세요.');return;}
@@ -2438,6 +2440,9 @@ function openStudentModal(no){
   document.getElementById('sdm-class-select').innerHTML=ASSIGN.classes.map(c=>
     `<option value="${c.idx}"${c===curClass?' selected':''}>${c.name}${c===curClass?' (현재반)':''}</option>`
   ).join('');
+  // 반 이동 섹션 — 확정 시 숨김
+  const moveSection=document.querySelector('.sdm-section:last-of-type');
+  if(moveSection)moveSection.style.display=ASSIGN.confirmed?'none':'block';
   document.getElementById('student-detail-modal').classList.add('open');
 }
 function closeStudentModal(){
@@ -2507,13 +2512,14 @@ function renderAssignResults(){
         return '<span class="student-mini-tag-dot" style="background:'+dc.fg+'" title="'+t+'"></span>';
       }).join('');
       const moreHtml=tags.length>maxDots?'<span class="student-mini-tag-more">+' +(tags.length-maxDots)+'</span>':'';
-      return '<div class="student-mini'+(isMig?' migrant-bg':'')+'"'
+      const confirmed=ASSIGN.confirmed;
+      return '<div class="student-mini'+(isMig?' migrant-bg':'')+(confirmed?' confirmed-lock':'')+'"'
         +' data-name="'+(s.name||'')+'" data-no="'+no+'"'
-        +' draggable="true"'
-        +' ondragstart="onDragStart(event,\''+no+'\')"'
+        +' draggable="'+(confirmed?'false':'true')+'"'
+        +(confirmed?'':' ondragstart="onDragStart(event,\''+no+'\')"')
         +' ondragend="onDragEnd(event)"'
-        +' onclick="openStudentModal(\''+no+'\')">'
-        +'<div class="student-mini-seq">'+(i+1)+'.'+(isMig?' 🌏':'')+'</div>'
+        +' onclick="openStudentModal(\''+no+'\')">'+
+        '<div class="student-mini-seq">'+(i+1)+'.'+(isMig?' 🌏':'')+(confirmed?' 🔒':'')+'</div>'
         +'<div class="student-mini-name">'+(s.name||no)+'</div>'
         +'<div class="student-mini-id">'+no+'</div>'
         +((dotHtml||moreHtml)?'<div class="student-mini-dots">'+dotHtml+moreHtml+'</div>':'')
@@ -2632,7 +2638,7 @@ async function exportClassApp(){
     ws.getRow(stHN).height=22;
 
     // 통계 컬럼 헤더
-    const stCH=ws.addRow(['구분','전체','남','여','이주배경','관찰영역 현황']);
+    const stCH=ws.addRow(['구분','전체','남','여','이주배경']);
     stCH.height=20;
     stCH.eachCell(cell=>{
       cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEBF5FB'}};
@@ -2643,16 +2649,12 @@ async function exportClassApp(){
     // 통계 데이터
     const male=c.genderCount['남']||0,female=c.genderCount['여']||0;
     const mig=ROSTER.filter(r=>c.ids.includes(r.no)&&r.migrant).length;
-    const tagSummary=allCols.map(d=>{
-      const cnt=c.ids.filter(no=>(students[no]?.tags||[]).includes(d)).length;
-      return cnt?`${d} ${cnt}명`:'';
-    }).filter(Boolean).join(' · ')||'없음';
-    const stRow=ws.addRow([c.name,c.ids.length,male,female,mig||0,tagSummary]);
+    const stRow=ws.addRow([c.name,c.ids.length,male,female,mig||0]);
     stRow.height=20;
     stRow.eachCell((cell,col)=>{
       cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFFFFF'}};
       cell.border=allBorder;
-      cell.alignment={horizontal:'center',vertical:'middle',wrapText:col===6};
+      cell.alignment={horizontal:'center',vertical:'middle'};
       if(col===3)cell.font={bold:true,color:{argb:'FF2563EB'}};
       if(col===4)cell.font={bold:true,color:{argb:'FFE11D48'}};
     });
