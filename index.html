@@ -86,9 +86,32 @@ input[type=number], input[type=text]{padding:8px 10px;border:1px solid var(--bor
 .review-layout{display:flex;gap:16px;align-items:flex-start}
 .review-list{flex:1.4;min-width:0}
 .review-detail{flex:1;position:sticky;top:0;max-height:80vh;overflow:auto}
-.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
-.filter-btn{padding:6px 12px;border-radius:16px;border:1px solid var(--border);background:var(--surface2);font-size:.8rem;cursor:pointer;font-weight:600;color:var(--text-sub)}
-.filter-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.filter-btn{padding:5px 11px;border-radius:16px;border:1.5px solid var(--border);background:#fff;font-size:.78rem;cursor:pointer;font-weight:700;color:var(--text-sub);display:inline-flex;align-items:center;gap:5px;transition:.12s}
+.filter-btn:hover{border-color:var(--primary);color:var(--primary)}
+.filter-btn.active{color:#fff;border-color:transparent}
+.filter-btn .f-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.filter-btn .f-cnt{font-size:.7rem;opacity:.85;font-weight:800}
+/* ── 검토 상세 패널 개선 ── */
+.detail-search-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.detail-search-row input{flex:1;padding:8px 12px;border-radius:8px;border:1.5px solid var(--border);font-size:.84rem}
+.review-summary-bar{font-size:.78rem;color:var(--text-muted);display:flex;gap:12px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.review-summary-bar b{color:var(--text)}
+/* ── 태그 토글 그리드 ── */
+.tag-toggle-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px}
+.tag-toggle-item{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:8px;border:1.5px solid var(--border);cursor:pointer;transition:.12s;user-select:none}
+.tag-toggle-item:hover{border-color:#93c5fd}
+.tag-toggle-item.on{border-color:transparent}
+.tag-toggle-label{display:flex;align-items:center;gap:6px;font-size:.8rem;font-weight:700}
+.tag-toggle-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.tag-toggle-switch{width:34px;height:18px;border-radius:9px;background:#d1d5db;position:relative;flex-shrink:0;transition:.2s}
+.tag-toggle-switch.on{background:var(--primary)}
+.tag-toggle-knob{width:14px;height:14px;border-radius:50%;background:#fff;position:absolute;top:2px;left:2px;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.tag-toggle-switch.on .tag-toggle-knob{left:18px}
+/* ── 특수교육 체크박스 ── */
+.specialed-toggle-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;border:1.5px solid var(--border);margin-bottom:6px}
+.specialed-toggle-row input[type=checkbox]{width:17px;height:17px;accent-color:var(--primary);cursor:pointer}
+.specialed-toggle-row label{font-size:.84rem;font-weight:700;cursor:pointer;flex:1}
 table{width:100%;border-collapse:collapse;font-size:.83rem}
 th{text-align:left;background:var(--surface2);padding:8px 10px;border-bottom:2px solid var(--border);position:sticky;top:0}
 td{padding:7px 10px;border-bottom:1px solid var(--border);cursor:pointer}
@@ -221,10 +244,21 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 .btn-assign.green{background:var(--green);color:#fff;border-color:var(--green)}
 .btn-assign.green:hover{background:#128a4a}
 .btn-assign.red{background:#ef4444;color:#fff;border-color:#ef4444}
-/* ── 반 설정 바 ── */
-.class-config-bar{display:flex;align-items:center;gap:14px;background:var(--surface2);border-radius:10px;padding:10px 16px;margin-bottom:12px;flex-wrap:wrap}
-.class-config-bar label{font-size:.82rem;font-weight:700;color:var(--text-sub);white-space:nowrap}
-.class-config-bar input[type=number]{width:56px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);font-size:.88rem;font-weight:700}
+/* ── 배치 설정 구역 ── */
+.assign-config-section{display:flex;align-items:center;gap:16px;background:var(--surface2);border-radius:10px;padding:12px 16px;margin-bottom:10px;flex-wrap:wrap}
+.assign-config-left{display:flex;align-items:center;gap:10px;flex:1;flex-wrap:wrap}
+.assign-section-label{font-size:.82rem;font-weight:700;color:var(--text-sub);white-space:nowrap}
+.assign-config-section input[type=number]{width:56px;padding:5px 8px;border-radius:6px;border:1px solid var(--border);font-size:.88rem;font-weight:700}
+/* 자동배치 CTA 버튼 */
+.btn-assign-main{flex-shrink:0;padding:10px 22px;border-radius:10px;font-size:.9rem;font-weight:800;background:var(--primary);color:#fff;border:none;cursor:pointer;transition:.15s;box-shadow:0 2px 8px rgba(37,99,235,.25);white-space:nowrap}
+.btn-assign-main:hover{background:var(--primary-dark);box-shadow:0 4px 12px rgba(37,99,235,.35)}
+/* ── 온보딩 안내 ── */
+.assign-onboarding{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 24px;text-align:center;border:2px dashed var(--border);border-radius:12px;margin-top:4px;background:var(--surface2)}
+.assign-onboarding-icon{font-size:2.4rem;margin-bottom:10px;opacity:.5}
+.assign-onboarding-title{font-size:.95rem;font-weight:800;color:var(--text-muted);margin-bottom:16px}
+.assign-onboarding-steps{display:flex;flex-direction:column;gap:8px;text-align:left}
+.assign-onboarding-step{display:flex;align-items:flex-start;gap:10px;font-size:.83rem;color:var(--text-sub);line-height:1.5}
+.step-dot{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--primary);color:#fff;font-size:.72rem;font-weight:800;display:flex;align-items:center;justify-content:center}
 .classname-pills{display:flex;gap:6px;flex-wrap:wrap}
 .classname-pill input{width:68px;padding:4px 6px;border-radius:6px;border:1.5px solid var(--border);font-size:.82rem;font-weight:700;text-align:center}
 /* ── 반 카드 보드 ── */
@@ -235,6 +269,37 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 .class-board-meta{font-size:.75rem;color:rgba(255,255,255,.9);text-align:right;line-height:1.5}
 .class-board-body{background:#fff;padding:8px;min-height:80px;transition:.12s}
 .class-board-body.drag-target{background:#f0fdf4;outline:2px dashed var(--green)}
+/* ── 사용법 모달 ── */
+.help-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:3000;align-items:center;justify-content:center}
+.help-modal-bg.open{display:flex}
+.help-modal{background:#fff;border-radius:14px;width:560px;max-width:94vw;max-height:88vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.22)}
+.help-modal-header{position:sticky;top:0;background:#2d3ae8;border-radius:14px 14px 0 0;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+.help-modal-header h3{color:#fff;font-size:1rem;font-weight:800;margin:0}
+.help-modal-close{background:none;border:none;color:rgba(255,255,255,.8);font-size:1.3rem;cursor:pointer}
+.help-modal-body{padding:20px 24px}
+.help-flow{display:flex;flex-direction:column;gap:0}
+.help-step{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)}
+.help-step:last-child{border-bottom:none}
+.help-step-icon{flex-shrink:0;width:36px;height:36px;border-radius:50%;background:var(--primary);color:#fff;font-weight:800;font-size:.9rem;display:flex;align-items:center;justify-content:center}
+.help-step-body{flex:1}
+.help-step-title{font-weight:800;font-size:.9rem;margin-bottom:4px;color:var(--text)}
+.help-step-desc{font-size:.8rem;color:var(--text-sub);line-height:1.6}
+.help-tip{background:#fef9c3;border-left:3px solid #f59e0b;padding:10px 14px;border-radius:0 6px 6px 0;font-size:.79rem;color:#92400e;margin-top:16px;line-height:1.6}
+.stats-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center}
+.stats-modal-bg.open{display:flex}
+.stats-modal{background:#fff;border-radius:14px;padding:24px;width:520px;max-width:94vw;max-height:86vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+.stats-modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.stats-modal-header h3{font-size:1rem;font-weight:900;color:var(--text)}
+.stats-close{background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text-muted)}
+.stats-table{width:100%;border-collapse:collapse;font-size:.84rem;margin-bottom:4px}
+.stats-table th{background:var(--surface2);padding:8px 10px;text-align:center;font-weight:700;color:var(--text-sub);border:1px solid var(--border)}
+.stats-table th.domain-col{text-align:left}
+.stats-table td{padding:7px 10px;text-align:center;border:1px solid var(--border)}
+.stats-table td.domain-name{text-align:left;font-weight:600;color:var(--text)}
+.stats-table tr:nth-child(even) td{background:#f8fafc}
+.stats-bar{display:inline-block;height:8px;border-radius:4px;background:var(--primary);opacity:.7;vertical-align:middle;margin-left:4px}
+.stats-section{margin-bottom:18px}
+.stats-section-title{font-size:.78rem;font-weight:700;color:var(--text-sub);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
 /* ── 학생 상세 모달 ── */
 .student-detail-modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:center;justify-content:center}
 .student-detail-modal-bg.open{display:flex}
@@ -289,8 +354,10 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
       <div class="header-badge">
         <span class="lock-icon">🔒</span>개인정보 미저장 · 작업 후 엑셀로 내보내세요
       </div>
+      <div style="font-size:.72rem;color:rgba(255,255,255,.6);white-space:nowrap">💾 명단 자동저장</div>
     </div>
-    <button style="padding:7px 14px;border-radius:8px;border:1.5px solid rgba(255,255,255,.6);background:transparent;color:#fff;font-weight:700;font-size:.82rem;cursor:pointer;white-space:nowrap" onclick="if(confirm('현재 작업 내용이 모두 초기화됩니다. 계속할까요?'))resetAll()">■ 전체초기화</button>
+    <button onclick="openHelpModal()" style="padding:7px 14px;border-radius:8px;border:1.5px solid rgba(255,255,255,.6);background:transparent;color:#fff;font-weight:700;font-size:.82rem;cursor:pointer;white-space:nowrap">? 사용법</button>
+    <button onclick="if(confirm('현재 작업 내용이 모두 초기화됩니다.\n이 작업은 되돌릴 수 없습니다.\n\n정말 초기화하시겠습니까?'))resetAll()" style="padding:7px 12px;border-radius:8px;border:1.5px solid rgba(255,100,100,.5);background:transparent;color:rgba(255,180,180,.9);font-weight:600;font-size:.78rem;cursor:pointer;white-space:nowrap">전체초기화</button>
   </header>
 
   <div id="step-progress"></div>
@@ -307,6 +374,24 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
         <button onclick="goStep('upload')" style="flex-shrink:0;background:#fff;color:#d97706;border:none;border-radius:8px;padding:10px 18px;font-size:.84rem;font-weight:800;cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.15)">
           📤 바로 업로드 →
         </button>
+      </div>
+
+      <!-- 처음 방문자를 위한 워크플로우 요약 -->
+      <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.78rem;color:var(--text-sub)">
+        <span style="font-weight:700;color:var(--text);white-space:nowrap">📋 작업 순서</span>
+        <span style="color:var(--border)">|</span>
+        <span>① 관찰 영역 선택 &amp; 확정</span>
+        <span style="color:var(--primary)">→</span>
+        <span>② 서식 출력 &amp; 면접 진행</span>
+        <span style="color:var(--primary)">→</span>
+        <span>③ 명단 등록 &amp; 서식 다운로드</span>
+        <span style="color:var(--primary)">→</span>
+        <span>④ 결과 업로드</span>
+        <span style="color:var(--primary)">→</span>
+        <span>⑤ 검토</span>
+        <span style="color:var(--primary)">→</span>
+        <span>⑥ 배치 &amp; 출력</span>
+        <button onclick="openHelpModal()" style="margin-left:auto;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;font-size:.75rem;font-weight:700;color:var(--primary);cursor:pointer;white-space:nowrap">자세히 보기 →</button>
       </div>
 
       <div class="prep-grid">
@@ -439,9 +524,17 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 
     <!-- 2. 검토 -->
     <section class="panel" id="panel-review">
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:.8rem;color:#1e40af;line-height:1.6">
+        💡 <b>이 단계에서 태그를 조정하면 배치 결과가 달라집니다.</b> 학생을 클릭해 오른쪽 패널에서 관찰 영역 태그를 on/off로 수정하세요. 검토를 건너뛰고 바로 배치해도 됩니다.
+      </div>
       <div class="card">
+        <!-- 검색 + 요약 -->
+        <div class="detail-search-row">
+          <input type="text" id="review-search" placeholder="🔍 이름 또는 관리번호 검색" oninput="renderReviewList()">
+          <div class="review-summary-bar" id="review-summary-bar"></div>
+        </div>
+        <!-- 필터 -->
         <div class="filters" id="review-filters"></div>
-        <input type="text" id="review-search" placeholder="이름 또는 접수번호 검색" oninput="renderReviewList()" style="max-width:260px;margin-bottom:10px">
         <div class="review-layout">
           <div class="review-list">
             <table>
@@ -460,30 +553,45 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 
     <!-- 3. 배치 -->
     <section class="panel" id="panel-assign">
-      <!-- 반 설정 바 -->
-      <div class="class-config-bar">
-        <label>학급 수</label>
-        <input type="number" id="assign-numClasses" min="1" max="15" value="5" oninput="onAssignNumClassesChange()">
-        <label>반 이름</label>
-        <div class="classname-pills" id="assign-classname-inputs"></div>
+
+      <!-- ① 설정 구역 -->
+      <div class="assign-config-section">
+        <div class="assign-config-left">
+          <span class="assign-section-label">학급 수</span>
+          <input type="number" id="assign-numClasses" min="1" max="15" value="5" oninput="onAssignNumClassesChange()">
+          <span class="assign-section-label">반 이름</span>
+          <div class="classname-pills" id="assign-classname-inputs"></div>
+        </div>
+        <button class="btn-assign-main" onclick="runAutoAssign()" id="btn-run-assign">⚙️ 자동 배치 실행</button>
       </div>
 
-      <!-- 툴바 -->
+      <!-- ② 작업 툴바 -->
       <div class="assign-toolbar">
-        <button class="btn-assign primary" onclick="runAutoAssign()">⚙️ 자동 배치</button>
         <button class="btn-assign" onclick="rerunAutoAssign()">🔄 재배치</button>
         <button class="btn-assign" onclick="undoAssign()">↩ 되돌리기</button>
         <button class="btn-assign" onclick="printAssign()">🖨 인쇄</button>
         <input type="text" id="assign-search" placeholder="🔍 학생 검색..." style="padding:7px 12px;border-radius:8px;border:1.5px solid var(--border);font-size:.82rem;width:160px" oninput="highlightSearch(this.value)">
-        <div class="assign-toolbar-right">
-          <button class="btn-assign" onclick="showAssignStats()">📊 통계</button>
-          <button class="btn-assign" onclick="showStudentManager()">👤 학생 관리 <span id="assign-student-count" style="background:var(--primary);color:#fff;border-radius:10px;padding:1px 7px;font-size:.72rem;margin-left:2px">0</span></button>
+        <button class="btn-assign" onclick="showAssignStats()">📊 통계</button>
+        <div style="margin-left:auto;display:flex;gap:8px">
           <button class="btn-assign green" onclick="confirmAssign()">✅ 최종 확정</button>
           <button class="btn-assign" style="background:#059669;color:#fff;border-color:#059669" onclick="exportClassApp()">📊 엑셀 출력</button>
         </div>
       </div>
 
       <div id="assign-violations"></div>
+
+      <!-- ③ 배치 전 온보딩 안내 -->
+      <div class="assign-onboarding" id="assign-onboarding">
+        <div class="assign-onboarding-icon">⚙️</div>
+        <div class="assign-onboarding-title">아직 배치가 실행되지 않았습니다</div>
+        <div class="assign-onboarding-steps">
+          <div class="assign-onboarding-step"><span class="step-dot">1</span>위에서 학급 수와 반 이름을 확인하세요</div>
+          <div class="assign-onboarding-step"><span class="step-dot">2</span><b>자동 배치 실행</b> 버튼을 눌러 배치를 시작하세요</div>
+          <div class="assign-onboarding-step"><span class="step-dot">3</span>학생 카드를 <b>드래그</b>하거나 <b>클릭</b>해서 반을 조정하세요</div>
+          <div class="assign-onboarding-step"><span class="step-dot">4</span>완료되면 <b>최종 확정 → 엑셀 출력</b></div>
+        </div>
+      </div>
+
       <div class="assign-board" id="assign-results"></div>
 
       <!-- 하단 통계 바 -->
@@ -492,7 +600,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
         <div class="assign-footer-stat">
           <span id="footer-all-assigned">전원 배정 <span style="color:var(--green);font-weight:800">✅</span></span>
           <span id="footer-max-diff">최대 편차 <b id="footer-diff-num">0</b>명</span>
-          <span style="color:var(--text-muted);font-size:.78rem">📌 드래그 이동 · 더블클릭 수정</span>
+          <span style="color:var(--text-muted);font-size:.78rem">📌 드래그 이동 · 클릭하여 상세/이동</span>
         </div>
       </div>
 
@@ -503,6 +611,76 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
     </section>
 
   </main>
+<!-- 사용법 모달 -->
+<div class="help-modal-bg" id="help-modal" onclick="closeHelpModal()">
+  <div class="help-modal" onclick="event.stopPropagation()">
+    <div class="help-modal-header">
+      <h3>📖 스마트 반편성 (신입생용) 사용법</h3>
+      <button class="help-modal-close" onclick="closeHelpModal()">✕</button>
+    </div>
+    <div class="help-modal-body">
+      <div class="help-flow">
+        <div class="help-step">
+          <div class="help-step-icon">1</div>
+          <div class="help-step-body">
+            <div class="help-step-title">준비 — 관찰 영역 선택 & 서식 출력</div>
+            <div class="help-step-desc">면접에서 관찰할 영역을 선택하고 확정하세요. 확정 후 학생 면접 문항과 학부모 설문지를 인쇄하거나, 구글폼·네이버폼으로 온라인 설문을 만들 수 있습니다. 신입생 명단을 등록하면 관리번호가 부여된 면접 서식을 다운로드할 수 있습니다.</div>
+          </div>
+        </div>
+        <div class="help-step">
+          <div class="help-step-icon">2</div>
+          <div class="help-step-body">
+            <div class="help-step-title">면접 진행 (오프라인)</div>
+            <div class="help-step-desc">면접교사에게 서식을 배부하고 학생 면접을 진행합니다. 학부모 설문은 종이 또는 온라인으로 수집합니다. 담당자가 학부모 설문 결과를 면접 서식의 '학부모설문' 시트에 입력합니다.</div>
+          </div>
+        </div>
+        <div class="help-step">
+          <div class="help-step-icon">3</div>
+          <div class="help-step-body">
+            <div class="help-step-title">업로드 — 면접 결과 취합</div>
+            <div class="help-step-desc">작성된 엑셀 파일을 업로드하세요. 여러 파일을 한꺼번에 올릴 수 있습니다. 관리번호가 일치하지 않으면 수동 매핑 화면이 뜹니다.</div>
+          </div>
+        </div>
+        <div class="help-step">
+          <div class="help-step-icon">4</div>
+          <div class="help-step-body">
+            <div class="help-step-title">검토 — 태그 확인 & 조정</div>
+            <div class="help-step-desc">면접·설문 점수를 바탕으로 학생별 관찰 영역 태그가 자동 부여됩니다. 필요하면 태그를 수동으로 on/off 조정하세요. 이 단계에서 태그를 조정하면 배치 결과가 달라집니다.</div>
+          </div>
+        </div>
+        <div class="help-step">
+          <div class="help-step-icon">5</div>
+          <div class="help-step-body">
+            <div class="help-step-title">배치 — 자동 배치 & 조정</div>
+            <div class="help-step-desc">학급 수와 반 이름을 설정하고 자동 배치를 실행하세요. 성별 균형, 관찰 영역 분산, 분리·동반 관계를 자동 반영합니다. 학생 카드를 드래그하거나 클릭해서 수동 조정도 가능합니다.</div>
+          </div>
+        </div>
+        <div class="help-step">
+          <div class="help-step-icon">6</div>
+          <div class="help-step-body">
+            <div class="help-step-title">최종 확정 & 엑셀 출력</div>
+            <div class="help-step-desc">최종 확정을 누르면 수동 이동이 잠깁니다. 엑셀 출력 버튼으로 반별 명렬표를 저장하세요. 확정 후에도 재배치 버튼으로 다시 수정할 수 있습니다.</div>
+          </div>
+        </div>
+      </div>
+      <div class="help-tip">
+        💡 <b>이 사이트는 개인정보를 서버에 저장하지 않습니다.</b> 모든 데이터는 브라우저에서만 처리되며, 작업 결과는 반드시 엑셀로 내보내 보관하세요. 탭을 닫아도 명단은 브라우저에 임시 저장되지만, 전체초기화 또는 브라우저 데이터 삭제 시 사라집니다.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 통계 모달 -->
+<div class="stats-modal-bg" id="stats-modal" onclick="closeStatsModal()">
+  <div class="stats-modal" onclick="event.stopPropagation()">
+    <div class="stats-modal-header">
+      <h3>📊 반별 관찰영역 분포</h3>
+      <button class="stats-close" onclick="closeStatsModal()">✕</button>
+    </div>
+    <div id="stats-modal-body"></div>
+  </div>
+</div>
+
 <!-- 학생 상세 모달 -->
 <div class="student-detail-modal-bg" id="student-detail-modal">
   <div class="student-detail-modal" onclick="event.stopPropagation()">
@@ -837,6 +1015,9 @@ function renderQuestionPreview(){
 /* 아코디언 열림 상태 유지 */
 const ACC_OPEN={};
 function toggleAcc(d){ACC_OPEN[d]=!ACC_OPEN[d];renderDomainToggles();}
+function openHelpModal(){document.getElementById('help-modal').classList.add('open');}
+function closeHelpModal(){document.getElementById('help-modal').classList.remove('open');}
+
 function switchSurveyTab(name,el){
   document.querySelectorAll('.survey-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('.survey-tab-pane').forEach(p=>p.classList.remove('active'));
@@ -856,7 +1037,7 @@ function renderDomainLockArea(){
     el.innerHTML=`<button class="btn-domain-confirm" onclick="lockDomains()">
       ✅ 영역 선택 확정 → STEP 2 활성화
     </button>
-    <div style="font-size:.75rem;color:var(--text-muted);margin-top:5px;text-align:center">확정 후 STEP 2에서 학부모 설문 방식을 결정하고 문항을 출력할 수 있습니다</div>`;
+    <div style="font-size:.75rem;color:var(--text-muted);margin-top:5px;text-align:center">확정하면 영역이 잠겨 서식 발급 후 혼선을 방지합니다. 언제든 '다시 선택'으로 해제 가능합니다.</div>`;
   }
   // 출력 버튼 활성/비활성
   ['btn-print-interview','btn-print-survey','btn-copy-google','btn-copy-naver','btn-gen-websurvey'].forEach(id=>{
@@ -2035,8 +2216,19 @@ function handleFiles(fileList){
   });
 }
 function renderFileList(){
-  document.getElementById('file-list').innerHTML=uploadedFiles.map(f=>`
-    <div class="file-card"><span class="name">📄 ${f.name}</span><span class="meta">학생면접 ${f.stuCount}명 · 학부모확인 ${f.parCount}명</span></div>`).join('');
+  document.getElementById('file-list').innerHTML=uploadedFiles.map(f=>{
+    const hasErr=f.stuCount===0&&f.parCount===0;
+    const hasWarn=f.stuCount===0||f.parCount===0;
+    const borderColor=hasErr?'#fca5a5':hasWarn?'#fde68a':'#bbf7d0';
+    const bgColor=hasErr?'#fef2f2':hasWarn?'#fffbeb':'#f0fdf4';
+    const icon=hasErr?'❌':hasWarn?'⚠️':'✅';
+    const meta=hasErr?'시트를 읽지 못했습니다. 서식을 확인하세요.'
+      :`학생면접 ${f.stuCount}명${f.parCount?` · 학부모설문 ${f.parCount}명`:''}${f.stuCount===0?' · ⚠ 학생면접 없음':f.parCount===0?' · 학부모설문 없음':''}`;
+    return `<div class="file-card" style="border-color:${borderColor};background:${bgColor}">
+      <span class="name">${icon} ${f.name}</span>
+      <span class="meta">${meta}</span>
+    </div>`;
+  }).join('');
 }
 function renderUploadSummary(){
   const list=Object.values(students);
@@ -2097,9 +2289,18 @@ function computeScores(){
 /* ===================== 검토 화면 ===================== */
 function renderFilters(){
   const enabled=DOMAIN_LIST.filter(d=>CONFIG.domains[d]);
-  const filters=[['all','전체'],...enabled.map(d=>[d,d]),...(CONFIG.specialEd.enabled?[['특수교육','특수교육']]:[])];
-  document.getElementById('review-filters').innerHTML=filters.map(([k,l])=>
-    `<button class="filter-btn ${activeFilter===k?'active':''}" onclick="activeFilter='${k}';renderReviewList()">${l}</button>`).join('');
+  const filters=[['all','전체',null],...enabled.map(d=>[d,d,DOMAIN_COLORS[d]]),...(CONFIG.specialEd.enabled?[['특수교육','특수교육',{bg:'#ede9fe',fg:'#7c3aed'}]]:[])];
+  const totalCnt=studentsRanked.length;
+  document.getElementById('review-filters').innerHTML=filters.map(([k,l,dc])=>{
+    const cnt=k==='all'?totalCnt:studentsRanked.filter(s=>s.tags.includes(k)).length;
+    const isActive=activeFilter===k;
+    const bgStyle=isActive&&dc?'background:'+dc.fg+';':(isActive?'background:var(--primary);':'');
+    const dotHtml=dc?'<span class="f-dot" style="background:'+(isActive?'rgba(255,255,255,.8)':dc.fg)+'"></span>':'';
+    return '<button class="filter-btn'+(isActive?' active':'')+'" style="'+bgStyle+'" onclick="activeFilter=\''+k+'\';renderFilters();renderReviewList()">'+dotHtml+l+'<span class="f-cnt">'+cnt+'</span></button>';
+  }).join('');
+  const missingCnt=studentsRanked.filter(s=>s.missing.length>0).length;
+  const sumEl=document.getElementById('review-summary-bar');
+  if(sumEl) sumEl.innerHTML='<b>'+totalCnt+'명</b> 검토 중'+(missingCnt?' · <span style="color:var(--amber)">⚠ 데이터 누락 '+missingCnt+'명</span>':'');
 }
 function matchesFilter(s){
   if(activeFilter==='all')return true;
@@ -2138,40 +2339,74 @@ function renderDetail(){
   const s=students[selectedId];
   if(!s){el.innerHTML='<div class="detail-empty">왼쪽 목록에서 학생을 선택하면<br>면접 상세 내용이 표시됩니다.</div>';return;}
   const enabled=DOMAIN_LIST.filter(d=>CONFIG.domains[d]);
-  let html=`<h3>${s.name||'(이름없음)'} <span style="color:var(--text-muted);font-weight:400;font-size:.8rem">#${s.id}</span></h3>`;
-  html+=`<div class="sec-title">확정 관찰 영역 (클릭해서 on/off)</div><div>`;
-  html+=enabled.map(d=>tagChip(d,{off:!s.tags.includes(d),interactive:true})).join('');
-  html+='</div>';
+
+  // 헤더
+  let html=`<h3 style="margin-bottom:4px">${s.name||'(이름없음)'} <span style="color:var(--text-muted);font-weight:400;font-size:.8rem">#${s.id}</span>
+    ${s.gender?`<span style="font-size:.76rem;background:var(--surface2);border-radius:6px;padding:2px 8px;margin-left:4px">${s.gender}</span>`:''}
+  </h3>`;
+  if(s.missing.length) html+=`<div style="font-size:.77rem;color:var(--amber);margin-bottom:8px">⚠ ${s.missing.join(', ')} 데이터 없음</div>`;
+
+  // ── 관찰 영역 토글 스위치 ──
+  html+=`<div class="sec-title" style="margin-top:10px">관찰 영역 <span style="font-weight:400;font-size:.74rem;color:var(--text-muted)">— 토글을 눌러 on/off 조정</span></div>`;
+  html+=`<div class="tag-toggle-grid">`;
+  enabled.forEach(d=>{
+    const on=s.tags.includes(d);
+    const dc=DOMAIN_COLORS[d]||{bg:'#eee',fg:'#888'};
+    const res=s.domains[d];
+    const score=res?`${res.score}/${res.max}`:'';
+    html+=`<div class="tag-toggle-item${on?' on':''}" style="${on?'background:'+dc.bg+';border-color:'+dc.fg+';':''}" onclick="toggleStudentTag('${d}')">
+      <span class="tag-toggle-label">
+        <span class="tag-toggle-dot" style="background:${dc.fg}"></span>
+        <span style="color:${on?dc.fg:'var(--text-muted)'}">${d}</span>
+        ${score?`<span style="font-size:.68rem;color:var(--text-muted);font-weight:400">${score}</span>`:''}
+      </span>
+      <span class="tag-toggle-switch${on?' on':''}"><span class="tag-toggle-knob"></span></span>
+    </div>`;
+  });
+  html+=`</div>`;
+
+  // ── 특수교육 체크박스 ──
   if(CONFIG.specialEd.enabled){
-    html+=`<div class="sec-title">행정 특성 (수동 지정)</div><div>`;
-    html+=tagChip('특수교육',{off:!s.tags.includes('특수교육'),interactive:true});
-    html+=`<span style="font-size:.78rem;color:var(--text-muted);margin-left:6px">${s.specialEdMark?'면접 서식에서 O로 표시됨':'문항 없이 담당자가 직접 지정합니다'}</span></div>`;
+    const hasSpEd=s.tags.includes('특수교육');
+    html+=`<div class="specialed-toggle-row" onclick="toggleStudentTag('특수교육')" style="cursor:pointer;${hasSpEd?'border-color:#7c3aed;background:#faf5ff':''}">
+      <input type="checkbox" id="spEd-check" ${hasSpEd?'checked':''} onclick="event.stopPropagation();toggleStudentTag('특수교육')">
+      <label for="spEd-check" style="color:${hasSpEd?'#7c3aed':'var(--text)'}">특수교육 대상</label>
+      <span style="font-size:.74rem;color:var(--text-muted)">${s.specialEdMark?'✅ 면접 서식에서 O 표시됨':'담당자가 직접 지정'}</span>
+    </div>`;
   }
+
+  // ── 영역별 상세 점수 ──
+  html+=`<div class="sec-title" style="margin-top:12px">영역별 상세</div>`;
   enabled.forEach(d=>{
     const res=s.domains[d];
-    html+=`<div class="sec-title">${d} <span style="color:var(--text-sub);font-weight:600;text-transform:none;letter-spacing:0">(${res.score}/${res.max})</span></div><div class="qgrid">`;
+    const dc=DOMAIN_COLORS[d]||{bg:'#eee',fg:'#888'};
+    html+=`<div style="margin-bottom:8px;padding:8px 10px;border-radius:8px;border:1px solid var(--border)">
+      <div style="font-size:.78rem;font-weight:800;color:${dc.fg};margin-bottom:5px">${DOMAIN_ICONS[d]||''} ${d} <span style="font-weight:400;color:var(--text-muted)">${res?res.score+'/'+res.max:''}점</span></div>
+      <div class="qgrid">`;
     STU_FIELDS.filter(f=>f.domain===d).forEach(f=>{
       const v=s.stu&&s.stu.q?s.stu.q[f.idx]:undefined;
-      html+=`<div>[학생] ${f.label}</div><div class="${v===2?'score-2':''}">${v==null?'-':v}</div>`;
+      html+=`<div style="font-size:.77rem">[학생] ${f.label}</div><div class="${v===2?'score-2':''}" style="font-size:.77rem">${v==null?'-':v}</div>`;
     });
     PAR_FIELDS.filter(f=>f.domain===d).forEach(f=>{
       const v=s.par?s.par[f.key]:undefined;
-      html+=`<div>[학부모] ${f.label}</div><div>${v||'-'}</div>`;
+      html+=`<div style="font-size:.77rem">[학부모] ${f.label}</div><div style="font-size:.77rem">${v||'-'}</div>`;
     });
     if(d==='기본생활·안전'&&s.par){
       const marked=[...PAR_HABIT,...PAR_HEALTH].filter(h=>(s.par.habit&&s.par.habit[h]==='O')||(s.par.health&&s.par.health[h]==='O'));
-      html+=`<div>[학부모] 표시된 항목</div><div>${marked.length?marked.join(', '):'없음'}</div>`;
+      html+=`<div style="font-size:.77rem">[학부모] 표시 항목</div><div style="font-size:.77rem">${marked.length?marked.join(', '):'없음'}</div>`;
     }
-    html+='</div>';
+    html+=`</div></div>`;
   });
-  if(s.stu&&s.stu.note)html+=`<div class="sec-title">학생면접 특이사항</div><div style="font-size:.82rem;color:var(--text-sub)">${s.stu.note}</div>`;
+
+  // ── 서술형 ──
+  if(s.stu&&s.stu.note) html+=`<div class="sec-title">학생면접 특이사항</div><div style="font-size:.82rem;color:var(--text-sub);background:var(--surface2);padding:7px 10px;border-radius:6px">${s.stu.note}</div>`;
   if(s.par){
-    if(s.par.healthNote)html+=`<div class="sec-title">건강 관련 구체 내용</div><div style="font-size:.82rem;color:var(--text-sub)">${s.par.healthNote}</div>`;
-    if(s.par.testExp==='있음')html+=`<div class="sec-title">검사·상담·치료 경험</div><div style="font-size:.82rem;color:var(--text-sub)">있음${s.par.testNote?' — '+s.par.testNote:''}</div>`;
-    if(s.par.care)html+=`<div class="sec-title">입학초기 배려사항</div><div style="font-size:.82rem;color:var(--text-sub)">${s.par.care}</div>`;
+    if(s.par.healthNote) html+=`<div class="sec-title">건강 관련 내용</div><div style="font-size:.82rem;color:var(--text-sub);background:var(--surface2);padding:7px 10px;border-radius:6px">${s.par.healthNote}</div>`;
+    if(s.par.testExp==='있음') html+=`<div class="sec-title">검사·상담·치료 경험</div><div style="font-size:.82rem;color:var(--text-sub);background:var(--surface2);padding:7px 10px;border-radius:6px">있음${s.par.testNote?' — '+s.par.testNote:''}</div>`;
+    if(s.par.care) html+=`<div class="sec-title">입학초기 배려사항</div><div style="font-size:.82rem;color:var(--text-sub);background:var(--surface2);padding:7px 10px;border-radius:6px">${s.par.care}</div>`;
   }
-  if(!s.stu)html+=`<div class="sec-title">학생면접</div><div style="color:var(--text-muted);font-size:.82rem">제출되지 않음</div>`;
-  if(!s.par)html+=`<div class="sec-title">학부모확인</div><div style="color:var(--text-muted);font-size:.82rem">제출되지 않음</div>`;
+  if(!s.stu) html+=`<div style="font-size:.82rem;color:var(--text-muted);margin-top:8px">⚠ 학생 면접 데이터 없음</div>`;
+  if(!s.par) html+=`<div style="font-size:.82rem;color:var(--text-muted);margin-top:4px">⚠ 학부모 설문 데이터 없음</div>`;
   el.innerHTML=html;
 }
 
@@ -2347,7 +2582,6 @@ function undoAssign(){
 }
 function rerunAutoAssign(){
   if(!ASSIGN.assigned){runAutoAssign();return;}
-  if(!confirm('현재 배치를 초기화하고 다시 자동 배치합니다. 계속할까요?'))return;
   ASSIGN.confirmed=false;
   saveAssignSnapshot();runAutoAssign();
 }
@@ -2361,15 +2595,70 @@ function confirmAssign(){
 }
 function showAssignStats(){
   if(!ASSIGN.assigned){alert('먼저 배치를 실행하세요.');return;}
-  let msg='📊 반별 현황\n\n';
-  ASSIGN.classes.forEach(c=>{
-    const gStr=Object.entries(c.genderCount).map(([g,n])=>`${g} ${n}명`).join(' · ')||'없음';
-    const mig=ROSTER.filter(r=>c.ids.includes(r.no)&&r.migrant).length;
-    msg+=`${c.name}: 총 ${c.ids.length}명 (${gStr})${mig?` · 이주배경 ${mig}명`:''}\n`;
+  const enabled=DOMAIN_LIST.filter(d=>CONFIG.domains[d]);
+  const extra=CONFIG.specialEd.enabled?['특수교육']:[];
+  const allDomains=[...enabled,...extra];
+  const classes=ASSIGN.classes;
+  const sizes=classes.map(c=>c.ids.length);
+  const maxVal=Math.max(...sizes);
+
+  // ── 섹션1: 반별 인원 요약 ──
+  let html=`<div class="stats-section">
+    <div class="stats-section-title">반별 인원 및 성별</div>
+    <table class="stats-table">
+      <thead><tr><th class="domain-col">반</th><th>전체</th><th>남</th><th>여</th><th>편차</th></tr></thead>
+      <tbody>`;
+  const totalStudents=sizes.reduce((a,b)=>a+b,0);
+  const avg=totalStudents/classes.length;
+  classes.forEach(c=>{
+    const m=c.genderCount['남']||0, f=c.genderCount['여']||0;
+    const diff=(c.ids.length-avg).toFixed(1);
+    const diffStr=diff>0?`+${diff}`:diff;
+    html+=`<tr>
+      <td class="domain-name">${c.name}</td>
+      <td><b>${c.ids.length}</b></td>
+      <td style="color:#2563eb">${m}</td>
+      <td style="color:#e11d48">${f}</td>
+      <td style="color:${Math.abs(diff)>1?'var(--amber)':'var(--green)'}">${diffStr}</td>
+    </tr>`;
   });
-  const sizes=ASSIGN.classes.map(c=>c.ids.length);
-  msg+=`\n최대 편차: ${Math.max(...sizes)-Math.min(...sizes)}명`;
-  alert(msg);
+  const maxDiff=Math.max(...sizes)-Math.min(...sizes);
+  html+=`</tbody></table>
+    <div style="font-size:.76rem;color:var(--text-muted);margin-top:6px">최대 편차 <b>${maxDiff}명</b> · 평균 <b>${avg.toFixed(1)}명</b></div>
+  </div>`;
+
+  // ── 섹션2: 관찰영역 분포 ──
+  if(allDomains.length){
+    html+=`<div class="stats-section">
+      <div class="stats-section-title">관찰영역별 학생 분포 (O 표시 학생 수)</div>
+      <table class="stats-table">
+        <thead><tr><th class="domain-col">관찰영역</th>`;
+    classes.forEach(c=>{html+=`<th>${c.name}</th>`;});
+    html+=`<th>합계</th></tr></thead><tbody>`;
+
+    allDomains.forEach(d=>{
+      const dc=DOMAIN_COLORS[d]||{bg:'#e2e8f0',fg:'#5a6a82'};
+      const cnts=classes.map(c=>c.ids.filter(no=>(students[no]?.tags||[]).includes(d)).length);
+      const total=cnts.reduce((a,b)=>a+b,0);
+      const maxCnt=Math.max(...cnts);
+      html+=`<tr><td class="domain-name"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dc.fg};margin-right:5px"></span>${d}</td>`;
+      cnts.forEach(cnt=>{
+        const isMax=cnt===maxCnt&&maxCnt>0;
+        const barW=maxCnt>0?Math.round(cnt/maxCnt*40):0;
+        html+=`<td style="${isMax?'font-weight:800;color:var(--primary)':''}">${cnt}${barW>0?`<span class="stats-bar" style="width:${barW}px"></span>`:''}</td>`;
+      });
+      html+=`<td style="color:var(--text-muted)">${total}</td></tr>`;
+    });
+    html+=`</tbody></table>
+      <div style="font-size:.76rem;color:var(--text-muted);margin-top:6px">진한 파란색 = 해당 영역 최다 반</div>
+    </div>`;
+  }
+
+  document.getElementById('stats-modal-body').innerHTML=html;
+  document.getElementById('stats-modal').classList.add('open');
+}
+function closeStatsModal(){
+  document.getElementById('stats-modal').classList.remove('open');
 }
 function showStudentManager(){
   // 검토 탭으로 이동
@@ -2490,7 +2779,16 @@ function renderAssignResults(){
       `<div class="violation-banner"><b>배치 규칙 위반 ${ASSIGN.violations.length}건</b>${ASSIGN.violations.map(v=>`<div>${v}</div>`).join('')}</div>`:'';
   }
   const el=document.getElementById('assign-results');if(!el)return;
-  if(!ASSIGN.assigned){el.innerHTML='';document.getElementById('assign-footer-bar').style.display='none';return;}
+  if(!ASSIGN.assigned){
+    el.innerHTML='';
+    document.getElementById('assign-footer-bar').style.display='none';
+    const ob=document.getElementById('assign-onboarding');
+    if(ob)ob.style.display='flex';
+    return;
+  }
+  // 배치 완료 시 온보딩 숨김
+  const ob=document.getElementById('assign-onboarding');
+  if(ob)ob.style.display='none';
 
   // 학생 수 업데이트
   const totalStudents=Object.keys(students).length;
