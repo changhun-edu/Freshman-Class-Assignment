@@ -2109,13 +2109,19 @@ function resolveSepPair(){
   });
 }
 function buildClusters(){
+  // 배치 대상: students에 있는 모든 학생 (ROSTER 유무 관계없이)
+  const allNos=[...new Set([
+    ...Object.keys(students),
+    ...ROSTER.map(r=>r.no).filter(Boolean)
+  ])].filter(no=>students[no]); // students에 실제로 존재하는 것만
+
   const parent={};
-  ROSTER.forEach(r=>{parent[r.no]=r.no;});
-  function find(x){while(parent[x]!==x){parent[x]=parent[parent[x]];x=parent[x];}return x;}
+  allNos.forEach(no=>{parent[no]=no;});
+  function find(x){while(parent[x]&&parent[x]!==x){parent[x]=parent[parent[x]];x=parent[x];}return x;}
   function union(a,b){if(parent[a]==null||parent[b]==null)return;const ra=find(a),rb=find(b);if(ra!==rb)parent[ra]=rb;}
-  ROSTER.forEach(r=>{(r.pairIds||[]).forEach(pid=>union(r.no,pid));});
+  ROSTER.forEach(r=>{(r.pairIds||[]).forEach(pid=>{if(parent[pid]!=null)union(r.no,pid);});});
   const groups={};
-  ROSTER.forEach(r=>{const root=find(r.no);(groups[root]=groups[root]||[]).push(r.no);});
+  allNos.forEach(no=>{const root=find(no);(groups[root]=groups[root]||[]).push(no);});
   return Object.values(groups);
 }
 function studentWeight(no){
