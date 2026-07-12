@@ -1013,8 +1013,11 @@ function unlockRoster(){
 /* ===================== 관찰 영역 선택 (STEP1) ===================== */
 function domainQuestionList(d){
   const list=[];
-  STU_FIELDS.filter(f=>f.domain===d).forEach(f=>list.push({who:'학생',text:`${f.label} — ${f.q}`}));
-  SURVEY_Q.filter(item=>item.domain===d).forEach(item=>list.push({who:'학부모',text:`${item.label} — ${item.q}`}));
+  STU_FIELDS.filter(f=>f.domain===d&&CONFIG.stuFields[f.idx]!==false).forEach(f=>list.push({who:'학생',text:`${f.label} — ${f.q}`}));
+  SURVEY_Q.filter(item=>item.domain===d).forEach(item=>{
+    const pf=PAR_FIELDS.find(p=>p.domain===d&&p.label.replace(/\s/g,'')===item.label.replace(/\s/g,''));
+    if(!pf||CONFIG.parFields[pf.key]!==false) list.push({who:'학부모',text:`${item.label} — ${item.q}`});
+  });
   return list;
 }
 function renderQuestionPreview(){
@@ -1480,7 +1483,7 @@ async function downloadRosterTemplate(){
 
 /* ===================== 학생 면접 문항 인쇄 ===================== */
 function printInterviewQuestions(){
-  const enabled=STU_FIELDS.filter(f=>CONFIG.domains[f.domain]);
+  const enabled=STU_FIELDS.filter(f=>CONFIG.domains[f.domain]&&CONFIG.stuFields[f.idx]!==false);
   if(!enabled.length){alert('선택된 관찰 영역에 학생 문항이 없습니다.');return;}
 
   // 영역별로 그룹화
@@ -3187,8 +3190,8 @@ async function exportHandoff(){
   downloadBuffer(buf,'담임인계_신입생면접자료.xlsx');
 }
 async function exportBackup(){
-  const enabledStu=STU_FIELDS.filter(f=>CONFIG.domains[f.domain]);
-  const enabledPar=PAR_FIELDS.filter(f=>CONFIG.domains[f.domain]);
+  const enabledStu=STU_FIELDS.filter(f=>CONFIG.domains[f.domain]&&CONFIG.stuFields[f.idx]!==false);
+  const enabledPar=PAR_FIELDS.filter(f=>CONFIG.domains[f.domain]&&CONFIG.parFields[f.key]!==false);
   const habitOn=CONFIG.domains['기본생활·안전'];
   const wb=new ExcelJS.Workbook();
   const ws=wb.addWorksheet('원본 백업');
