@@ -839,10 +839,10 @@ const SURVEY_Q=[
     opts:['어려움 없음','약간 어려워함','많이 어려워함'],optNums:['①','②','③'],note:true},
   {label:'학습 활동 집중',domain:'기초학습준비도',q:'아이가 앉아서 한 가지 활동(그림 그리기, 책 보기 등)을 10분 정도 지속하는 데 어려움이 있나요?',
     opts:['없음','약간 있음','많이 있음'],optNums:['①','②','③'],note:true},
-  {label:'기본 생활 습관',domain:'기본생활·안전',q:'다음 중 도움이 필요한 부분이 있나요? (해당 항목 모두 표시)',
+  {label:'기본 생활 습관',surveyKey:'habit',domain:'기본생활·안전',q:'다음 중 도움이 필요한 부분이 있나요? (해당 항목 모두 표시)',
     opts:['화장실 사용','식사','옷 입고 벗기','정리정돈','물건 챙기기','등하교 적응','해당 없음'],
     subNums:['8-1','8-2','8-3','8-4','8-5','8-6','8-7'],note:true,multi:true},
-  {label:'건강 및 안전',domain:'기본생활·안전',q:'건강상 학교에서 꼭 알아야 할 내용이 있나요? (해당 항목 모두 표시)',
+  {label:'건강 및 안전',surveyKey:'health',domain:'기본생활·안전',q:'건강상 학교에서 꼭 알아야 할 내용이 있나요? (해당 항목 모두 표시)',
     opts:['없음','알레르기','투약','음식 제한','시력·청력 관련','기타 건강상 유의 사항'],
     subNums:['9-1','9-2','9-3','9-4','9-5','9-6'],note:true,multi:true},
   {label:'가정에서 사용하는 언어',domain:'의사소통',q:'가정에서 주로 사용하는 언어는 무엇인가요?',
@@ -876,9 +876,12 @@ let unregistered=[];
 const CONFIG={
   domains:Object.fromEntries(DOMAIN_LIST.map(d=>[d,true])),
   specialEd:{enabled:true,weight:2},
-  // 문항별 활성화 여부 — key: STU_FIELDS idx 또는 PAR_FIELDS key
   stuFields:Object.fromEntries(STU_FIELDS.map(f=>[f.idx,true])),
-  parFields:Object.fromEntries(PAR_FIELDS.map(f=>[f.key,true])),
+  parFields:{
+    ...Object.fromEntries(PAR_FIELDS.map(f=>[f.key,true])),
+    habit:true,   // 기본생활습관 체크리스트
+    health:true,  // 건강및안전 체크리스트
+  },
 };
 
 let uploadedFiles=[];
@@ -1091,11 +1094,10 @@ function renderDomainToggles(){
     const stuFs=STU_FIELDS.filter(f=>f.domain===d);
     const parFs=PAR_FIELDS.filter(f=>f.domain===d);
 
-    // 활성 문항 수 계산
     const stuActiveCnt=stuFs.filter(f=>on&&CONFIG.stuFields[f.idx]!==false).length;
-    const parActiveCnt=parFs.filter(f=>on&&CONFIG.parFields[f.key]!==false).length;
+    const parActiveCnt=parFs.filter(f=>on&&CONFIG.parFields[f.key]!==false).length+(on?habitActiveCnt:0);
     const stuTotalCnt=stuFs.length;
-    const parTotalCnt=parFs.length+(d==='기본생활·안전'?2:0);
+    const parTotalCnt=parFs.length+habitTotalCnt;
     const metaText=on
       ?`학생 ${stuActiveCnt}/${stuTotalCnt} · 학부모 ${parActiveCnt}/${parTotalCnt}`
       :`학생 ${stuTotalCnt} · 학부모 ${parTotalCnt}`;
@@ -1129,10 +1131,24 @@ function renderDomainToggles(){
       </div>`;
     }).join('');
 
-    // 기본생활·안전 체크리스트 안내
-    const habitNote=(d==='기본생활·안전')?`<div style="font-size:.76rem;color:var(--text-muted);padding:6px 8px;background:var(--surface2);border-radius:6px;margin-top:4px">
-      📋 학부모 체크리스트: 기본생활습관 (화장실·식사·옷·정리·물건·등하교) + 건강안전 (알레르기·투약·음식·시력청력·기타) — 항상 포함
-    </div>`:'';
+    // 기본생활·안전: SURVEY_Q 항목(습관/건강)을 체크박스로 표시
+    const habitNote=(d==='기본생활·안전')?SURVEY_Q.filter(q=>q.domain==='기본생활·안전').map(q=>{
+      const key=q.surveyKey||'';
+      const fOn=CONFIG.parFields[key]!==false;
+      return `<div class="field-checkbox-row" onclick="event.stopPropagation();CONFIG.parFields['${key}']=!CONFIG.parFields['${key}'];renderDomainToggles();renderPrepSummary()">
+        <input type="checkbox" ${fOn&&on?'checked':''} ${!on?'disabled':''} onchange="event.stopPropagation();CONFIG.parFields['${key}']=this.checked;renderDomainToggles();renderPrepSummary()">
+        <div class="field-checkbox-body">
+          <div class="field-checkbox-who" style="background:${dc.bg};color:${dc.fg}">학부모 설문</div>
+          <div class="field-checkbox-label">${q.label}</div>
+          <div class="field-checkbox-q">${q.q}</div>
+          <div class="field-checkbox-cmt">${q.opts.join(' / ')}</div>
+        </div>
+      </div>`;
+    }).join(''):'';
+
+    // 활성 문항 수 재계산 (기본생활·안전 포함)
+    const habitActiveCnt=d==='기본생활·안전'?SURVEY_Q.filter(q=>q.domain==='기본생활·안전'&&CONFIG.parFields[q.surveyKey||'']!==false).length:0;
+    const habitTotalCnt=d==='기본생활·안전'?SURVEY_Q.filter(q=>q.domain==='기본생활·안전').length:0;
 
     return `<div class="acc-row ${on?'on':''} ${(!stuItems&&!parItems)?'warn-row':''}">
       <div class="acc-header" onclick="toggleAcc('${d}')">
@@ -1142,13 +1158,13 @@ function renderDomainToggles(){
         <span class="acc-toggle">${isOpen?'▲ 접기':'▼ 펼치기'}</span>
       </div>
       <div class="acc-body ${isOpen?'open':''}">
-        ${stuItems||parItems
+        ${stuItems||parItems||habitNote
           ?`${stuItems?`<div class="field-section-label">학생 면접 문항</div>${stuItems}`:''}
-            ${parItems?`<div class="field-section-label" style="margin-top:8px">학부모 설문 문항</div>${parItems}`:''}`
+            ${parItems?`<div class="field-section-label" style="margin-top:8px">학부모 설문 문항</div>${parItems}`:''}
+            ${habitNote?`<div class="field-section-label" style="margin-top:8px">학부모 설문 (체크리스트)</div>${habitNote}`:''}`
           :'<div style="font-size:.8rem;color:var(--text-muted);padding:10px 0">이 영역에 등록된 문항이 없습니다.</div>'
         }
-        ${habitNote}
-        ${on&&(stuFs.length>1||parFs.length>1)?`<div style="margin-top:8px;display:flex;gap:6px">
+        ${on&&(stuFs.length>1||parFs.length>1||habitTotalCnt>0)?`<div style="margin-top:8px;display:flex;gap:6px">
           <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();STU_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.stuFields[f.idx]=true;});PAR_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.parFields[f.key]=true;});renderDomainToggles();renderPrepSummary()">모두 선택</button>
           <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();STU_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.stuFields[f.idx]=false;});PAR_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.parFields[f.key]=false;});renderDomainToggles();renderPrepSummary()">모두 해제</button>
         </div>`:''}
@@ -1620,13 +1636,15 @@ function printInterviewQuestions(){
 /* ===================== 안 A: 외부 설문 도구용 문항 복사 ===================== */
 function getActiveItems(){
   return SURVEY_Q.filter(item=>{
-    if(item.domain===null) return true; // 검사경험 등 도메인 없는 항목은 항상 포함
+    if(item.domain===null) return true;
     if(!CONFIG.domains[item.domain]) return false;
-    // PAR_FIELDS와 매핑 — 해당 문항이 비활성화됐으면 제외
+    // surveyKey가 있으면 (기본생활습관, 건강및안전) 해당 키로 체크
+    if(item.surveyKey) return CONFIG.parFields[item.surveyKey]!==false;
+    // PAR_FIELDS와 레이블 매핑
     const matched=PAR_FIELDS.find(f=>f.domain===item.domain&&
       f.label.replace(/\s/g,'')===item.label.replace(/\s/g,''));
     if(matched) return CONFIG.parFields[matched.key]!==false;
-    return true; // 매핑 못 찾으면 포함
+    return true;
   });
 }
 
