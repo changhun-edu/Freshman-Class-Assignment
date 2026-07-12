@@ -516,6 +516,13 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
       <div class="card">
         <h3><span class="icon">📄</span>면접 결과 업로드</h3>
         <p style="font-size:.82rem;color:var(--text-sub);margin-bottom:12px">학생 면접 결과는 교사가 면접용 서식(학생면접 시트)에 입력해 업로드하세요. 학부모 설문은 <b>종이 설문지</b>를 수거 후 담당자가 학부모설문 시트에 옮겨 적거나, <b>온라인 설문</b>(구글폼·네이버폼·웹설문)을 이용해 수집한 CSV를 업로드할 수 있습니다. 서식·설문지는 준비 단계에서 받으세요.</p>
+        <div style="background:#fef9c3;border:1.5px solid #f59e0b;border-radius:8px;padding:11px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px">
+          <span style="font-size:1.2rem;flex-shrink:0">💡</span>
+          <div>
+            <div style="font-weight:800;font-size:.85rem;color:#92400e;margin-bottom:3px">파일을 합치지 않아도 됩니다!</div>
+            <div style="font-size:.8rem;color:#92400e;line-height:1.6">면접교사별로 각자 작성한 엑셀 파일을 <b>합치지 않고 그대로 여러 개 함께 업로드</b>하면 자동으로 합산됩니다.<br>드래그 앤 드롭으로 한꺼번에 올리거나 파일 찾아보기에서 여러 파일을 선택하세요.</div>
+          </div>
+        </div>
         <div id="drop-zone">
           <div class="big">📁</div>
           <div style="margin-top:8px;font-weight:700">엑셀 파일을 여기로 끌어다 놓으세요</div>
@@ -2692,6 +2699,39 @@ function runAutoAssign(shuffle=false){
   });
   ASSIGN.classes=classes;
   ASSIGN.assigned=true;
+
+  // ── 분리 위반 자동 수정 후처리 ──
+  const fixMap={};
+  classes.forEach(c=>c.ids.forEach(no=>{fixMap[no]=c.idx;}));
+  let fixAttempts=0,hasViolation=true;
+  while(hasViolation&&fixAttempts<30){
+    hasViolation=false;fixAttempts++;
+    outer:for(const r of ROSTER){
+      for(const sepId of (r.sepIds||[])){
+        if(fixMap[r.no]==null||fixMap[sepId]==null||fixMap[r.no]!==fixMap[sepId]) continue;
+        hasViolation=true;
+        const violatorNo=r.no;
+        const curIdx=fixMap[violatorNo];
+        const targetC=classes.filter(c=>c.idx!==curIdx).sort((a,b)=>a.weight-b.weight||a.ids.length-b.ids.length)[0];
+        if(!targetC) break outer;
+        const fromC=classes[curIdx];
+        const sv=students[violatorNo];
+        if(fromC&&sv){
+          fromC.ids=fromC.ids.filter(x=>x!==violatorNo);
+          fromC.weight-=studentWeight(violatorNo);
+          (sv.tags||[]).forEach(t=>{fromC.tagCount[t]=Math.max(0,(fromC.tagCount[t]||1)-1);});
+          fromC.genderCount[sv.gender]=Math.max(0,(fromC.genderCount[sv.gender]||1)-1);
+          targetC.ids.push(violatorNo);
+          targetC.weight+=studentWeight(violatorNo);
+          (sv.tags||[]).forEach(t=>{targetC.tagCount[t]=(targetC.tagCount[t]||0)+1;});
+          targetC.genderCount[sv.gender]=(targetC.genderCount[sv.gender]||0)+1;
+          fixMap[violatorNo]=targetC.idx;
+        }
+        break outer;
+      }
+    }
+  }
+
   computeViolationsLive();
   renderAssignResults();
   saveSession();
