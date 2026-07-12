@@ -204,6 +204,17 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 .acc-header .acc-meta{font-size:.74rem;color:var(--text-muted);white-space:nowrap}
 .acc-row.warn-row .acc-header .acc-meta{color:var(--amber)}
 .acc-toggle{font-size:.8rem;font-weight:700;color:#fff;padding:4px 10px;border-radius:6px;background:var(--primary);border:none;flex-shrink:0;letter-spacing:.02em;box-shadow:0 1px 3px rgba(37,99,235,.3)}
+
+.field-checkbox-row{display:flex;align-items:flex-start;gap:8px;padding:6px 8px;border-radius:6px;transition:.12s;cursor:pointer}
+.field-checkbox-row:hover{background:var(--surface2)}
+.field-checkbox-row input[type=checkbox]{width:15px;height:15px;flex-shrink:0;margin-top:2px;cursor:pointer;accent-color:var(--primary)}
+.field-checkbox-body{flex:1}
+.field-checkbox-who{font-size:.68rem;font-weight:700;padding:1px 6px;border-radius:4px;display:inline-block;margin-bottom:2px}
+.field-checkbox-label{font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:1px}
+.field-checkbox-q{font-size:.75rem;color:var(--text-sub);line-height:1.4}
+.field-checkbox-cmt{font-size:.7rem;color:var(--text-muted);margin-top:2px;line-height:1.4}
+.field-section-label{font-size:.72rem;font-weight:700;color:var(--text-muted);padding:6px 0 4px 2px;border-bottom:1px solid var(--border);margin-bottom:4px}
+
 .acc-body{display:none;padding:0 12px;background:#fff}
 .acc-body.open{display:block}
 .acc-item{display:flex;gap:10px;padding:9px 0;border-bottom:1px dashed var(--border)}
@@ -862,7 +873,13 @@ let ROSTER=[];
 let rosterLocked=false;
 let domainsLocked=false;
 let unregistered=[];
-const CONFIG={domains:Object.fromEntries(DOMAIN_LIST.map(d=>[d,true])),specialEd:{enabled:true,weight:2}};
+const CONFIG={
+  domains:Object.fromEntries(DOMAIN_LIST.map(d=>[d,true])),
+  specialEd:{enabled:true,weight:2},
+  // 문항별 활성화 여부 — key: STU_FIELDS idx 또는 PAR_FIELDS key
+  stuFields:Object.fromEntries(STU_FIELDS.map(f=>[f.idx,true])),
+  parFields:Object.fromEntries(PAR_FIELDS.map(f=>[f.key,true])),
+};
 
 let uploadedFiles=[];
 let students={};
@@ -1066,73 +1083,85 @@ function renderDomainToggles(){
   const el=document.getElementById('domain-toggles');
   el.innerHTML=DOMAIN_LIST.map(d=>{
     const on=CONFIG.domains[d];
-    const stuCnt=STU_FIELDS.filter(f=>f.domain===d).length;
-    const parQCnt=PAR_FIELDS.filter(f=>f.domain===d).length+(d==='기본생활·안전'?2:0);
-    const checkCnt=d==='기본생활·안전'?PAR_HABIT.length+PAR_HEALTH.length:0;
-    const parLabel=parQCnt?`학부모 문항 ${parQCnt}개${checkCnt?` (체크항목 ${checkCnt}개)`:''}`:'';
-    // 경고: 켜진 상태에서 한쪽 문항이 0개 (기본생활·안전은 학생 문항 없는 게 설계 의도)
-    const warnStu=on&&stuCnt===0&&d!=='기본생활·안전';
-    const warnPar=on&&parQCnt===0;
-    const warn=warnStu||warnPar;
-    const warnMsg=warnStu?'⚠ 학생 문항 없음':warnPar?'⚠ 학부모 문항 없음':'';
     const dc=DOMAIN_COLORS[d]||{bg:'#eee',fg:'#333'};
     const isOpen=!!ACC_OPEN[d];
+    const stuFs=STU_FIELDS.filter(f=>f.domain===d);
+    const parFs=PAR_FIELDS.filter(f=>f.domain===d);
 
-    // 문항 목록 생성
-    const dc2=dc;
-    let itemNum=0;
-    const stuItems=STU_FIELDS.filter(f=>f.domain===d).map(f=>{
-      itemNum++;
-      return `<div class="acc-item">
-        <div class="acc-item-num" style="background:${dc2.bg};color:${dc2.fg}">${itemNum}</div>
-        <div class="acc-item-body">
-          <div class="acc-item-who" style="color:${dc2.fg}">학생 면접</div>
-          <div class="acc-item-label">${f.label}</div>
-          <div class="acc-item-q">${f.q}</div>
-          <div class="acc-item-cmt">${f.cmt}</div>
+    // 활성 문항 수 계산
+    const stuActiveCnt=stuFs.filter(f=>on&&CONFIG.stuFields[f.idx]!==false).length;
+    const parActiveCnt=parFs.filter(f=>on&&CONFIG.parFields[f.key]!==false).length;
+    const stuTotalCnt=stuFs.length;
+    const parTotalCnt=parFs.length+(d==='기본생활·안전'?2:0);
+    const metaText=on
+      ?`학생 ${stuActiveCnt}/${stuTotalCnt} · 학부모 ${parActiveCnt}/${parTotalCnt}`
+      :`학생 ${stuTotalCnt} · 학부모 ${parTotalCnt}`;
+
+    // 학생 문항 체크박스
+    const stuItems=stuFs.map(f=>{
+      const fOn=CONFIG.stuFields[f.idx]!==false;
+      return `<div class="field-checkbox-row" onclick="event.stopPropagation();toggleFieldCheck('stu',${f.idx})">
+        <input type="checkbox" ${fOn&&on?'checked':''} ${!on?'disabled':''} onchange="event.stopPropagation();CONFIG.stuFields[${f.idx}]=this.checked;renderDomainToggles();renderPrepSummary()">
+        <div class="field-checkbox-body">
+          <div class="field-checkbox-who" style="background:${dc.bg};color:${dc.fg}">학생 면접</div>
+          <div class="field-checkbox-label">${f.label}</div>
+          <div class="field-checkbox-q">${f.q}</div>
+          <div class="field-checkbox-cmt">${f.cmt}</div>
         </div>
       </div>`;
     }).join('');
-    const parItems=PAR_FIELDS.filter(f=>f.domain===d).map(f=>{
-      itemNum++;
+
+    // 학부모 문항 체크박스
+    const parItems=parFs.map(f=>{
+      const fOn=CONFIG.parFields[f.key]!==false;
       const sq=SURVEY_Q.find(q=>q.domain===d&&q.label.replace(/\s/g,'')===f.label.replace(/\s/g,''));
-      return `<div class="acc-item">
-        <div class="acc-item-num" style="background:${dc2.bg};color:${dc2.fg}">${itemNum}</div>
-        <div class="acc-item-body">
-          <div class="acc-item-who" style="color:${dc2.fg}">학부모 확인</div>
-          <div class="acc-item-label">${f.label}</div>
-          ${sq?`<div class="acc-item-q">${sq.q}</div>`:''}
-          <div class="acc-item-cmt">${f.opts.join(' / ')}</div>
+      return `<div class="field-checkbox-row" onclick="event.stopPropagation();toggleFieldCheck('par','${f.key}')">
+        <input type="checkbox" ${fOn&&on?'checked':''} ${!on?'disabled':''} onchange="event.stopPropagation();CONFIG.parFields['${f.key}']=this.checked;renderDomainToggles();renderPrepSummary()">
+        <div class="field-checkbox-body">
+          <div class="field-checkbox-who" style="background:${dc.bg};color:${dc.fg}">학부모 설문</div>
+          <div class="field-checkbox-label">${f.label}</div>
+          ${sq?`<div class="field-checkbox-q">${sq.q}</div>`:''}
+          <div class="field-checkbox-cmt">${f.opts.join(' / ')}</div>
         </div>
       </div>`;
     }).join('');
-    // 기본생활·안전 체크리스트 안내
-    const habitNote=(d==='기본생활·안전')?`<div class="acc-item">
-        <div class="acc-item-num" style="background:${dc2.bg};color:${dc2.fg}">+</div>
-        <div class="acc-item-body">
-          <div class="acc-item-who" style="color:${dc2.fg}">학부모 확인 (체크리스트)</div>
-          <div class="acc-item-label">기본 생활 습관 · 건강 및 안전</div>
-          <div class="acc-item-cmt">화장실사용 / 식사 / 옷입고벗기 / 정리정돈 / 물건챙기기 / 등하교적응 / 알레르기 / 투약 / 음식제한 / 시력청력 / 기타건강유의</div>
-        </div>
-      </div>`:'';
-    const metaText=`학생 ${stuCnt}개 · 학부모 ${parQCnt}개${warn?' '+warnMsg:''}`;
 
-    return `<div class="acc-row ${on?'on':''} ${warn?'warn-row':''}">
+    // 기본생활·안전 체크리스트 안내
+    const habitNote=(d==='기본생활·안전')?`<div style="font-size:.76rem;color:var(--text-muted);padding:6px 8px;background:var(--surface2);border-radius:6px;margin-top:4px">
+      📋 학부모 체크리스트: 기본생활습관 (화장실·식사·옷·정리·물건·등하교) + 건강안전 (알레르기·투약·음식·시력청력·기타) — 항상 포함
+    </div>`:'';
+
+    return `<div class="acc-row ${on?'on':''} ${(!stuItems&&!parItems)?'warn-row':''}">
       <div class="acc-header" onclick="toggleAcc('${d}')">
-        <input type="checkbox" ${on?'checked':''} onclick="event.stopPropagation()" onchange="CONFIG.domains['${d}']=this.checked;renderDomainToggles();renderPrepSummary();renderQuestionPreview();">
+        <input type="checkbox" ${on?'checked':''} onclick="event.stopPropagation()" onchange="CONFIG.domains['${d}']=this.checked;if(!this.checked){STU_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.stuFields[f.idx]=false;});PAR_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.parFields[f.key]=false;});}else{STU_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.stuFields[f.idx]=true;});PAR_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.parFields[f.key]=true;});}renderDomainToggles();renderPrepSummary();renderQuestionPreview();">
         <span class="acc-label">${DOMAIN_ICONS[d]} ${d}</span>
         <span class="acc-meta">${metaText}</span>
         <span class="acc-toggle">${isOpen?'▲ 접기':'▼ 펼치기'}</span>
       </div>
       <div class="acc-body ${isOpen?'open':''}">
-        ${stuItems}${parItems}${habitNote}
-        ${(!stuItems&&!parItems&&!habitNote)?'<div style="font-size:.8rem;color:var(--text-muted);padding:10px 0">이 영역에 등록된 문항이 없습니다.</div>':''}
+        ${stuItems||parItems
+          ?`${stuItems?`<div class="field-section-label">학생 면접 문항</div>${stuItems}`:''}
+            ${parItems?`<div class="field-section-label" style="margin-top:8px">학부모 설문 문항</div>${parItems}`:''}`
+          :'<div style="font-size:.8rem;color:var(--text-muted);padding:10px 0">이 영역에 등록된 문항이 없습니다.</div>'
+        }
+        ${habitNote}
+        ${on&&(stuFs.length>1||parFs.length>1)?`<div style="margin-top:8px;display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();STU_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.stuFields[f.idx]=true;});PAR_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.parFields[f.key]=true;});renderDomainToggles();renderPrepSummary()">모두 선택</button>
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();STU_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.stuFields[f.idx]=false;});PAR_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.parFields[f.key]=false;});renderDomainToggles();renderPrepSummary()">모두 해제</button>
+        </div>`:''}
       </div>
     </div>`;
   }).join('');
   renderQuestionPreview();
   renderDomainLockArea();
 }
+
+function toggleFieldCheck(type,key){
+  if(type==='stu') CONFIG.stuFields[key]=!CONFIG.stuFields[key];
+  else CONFIG.parFields[key]=!CONFIG.parFields[key];
+  renderDomainToggles();renderPrepSummary();
+}
+
 function onSpecialEdChange(enabled){
   CONFIG.specialEd.enabled=enabled;
   renderSpecialEdToggle();renderPrepSummary();
@@ -1156,8 +1185,8 @@ function onConfigChange(){
 
 /* ===================== 명단 기반 면접 서식 생성 ===================== */
 async function buildInterviewWorkbook(prefill){
-  const stuFields=STU_FIELDS.filter(f=>CONFIG.domains[f.domain]);
-  const parFields=PAR_FIELDS.filter(f=>CONFIG.domains[f.domain]);
+  const stuFields=STU_FIELDS.filter(f=>CONFIG.domains[f.domain]&&CONFIG.stuFields[f.idx]!==false);
+  const parFields=PAR_FIELDS.filter(f=>CONFIG.domains[f.domain]&&CONFIG.parFields[f.key]!==false);
   const habitOn=CONFIG.domains['기본생활·안전'];
   const specialEdOn=CONFIG.specialEd.enabled;
 
@@ -1587,7 +1616,15 @@ function printInterviewQuestions(){
 }
 /* ===================== 안 A: 외부 설문 도구용 문항 복사 ===================== */
 function getActiveItems(){
-  return SURVEY_Q.filter(item=>item.domain===null||CONFIG.domains[item.domain]);
+  return SURVEY_Q.filter(item=>{
+    if(item.domain===null) return true; // 검사경험 등 도메인 없는 항목은 항상 포함
+    if(!CONFIG.domains[item.domain]) return false;
+    // PAR_FIELDS와 매핑 — 해당 문항이 비활성화됐으면 제외
+    const matched=PAR_FIELDS.find(f=>f.domain===item.domain&&
+      f.label.replace(/\s/g,'')===item.label.replace(/\s/g,''));
+    if(matched) return CONFIG.parFields[matched.key]!==false;
+    return true; // 매핑 못 찾으면 포함
+  });
 }
 
 /* ── 안 B: 구글폼 Apps Script 자동 생성 ── */
@@ -2015,6 +2052,7 @@ function saveSession(){
     const data={
       ROSTER,rosterLocked,
       domains:CONFIG.domains,specialEd:CONFIG.specialEd,
+      stuFields:CONFIG.stuFields,parFields:CONFIG.parFields,
       students,uploadedFiles,
       ASSIGN:{
         numClasses:ASSIGN.numClasses,
@@ -2037,6 +2075,8 @@ function restoreSession(){
   rosterLocked=!!saved.rosterLocked;
   if(saved.domains)Object.assign(CONFIG.domains,saved.domains);
   if(saved.specialEd)CONFIG.specialEd=saved.specialEd;
+  if(saved.stuFields)Object.assign(CONFIG.stuFields,saved.stuFields);
+  if(saved.parFields)Object.assign(CONFIG.parFields,saved.parFields);
   // 업로드 데이터 복원
   if(saved.students&&typeof saved.students==='object'){
     Object.assign(students,saved.students);
@@ -2296,12 +2336,16 @@ function renderUploadSummary(){
 function proceedToReview(){goStep('review');}
 
 /* ===================== 채점 로직 (관찰 영역별) ===================== */
+
+// 활성 문항 필터 헬퍼
+function activeStuFields(){return STU_FIELDS.filter(f=>CONFIG.domains[f.domain]&&CONFIG.stuFields[f.idx]!==false);}
+function activeParFields(){return PAR_FIELDS.filter(f=>CONFIG.domains[f.domain]&&CONFIG.parFields[f.key]!==false);}
 function computeDomainResult(s,domain){
   let score=0,max=0,flag=false;
-  STU_FIELDS.filter(f=>f.domain===domain).forEach(f=>{
+  STU_FIELDS.filter(f=>f.domain===domain&&CONFIG.stuFields[f.idx]!==false).forEach(f=>{
     if(s.stu&&s.stu.q&&s.stu.q[f.idx]!=null){const v=s.stu.q[f.idx];score+=v;max+=2;if(v===2)flag=true;}
   });
-  PAR_FIELDS.filter(f=>f.domain===domain).forEach(f=>{
+  PAR_FIELDS.filter(f=>f.domain===domain&&CONFIG.parFields[f.key]!==false).forEach(f=>{
     if(s.par&&s.par[f.key]){const v=severity(f.key,s.par[f.key]);score+=v;max+=2;if(v===2)flag=true;}
   });
   if(domain==='기본생활·안전'&&s.par){
