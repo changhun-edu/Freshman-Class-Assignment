@@ -3053,10 +3053,10 @@ function renderAssignResults(){
     if(ob)ob.style.display='flex';
     return;
   }
-  // 반 수에 따라 컬럼 수 동적 설정 (스크롤 최소화)
+  // 반 수에 따라 카드 최소 너비 결정 — auto-fill로 자동 줄바꿈
   const numCls=ASSIGN.classes.length;
-  const minW=numCls<=4?240:numCls<=6?200:numCls<=8?180:160;
-  el.style.gridTemplateColumns=`repeat(${numCls},minmax(${minW}px,1fr))`;
+  const minW=numCls<=4?220:numCls<=7?180:160;
+  el.style.gridTemplateColumns=`repeat(auto-fill,minmax(${minW}px,1fr))`;
   // 배치 완료 시 온보딩 숨김
   const ob=document.getElementById('assign-onboarding');
   if(ob)ob.style.display='none';
