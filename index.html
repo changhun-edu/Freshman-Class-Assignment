@@ -1094,6 +1094,9 @@ function renderDomainToggles(){
     const stuFs=STU_FIELDS.filter(f=>f.domain===d);
     const parFs=PAR_FIELDS.filter(f=>f.domain===d);
 
+    // 기본생활·안전 체크리스트 문항 수 (선언을 먼저)
+    const habitActiveCnt=d==='기본생활·안전'?SURVEY_Q.filter(q=>q.domain==='기본생활·안전'&&CONFIG.parFields[q.surveyKey||'']!==false).length:0;
+    const habitTotalCnt=d==='기본생활·안전'?SURVEY_Q.filter(q=>q.domain==='기본생활·안전').length:0;
     const stuActiveCnt=stuFs.filter(f=>on&&CONFIG.stuFields[f.idx]!==false).length;
     const parActiveCnt=parFs.filter(f=>on&&CONFIG.parFields[f.key]!==false).length+(on?habitActiveCnt:0);
     const stuTotalCnt=stuFs.length;
@@ -1146,9 +1149,7 @@ function renderDomainToggles(){
       </div>`;
     }).join(''):'';
 
-    // 활성 문항 수 재계산 (기본생활·안전 포함)
-    const habitActiveCnt=d==='기본생활·안전'?SURVEY_Q.filter(q=>q.domain==='기본생활·안전'&&CONFIG.parFields[q.surveyKey||'']!==false).length:0;
-    const habitTotalCnt=d==='기본생활·안전'?SURVEY_Q.filter(q=>q.domain==='기본생활·안전').length:0;
+
 
     return `<div class="acc-row ${on?'on':''} ${(!stuItems&&!parItems)?'warn-row':''}">
       <div class="acc-header" onclick="toggleAcc('${d}')">
