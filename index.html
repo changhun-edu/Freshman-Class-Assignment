@@ -1260,11 +1260,19 @@ async function buildInterviewWorkbook(prefill){
   }
 
   // ── 학생면접 헤더/컬럼 계산 ──
+  // 열 번호 → 엑셀 알파벳 변환 헬퍼 (A=1, Z=26, AA=27, ...)
+  function colToLetter(n){
+    let s='';
+    while(n>0){s=String.fromCharCode(64+(n%26||26))+s;n=Math.floor((n-1)/26);}
+    return s;
+  }
   const h1=['접수번호','이름','성별','면접교사',...(specialEdOn?['특수교육']:[]),...stuFields.map((f,i)=>`${i+1}.${f.label}(0~2)`),'합계','분리대상(관리번호)','동반대상(관리번호)','특이사항(서술)'];
   const specialEdCol=specialEdOn?5:null;
   const scoreStart=4+(specialEdOn?1:0)+1,scoreEnd=scoreStart+stuFields.length-1,sumCol=scoreEnd+1;
   const widths=[11,10,7,10,...(specialEdOn?[9]:[]),...stuFields.map(()=>12),9,18,18,34];
-  let scoreStartLetter='',scoreEndLetter='';
+  // 열 알파벳은 헬퍼로 직접 계산 (ws1.getColumn().letter 의존 제거)
+  const scoreStartLetter=stuFields.length?colToLetter(scoreStart):'';
+  const scoreEndLetter=stuFields.length?colToLetter(scoreEnd):'';
 
   const wb=new ExcelJS.Workbook();
   wb.creator='신입생면접자료정리';wb.created=new Date();
@@ -1291,7 +1299,6 @@ async function buildInterviewWorkbook(prefill){
   styleHeaderRow(ws1,2,h1.length);
   // 점수 문항 헤더 툴팁
   stuFields.forEach((f,i)=>{ws1.getCell(2,scoreStart+i).note={texts:[{text:f.cmt}]};});
-  if(stuFields.length){scoreStartLetter=ws1.getColumn(scoreStart).letter;scoreEndLetter=ws1.getColumn(scoreEnd).letter;}
   if(specialEdCol){
     ws1.getCell(2,specialEdCol).note={texts:[{text:'이미 파악한 특수교육 대상이면 O를 입력하세요.'}]};
     // 특수교육: 드롭다운 제거, 텍스트 자유 입력
@@ -1316,8 +1323,12 @@ async function buildInterviewWorkbook(prefill){
     ws1.getCell(r,3).alignment=centerAlign;
     // 특수교육: 드롭다운 없이 텍스트 직접 입력 (2번 수정)
     if(specialEdCol)ws1.getCell(r,specialEdCol).alignment=centerAlign;
-    // 합계 수식
-    if(stuFields.length)ws1.getCell(r,sumCol).value={formula:`SUM(${scoreStartLetter}${r}:${scoreEndLetter}${r})`};
+    // 합계 수식 — 활성 문항이 있을 때만 SUM, 없으면 0
+    if(stuFields.length&&scoreStartLetter&&scoreEndLetter){
+      ws1.getCell(r,sumCol).value={formula:`SUM(${scoreStartLetter}${r}:${scoreEndLetter}${r})`};
+    } else {
+      ws1.getCell(r,sumCol).value=0;
+    }
     ws1.getCell(r,sumCol).alignment=centerAlign;
     ws1.getCell(r,sumCol).font={bold:true};
   }
