@@ -48,6 +48,7 @@ header .sub{font-size:.8rem;color:var(--text-muted);margin-top:2px}
 .step-line{width:50px;height:2px;background:var(--border)}
 
 main{flex:1;overflow:auto;padding:24px 32px}
+main:has(#panel-assign.active){padding:16px 16px}
 .panel{display:none;max-width:1300px;margin:0 auto}
 .panel.active{display:block}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px 22px;margin-bottom:16px;box-shadow:var(--shadow)}
@@ -273,7 +274,26 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 .classname-pills{display:flex;gap:6px;flex-wrap:wrap}
 .classname-pill input{width:68px;padding:4px 6px;border-radius:6px;border:1.5px solid var(--border);font-size:.82rem;font-weight:700;text-align:center}
 /* ── 반 카드 보드 ── */
-.assign-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:12px;margin-top:4px}
+/* ── 배치 패널 전용 full-width ── */
+#panel-assign{max-width:none!important}
+#panel-assign .assign-config-section,
+#panel-assign .assign-toolbar,
+#panel-assign .assign-footer-bar,
+#panel-assign .footer-nav{max-width:none}
+/* 배치 보드 — 반 수에 따라 자동 컬럼 (최소 180px) */
+.assign-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:4px}
+/* 미니카드 조밀화 */
+.student-mini{padding:5px 6px}
+.student-mini-seq{font-size:.6rem;margin-bottom:0}
+.student-mini-name{font-size:.76rem}
+.student-mini-id{font-size:.6rem}
+.student-mini-dots{margin-top:2px}
+.student-mini-tag-dot{width:6px;height:6px}
+.class-board-header{padding:7px 10px}
+.class-board-header h4{font-size:.85rem}
+.class-board-meta{font-size:.68rem}
+.class-board-body{padding:6px}
+.student-mini-grid{gap:3px}
 .class-board-card{border-radius:10px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.09)}
 .class-board-header{padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
 .class-board-header h4{font-size:.98rem;font-weight:900;color:#fff;margin:0}
@@ -2613,38 +2633,53 @@ function runAutoAssign(shuffle=false){
   const classes=Array.from({length:numClasses},(_,i)=>({idx:i,name:ASSIGN.classNames[i],ids:[],genderCount:{},tagCount:{},weight:0,langCount:0,migrantCount:0}));
   const clusters=buildClusters().map(ids=>({ids,...clusterScore(ids)}));
 
-  // ── 배치 순서: 특수교육 포함 클러스터 먼저, 나머지 나중 ──
-  // 각 클러스터의 특수교육 여부 계산
+  // 클러스터에 주요 성별 정보 추가
   clusters.forEach(cl=>{
-    cl.hasSpecialEd=cl.ids.some(no=>students[no]&&(students[no].tags||[]).includes('특수교육'));
-    cl.hasLangDiff=cl.ids.some(no=>{
-      const s=students[no];
-      return s&&s.domains&&s.domains['의사소통']&&s.domains['의사소통'].score>=1;
-    });
+    const genders={};
+    cl.ids.forEach(no=>{const s=students[no];if(s&&s.gender)genders[s.gender]=(genders[s.gender]||0)+1;});
+    cl.majorGender=Object.entries(genders).sort((a,b)=>b[1]-a[1])[0]?.[0]||'';
+    cl.maleCnt=genders['남']||0;
+    cl.femaleCnt=genders['여']||0;
   });
 
   function sortClusters(list){
-    if(shuffle){
-      list.sort((a,b)=>{
-        // 특수교육 먼저, 동점이면 무작위
-        if(a.hasSpecialEd!==b.hasSpecialEd) return a.hasSpecialEd?-1:1;
-        const diff=(b.weight-a.weight)||(b.tagSum-a.tagSum)||(b.size-a.size);
-        return diff!==0?diff:(Math.random()-0.5);
-      });
-    } else {
-      list.sort((a,b)=>{
-        // 특수교육 먼저
-        if(a.hasSpecialEd!==b.hasSpecialEd) return a.hasSpecialEd?-1:1;
-        // 그 다음 weight(특수교육 가중치) 내림차순
-        return (b.weight-a.weight)||(b.tagSum-a.tagSum)||(b.size-a.size);
-      });
+    // 1단계: 특수교육 포함 / 일반으로 분리
+    const special=list.filter(c=>c.hasSpecialEd);
+    const normal=list.filter(c=>!c.hasSpecialEd);
+
+    // 특수교육 정렬: weight 내림차순
+    special.sort((a,b)=>(b.weight-a.weight)||(b.tagSum-a.tagSum));
+
+    // 일반 클러스터: 성별 교차 배치를 위해 남초/여초/균등으로 분류 후 교차
+    const maleDom=normal.filter(c=>c.maleCnt>c.femaleCnt);
+    const femDom=normal.filter(c=>c.femaleCnt>c.maleCnt);
+    const balanced=normal.filter(c=>c.maleCnt===c.femaleCnt);
+
+    // 각 그룹 내 정렬 (tagSum 내림차순)
+    const sortByTag=(a,b)=>(b.tagSum-a.tagSum)||(b.size-a.size);
+    maleDom.sort(sortByTag);femDom.sort(sortByTag);balanced.sort(sortByTag);
+
+    // 남초/여초 교차 병합 → 균등 추가
+    const interleaved=[];
+    const maxLen=Math.max(maleDom.length,femDom.length);
+    for(let i=0;i<maxLen;i++){
+      if(i<maleDom.length)interleaved.push(maleDom[i]);
+      if(i<femDom.length)interleaved.push(femDom[i]);
     }
-    return list;
+    interleaved.push(...balanced);
+
+    // shuffle 시 각 그룹 내 무작위 적용
+    if(shuffle){
+      [maleDom,femDom,balanced].forEach(g=>g.sort(()=>Math.random()-0.5));
+      // 교차 순서는 유지
+    }
+
+    return [...special,...interleaved];
   }
-  sortClusters(clusters);
+  const sortedClusters=sortClusters(clusters);
   const assignmentMap={};
   const forcedViolations=[];
-  clusters.forEach(cl=>{
+  sortedClusters.forEach(cl=>{
     const blocked=new Set();
     cl.ids.forEach(no=>{
       const r=ROSTER.find(x=>x.no===no);
@@ -2663,8 +2698,16 @@ function runAutoAssign(shuffle=false){
       score+=c.ids.length*2;
       cl.ids.forEach(no=>{
         const s=students[no];if(!s)return;
-        // ③ 성별 균형
-        score+=(c.genderCount[s.gender]||0);
+        // ③ 성별 균형 — 가중치 상향 (이 클러스터의 성별이 해당 반에 이미 많으면 페널티)
+        const gender=s.gender;
+        if(gender){
+          // 현재 반의 해당 성별 수 vs 반대 성별 수 차이만큼 페널티
+          const sameGenderCnt=c.genderCount[gender]||0;
+          const otherGenders=Object.entries(c.genderCount).filter(([g])=>g!==gender);
+          const otherGenderCnt=otherGenders.length?Math.max(...otherGenders.map(([,n])=>n)):0;
+          score+=sameGenderCnt*4;                    // 같은 성별 많으면 강한 페널티
+          score-=Math.min(otherGenderCnt,sameGenderCnt); // 균형 맞으면 보너스
+        }
         // ④ 태그별 균등 분산
         (s.tags||[]).forEach(t=>{score+=(c.tagCount[t]||0)*2;});
         // ⑤ 언어 어려움 학생 별도 분산
@@ -3010,6 +3053,10 @@ function renderAssignResults(){
     if(ob)ob.style.display='flex';
     return;
   }
+  // 반 수에 따라 컬럼 수 동적 설정 (스크롤 최소화)
+  const numCls=ASSIGN.classes.length;
+  const minW=numCls<=4?240:numCls<=6?200:numCls<=8?180:160;
+  el.style.gridTemplateColumns=`repeat(${numCls},minmax(${minW}px,1fr))`;
   // 배치 완료 시 온보딩 숨김
   const ob=document.getElementById('assign-onboarding');
   if(ob)ob.style.display='none';
