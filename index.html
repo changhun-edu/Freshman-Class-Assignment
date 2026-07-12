@@ -285,7 +285,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 /* 미니카드 조밀화 */
 .student-mini{padding:5px 6px}
 .student-mini-seq{font-size:.6rem;margin-bottom:0}
-.student-mini-name{font-size:.76rem}
+.student-mini-name{font-size:.76rem;word-break:keep-all;line-height:1.2}
 .student-mini-id{font-size:.6rem}
 .student-mini-dots{margin-top:2px}
 .student-mini-tag-dot{width:6px;height:6px}
@@ -350,7 +350,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 .student-mini:hover{border-color:#93c5fd;background:#eff6ff}
 .student-mini.dragging{opacity:.35;border-style:dashed}
 .student-mini-seq{font-size:.66rem;color:var(--text-muted);margin-bottom:1px}
-.student-mini-name{font-size:.82rem;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.student-mini-name{font-size:.82rem;font-weight:800;color:var(--text);word-break:keep-all;line-height:1.2}
 .student-mini-id{font-size:.65rem;color:var(--text-muted);margin-top:1px}
 .student-mini-dots{display:flex;align-items:center;gap:2px;margin-top:4px;flex-wrap:wrap}
 .student-mini-tag-dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
@@ -3053,10 +3053,16 @@ function renderAssignResults(){
     if(ob)ob.style.display='flex';
     return;
   }
-  // 반 수에 따라 카드 최소 너비 결정 — auto-fill로 자동 줄바꿈
+  // 반 수에 따라 최적 컬럼 계산
+  // 화면 너비 기준으로 한 줄에 몇 개 들어갈지 결정, 나머지는 다음 줄로
   const numCls=ASSIGN.classes.length;
-  const minW=numCls<=4?220:numCls<=7?180:160;
-  el.style.gridTemplateColumns=`repeat(auto-fill,minmax(${minW}px,1fr))`;
+  const availW=el.parentElement?.clientWidth||1200;
+  const gap=8;
+  // 한 줄에 최대로 들어갈 수 있는 반 수 (최소 카드 폭 160px 기준)
+  const maxPerRow=Math.max(1,Math.floor((availW+gap)/(160+gap)));
+  // 실제 한 줄 반 수: 전체 반 수가 maxPerRow 이하면 전체를 1줄로
+  const perRow=numCls<=maxPerRow?numCls:Math.ceil(numCls/Math.ceil(numCls/maxPerRow));
+  el.style.gridTemplateColumns=`repeat(${perRow},1fr)`;
   // 배치 완료 시 온보딩 숨김
   const ob=document.getElementById('assign-onboarding');
   if(ob)ob.style.display='none';
