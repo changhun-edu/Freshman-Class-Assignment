@@ -1317,7 +1317,7 @@ async function buildInterviewWorkbook(prefill){
   let col2=3;
 
   // SURVEY_Q 기반으로 헤더 동적 생성 — 설문지 번호와 완전 일치
-  const activeItems=SURVEY_Q.filter(item=>item.domain===null||CONFIG.domains[item.domain]);
+  const activeItems=getActiveItems();
   activeItems.forEach((item,qi)=>{
     const qNum=qi+1;
     if(item.multi&&item.subNums){
@@ -1951,7 +1951,7 @@ init();`;
 }
 
 function printParentSurvey(subset){
-  const items=SURVEY_Q.filter(item=>item.domain===null||CONFIG.domains[item.domain]);
+  const items=getActiveItems();
   // 명단이 확정된 경우 명단 기반 출력, 아니면 빈 양식 1장 출력
   let list;
   if(subset){
