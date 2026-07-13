@@ -1215,8 +1215,8 @@ function unlockRoster(){
 /* ===================== 관찰 영역 선택 (STEP1) ===================== */
 function domainQuestionList(d){
   const list=[];
-  STU_FIELDS.filter(f=>f.domain===d&&CONFIG.stuFields[f.idx]!==false).forEach(f=>list.push({who:'학생',text:`${f.label} — ${f.q}`}));
-  SURVEY_Q.filter(item=>item.domain===d).forEach(item=>{
+  getEffectiveStuFields().filter(f=>f.domain===d&&CONFIG.stuFields[f.idx]!==false).forEach(f=>list.push({who:'학생',text:`${f.label} — ${f.q}`}));
+  getEffectiveSurveyQ().filter(item=>item.domain===d).forEach(item=>{
     if(item.surveyKey){
       if(CONFIG.parFields[item.surveyKey]!==false) list.push({who:'학부모',text:`${item.label} — ${item.q}`});
     } else {
@@ -1516,8 +1516,8 @@ function onConfigChange(){
 
 /* ===================== 명단 기반 면접 서식 생성 ===================== */
 async function buildInterviewWorkbook(prefill){
-  const stuFields=STU_FIELDS.filter(f=>CONFIG.domains[f.domain]&&CONFIG.stuFields[f.idx]!==false);
-  const parFields=PAR_FIELDS.filter(f=>CONFIG.domains[f.domain]&&CONFIG.parFields[f.key]!==false);
+  const stuFields=getEffectiveStuFields().filter(f=>CONFIG.domains[f.domain]&&CONFIG.stuFields[f.idx]!==false);
+  const parFields=getEffectiveParFields().filter(f=>CONFIG.domains[f.domain]&&CONFIG.parFields[f.key]!==false);
   const habitOn=CONFIG.domains['기본생활·안전'];
   const specialEdOn=CONFIG.specialEd.enabled;
 
@@ -1822,7 +1822,7 @@ async function downloadRosterTemplate(){
 
 /* ===================== 학생 면접 문항 인쇄 ===================== */
 function printInterviewQuestions(){
-  const enabled=STU_FIELDS.filter(f=>CONFIG.domains[f.domain]&&CONFIG.stuFields[f.idx]!==false);
+  const enabled=getEffectiveStuFields().filter(f=>CONFIG.domains[f.domain]&&CONFIG.stuFields[f.idx]!==false);
   if(!enabled.length){alert('선택된 관찰 영역에 학생 문항이 없습니다.');return;}
 
   // 영역별로 그룹화
@@ -1969,8 +1969,18 @@ const SURVEY_TO_PAR_KEY={
   '가정에서 사용하는 언어':'lang',
   '한국어 의사소통':'langcomm',
 };
+function getEffectiveStuFields(){
+  return STU_FIELDS.map(f=>getStuField(f));
+}
+function getEffectiveParFields(){
+  return PAR_FIELDS.map(f=>getParField(f));
+}
+function getEffectiveSurveyQ(){
+  return SURVEY_Q.map((q,i)=>getSurveyQ(q,i));
+}
+
 function getActiveItems(){
-  return SURVEY_Q.filter(item=>{
+  return getEffectiveSurveyQ().filter(item=>{
     if(item.domain===null) return true;
     if(!CONFIG.domains[item.domain]) return false;
     // surveyKey가 있으면 (기본생활습관, 건강및안전) 해당 키로 체크
@@ -2902,14 +2912,14 @@ function proceedToReview(){goStep('review');}
 /* ===================== 채점 로직 (관찰 영역별) ===================== */
 
 // 활성 문항 필터 헬퍼
-function activeStuFields(){return STU_FIELDS.filter(f=>CONFIG.domains[f.domain]&&CONFIG.stuFields[f.idx]!==false);}
-function activeParFields(){return PAR_FIELDS.filter(f=>CONFIG.domains[f.domain]&&CONFIG.parFields[f.key]!==false);}
+function activeStuFields(){return getEffectiveStuFields().filter(f=>CONFIG.domains[f.domain]&&CONFIG.stuFields[f.idx]!==false);}
+function activeParFields(){return getEffectiveParFields().filter(f=>CONFIG.domains[f.domain]&&CONFIG.parFields[f.key]!==false);}
 function computeDomainResult(s,domain){
   let score=0,max=0,flag=false;
-  STU_FIELDS.filter(f=>f.domain===domain&&CONFIG.stuFields[f.idx]!==false).forEach(f=>{
+  getEffectiveStuFields().filter(f=>f.domain===domain&&CONFIG.stuFields[f.idx]!==false).forEach(f=>{
     if(s.stu&&s.stu.q&&s.stu.q[f.idx]!=null){const v=s.stu.q[f.idx];score+=v;max+=2;if(v===2)flag=true;}
   });
-  PAR_FIELDS.filter(f=>f.domain===domain&&CONFIG.parFields[f.key]!==false).forEach(f=>{
+  getEffectiveParFields().filter(f=>f.domain===domain&&CONFIG.parFields[f.key]!==false).forEach(f=>{
     if(s.par&&s.par[f.key]){const v=severity(f.key,s.par[f.key]);score+=v;max+=2;if(v===2)flag=true;}
   });
   if(domain==='기본생활·안전'&&s.par){
@@ -3035,11 +3045,11 @@ function renderDetail(){
     html+=`<div style="margin-bottom:8px;padding:8px 10px;border-radius:8px;border:1px solid var(--border)">
       <div style="font-size:.78rem;font-weight:800;color:${dc.fg};margin-bottom:5px">${DOMAIN_ICONS[d]||''} ${d} <span style="font-weight:400;color:var(--text-muted)">${res?res.score+'/'+res.max:''}점</span></div>
       <div class="qgrid">`;
-    STU_FIELDS.filter(f=>f.domain===d).forEach(f=>{
+    getEffectiveStuFields().filter(f=>f.domain===d).forEach(f=>{
       const v=s.stu&&s.stu.q?s.stu.q[f.idx]:undefined;
       html+=`<div style="font-size:.77rem">[학생] ${f.label}</div><div class="${v===2?'score-2':''}" style="font-size:.77rem">${v==null?'-':v}</div>`;
     });
-    PAR_FIELDS.filter(f=>f.domain===d).forEach(f=>{
+    getEffectiveParFields().filter(f=>f.domain===d).forEach(f=>{
       const v=s.par?s.par[f.key]:undefined;
       html+=`<div style="font-size:.77rem">[학부모] ${f.label}</div><div style="font-size:.77rem">${v||'-'}</div>`;
     });
@@ -3818,8 +3828,8 @@ async function exportHandoff(){
   downloadBuffer(buf,'담임인계_신입생면접자료.xlsx');
 }
 async function exportBackup(){
-  const enabledStu=STU_FIELDS.filter(f=>CONFIG.domains[f.domain]&&CONFIG.stuFields[f.idx]!==false);
-  const enabledPar=PAR_FIELDS.filter(f=>CONFIG.domains[f.domain]&&CONFIG.parFields[f.key]!==false);
+  const enabledStu=getEffectiveStuFields().filter(f=>CONFIG.domains[f.domain]&&CONFIG.stuFields[f.idx]!==false);
+  const enabledPar=getEffectiveParFields().filter(f=>CONFIG.domains[f.domain]&&CONFIG.parFields[f.key]!==false);
   const habitOn=CONFIG.domains['기본생활·안전'];
   const wb=new ExcelJS.Workbook();
   const ws=wb.addWorksheet('원본 백업');
