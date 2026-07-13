@@ -34,7 +34,8 @@ header h1{font-size:1.1rem;font-weight:800;color:#fff}
 header .sub{font-size:.75rem;color:rgba(255,255,255,.7);margin-top:2px}
 .header-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:.78rem;font-weight:600;padding:5px 12px;border-radius:20px;white-space:nowrap}
 .header-badge .lock-icon{font-size:.85rem}
-header h1{font-size:1.1rem;font-weight:800;color:#fff}
+header h1{font-size:1.1rem;font-weight:800;color:#fff;transition:opacity .15s}
+header h1:hover{opacity:.75}
 header .sub{font-size:.8rem;color:var(--text-muted);margin-top:2px}
 
 #step-progress{display:flex;align-items:center;justify-content:center;gap:6px;background:var(--surface);border-bottom:1px solid var(--border);padding:14px;flex-shrink:0}
@@ -419,7 +420,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 <div id="app">
   <header>
     <div style="display:flex;align-items:center;gap:10px;flex:1">
-      <h1>🏫 스마트 반편성 (신입생용)</h1>
+      <h1 onclick="goStep('prep')" style="cursor:pointer" title="준비 화면으로 이동">🏫 스마트 반편성 (신입생용)</h1>
       <div class="header-badge">
         <span class="lock-icon">🔒</span>개인정보 미저장 · 작업 후 엑셀로 내보내세요
       </div>
@@ -851,7 +852,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
       <div class="guide-step-body">
         <div class="guide-step-title">스크립트 코드 복사</div>
         <div class="guide-step-desc">아래 버튼을 눌러 코드를 클립보드에 복사하세요.</div>
-        <button class="btn btn-primary btn-sm" style="margin-top:6px" onclick="copyGoogleScript()">📋 스크립트 코드 복사</button>
+        <button class="btn btn-primary btn-sm" style="margin-top:6px" onclick="copyGoogleScript()">📋 1단계 코드 복사 (createForm)</button>
         <div id="copy-confirm" style="font-size:.75rem;color:var(--green);margin-top:4px;display:none">✅ 복사되었습니다!</div>
       </div>
     </div>
@@ -891,8 +892,17 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
       <div class="guide-step-num">5</div>
       <div class="guide-step-body">
         <div class="guide-step-title">응답 수집 후 CSV 내보내기</div>
-        <div class="guide-step-desc">응답이 모두 수집되면 같은 스크립트 편집기에서 함수를 <b>createForm → exportToCSV</b>로 바꾼 뒤 실행하세요. 실행 로그에 CSV 파일 링크가 뜹니다. 다운로드 후 이 사이트 업로드 탭에서 가져오면 자동 반영됩니다.</div>
-        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:7px 10px;font-size:.75rem;margin-top:6px;color:#1e40af">
+        <div class="guide-step-desc">응답이 모두 수집되면 아래 버튼으로 <b>2단계 코드</b>를 복사하세요. 그런 다음 같은 스크립트 편집기로 돌아가 기존 코드를 전체 선택(Ctrl+A) 후 삭제하고 붙여넣은 뒤, 편집기 상단 드롭다운(▼)에서 <b>exportToCSV</b>를 선택하고 ▶ 실행하세요.</div>
+        <button class="btn btn-sm" style="margin-top:8px;background:#0f9d58;color:#fff;border:none;cursor:pointer" onclick="copyExportScript()">📋 2단계 코드 복사 (exportToCSV)</button>
+        <div id="copy-confirm-export" style="font-size:.75rem;color:var(--green);margin-top:4px;display:none">✅ 복사되었습니다!</div>
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px 12px;font-size:.75rem;margin-top:10px;color:#1e40af;line-height:1.7">
+          <b>드롭다운 선택 위치:</b><br>
+          편집기 상단 <b>▶ 실행</b> 버튼 왼쪽의 함수 선택창(▼)을 클릭<br>
+          → 목록에서 <b>exportToCSV</b> 선택 → ▶ 실행<br><br>
+          실행 완료 후 하단 <b>실행 로그</b>에 CSV 파일 링크가 뜹니다.<br>
+          다운로드 후 이 사이트 업로드 탭에서 가져오면 자동 반영됩니다.
+        </div>
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:7px 10px;font-size:.75rem;margin-top:6px;color:#166534">
           💡 CSV는 이 사이트의 학부모설문 시트 형식과 자동으로 맞춰져 생성됩니다.
         </div>
       </div>
@@ -2117,6 +2127,65 @@ function copyForGoogleForm(){
   });
 }
 function copyGoogleScript(){ copyForGoogleForm(); }
+
+function buildExportOnlyScript(){
+  const items=getActiveItems();
+  const colDefs=[];
+  colDefs.push({key:'관리번호',title:'관리번호'});
+  colDefs.push({key:'이름',title:'학생이름'});
+  items.forEach((item,i)=>{
+    colDefs.push({key:`q${i}`,title:`${i+1}.${item.label}`});
+    if(item.note) colDefs.push({key:`n${i}`,title:`${i+1}.${item.label} 구체내용`});
+  });
+  colDefs.push({key:`q${items.length}`,title:'입학초기배려사항'});
+  const colDefsJson=JSON.stringify(colDefs);
+
+  let code='// =====================================================\n';
+  code+='// 2단계: 학부모 설문 응답 CSV 내보내기\n';
+  code+='// 사용법: 편집기 상단 드롭다운(▼)에서 exportToCSV 선택 후 ▶ 실행\n';
+  code+='// =====================================================\n\n';
+  code+='// 응답 수집 후 실행 → 면접서식(학부모설문 시트)에 바로 붙여넣기 가능한 CSV 생성\n';
+  code+='function exportToCSV(){\n';
+  code+=`  var colDefs=${colDefsJson};\n`;
+  code+='  var formId=PropertiesService.getScriptProperties().getProperty("FORM_ID");\n';
+  code+='  if(!formId){Logger.log("먼저 1단계 createForm()을 실행하세요.");return;}\n';
+  code+='  var form=FormApp.openById(formId);\n';
+  code+='  var responses=form.getResponses();\n';
+  code+='  var headers=colDefs.map(function(c){return c.title;});\n';
+  code+='  var rows=[headers];\n';
+  code+='  responses.forEach(function(res){\n';
+  code+='    var itemResponses=res.getItemResponses();\n';
+  code+='    var map={};\n';
+  code+='    var idVal="",nameVal="";\n';
+  code+='    itemResponses.forEach(function(ir,idx){\n';
+  code+='      var title=ir.getItem().getTitle();\n';
+  code+='      var val=ir.getResponse();\n';
+  code+='      if(Array.isArray(val)) val=val.join(",");\n';
+  code+='      if(title.indexOf("관리번호")>=0) idVal=val;\n';
+  code+='      else if(title.indexOf("학생 이름")>=0) nameVal=val;\n';
+  code+='      else map[idx-2]=val;\n';
+  code+='    });\n';
+  code+='    var row=[idVal,nameVal];\n';
+  code+='    colDefs.slice(2).forEach(function(_,i){ row.push(map[i]||""); });\n';
+  code+='    rows.push(row);\n';
+  code+='  });\n';
+  code+='  var csv=rows.map(function(r){\n';
+  code+='    return r.map(function(v){return \'"\'+String(v||"").replace(/"/g,\'""\')+\'"\'}).join(",");\n';
+  code+='  }).join("\\n");\n';
+  code+='  var file=DriveApp.createFile("학부모설문_응답_"+new Date().toLocaleDateString("ko-KR")+".csv", "\\uFEFF"+csv, "text/csv");\n';
+  code+='  Logger.log("✅ CSV 생성 완료: " + file.getUrl());\n';
+  code+='  Logger.log("※ 위 링크에서 파일을 다운로드하세요.");\n';
+  code+='}\n';
+  return code;
+}
+
+function copyExportScript(){
+  const code=buildExportOnlyScript();
+  navigator.clipboard.writeText(code).then(()=>{
+    const el=document.getElementById('copy-confirm-export');
+    if(el){el.style.display='block';setTimeout(()=>{el.style.display='none';},3000);}
+  });
+}
 
 function showGoogleGuide(){
   document.getElementById('google-guide-modal').classList.add('open');
