@@ -359,6 +359,8 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 .student-mini-tag{font-size:.58rem;font-weight:800;padding:1px 5px;border-radius:4px;border:1px solid transparent}
 .student-mini.confirmed-lock{cursor:default;opacity:.85}
 .student-mini.migrant-bg{background:#fefce8;border-color:#fde68a}
+.student-mini.gender-m{border-left:3px solid #2563eb}
+.student-mini.gender-f{border-left:3px solid #e11d48}
 /* ── 통계 하단 바 ── */
 .assign-footer-bar{display:flex;align-items:center;gap:14px;padding:10px 16px;background:var(--surface2);border-radius:10px;margin-top:12px;font-size:.82rem;flex-wrap:wrap}
 .assign-footer-stat{margin-left:auto;display:flex;gap:14px;align-items:center;font-size:.82rem}
@@ -368,6 +370,24 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 .cc-6{background:#be185d}.cc-7{background:#15803d}.cc-8{background:#1d4ed8}.cc-9{background:#92400e}
 .classname-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-top:10px}
 .classname-grid input{padding:6px 8px;font-size:.85rem}
+
+/* ── 1일차 업로드 ── */
+.drop-zone-day1{border:2px dashed var(--border);border-radius:var(--r-lg);padding:44px;text-align:center;color:var(--text-muted);cursor:pointer;background:var(--surface2)}
+.drop-zone-day1.drag{border-color:var(--primary);background:var(--primary-light);color:var(--primary-dark)}
+.drop-zone-day1 .big{font-size:2rem}
+.day1-stat-bar{display:flex;gap:12px;flex-wrap:wrap;margin:14px 0 0}
+.day1-stat-card{flex:1;min-width:140px;border-radius:10px;padding:14px 18px}
+.day1-stat-card .num{font-size:1.6rem;font-weight:900;line-height:1}
+.day1-stat-card .label{font-size:.78rem;margin-top:4px;font-weight:600}
+.day1-absent-list{margin-top:14px}
+.day1-absent-list h4{font-size:.88rem;font-weight:800;color:var(--amber);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.day1-absent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px}
+.day1-absent-chip{background:#fffbeb;border:1.5px solid #fde68a;border-radius:8px;padding:7px 10px;font-size:.82rem}
+.day1-absent-chip .ac-name{font-weight:800;color:var(--text)}
+.day1-absent-chip .ac-no{font-size:.7rem;color:var(--text-muted);margin-top:1px}
+.day1-absent-chip .ac-gender{font-size:.7rem;font-weight:700;margin-top:2px}
+.day1-absent-chip .ac-gender.m{color:#2563eb}
+.day1-absent-chip .ac-gender.f{color:#e11d48}
 </style>
 </head>
 <body>
@@ -531,11 +551,54 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
       </div>
     </section>
 
-    <!-- 1. 업로드 -->
+    <!-- 1. 1일차 업로드 -->
+    <section class="panel" id="panel-day1">
+      <div class="card">
+        <h3><span class="icon">📅</span>1일차 예비 소집 — 면접 결과 업로드</h3>
+        <p style="font-size:.82rem;color:var(--text-sub);margin-bottom:12px">
+          오늘 면접에 참여한 학생들의 엑셀 파일을 업로드하세요. 명단과 대조해 <b>불참자를 자동으로 확인</b>하고, 통합 파일을 내려받을 수 있습니다.
+        </p>
+        <div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:8px;padding:11px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px">
+          <span style="font-size:1.2rem;flex-shrink:0">💡</span>
+          <div style="font-size:.8rem;color:#1e40af;line-height:1.6">
+            <b>오늘 흐름:</b> 여기서 1일차 파일을 업로드 → 불참자 확인 → 통합 엑셀 다운로드<br>
+            <b>내일 흐름:</b> 불참자 면접 후 통합 엑셀에 추가 → <b>최종 업로드</b> 단계에서 올리기
+          </div>
+        </div>
+
+        <!-- 드롭존 -->
+        <div id="day1-drop-zone" class="drop-zone-day1">
+          <div class="big">📁</div>
+          <div style="margin-top:8px;font-weight:700">1일차 엑셀 파일을 여기로 끌어다 놓으세요</div>
+          <div style="font-size:.82rem;margin-top:4px;color:var(--text-muted)">여러 파일 동시 업로드 가능</div>
+          <button class="btn btn-primary btn-sm" style="margin-top:14px" onclick="document.getElementById('day1-file-input').click()">📂 파일 찾아보기</button>
+        </div>
+        <input type="file" id="day1-file-input" multiple accept=".xlsx" style="display:none" onchange="handleDay1Files(this.files)">
+
+        <!-- 업로드된 파일 목록 -->
+        <div id="day1-file-list" style="margin-top:12px"></div>
+
+        <!-- 결과 요약 -->
+        <div id="day1-summary"></div>
+
+        <!-- 불참자 목록 -->
+        <div id="day1-absent-area"></div>
+      </div>
+
+      <div class="footer-nav">
+        <button class="btn btn-ghost" onclick="goStep('prep')">← 이전</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost" id="btn-day1-export" onclick="exportDay1Excel()" disabled>📥 1일차 통합 엑셀 다운로드</button>
+          <button class="btn btn-primary" onclick="goStep('upload')">다음: 최종 업로드 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 최종 업로드 -->
     <section class="panel" id="panel-upload">
       <div class="card">
-        <h3><span class="icon">📄</span>면접 결과 업로드</h3>
-        <p style="font-size:.82rem;color:var(--text-sub);margin-bottom:12px">학생 면접 결과는 교사가 면접용 서식(학생면접 시트)에 입력해 업로드하세요. 학부모 설문은 <b>종이 설문지</b>를 수거 후 담당자가 학부모설문 시트에 옮겨 적거나, <b>온라인 설문</b>(구글폼·네이버폼·웹설문)을 이용해 수집한 CSV를 업로드할 수 있습니다. 서식·설문지는 준비 단계에서 받으세요.</p>
+        <h3><span class="icon">📄</span>최종 업로드 — 전체 면접 결과 취합</h3>
+        <p style="font-size:.82rem;color:var(--text-sub);margin-bottom:12px">1일차 통합 엑셀에 2일차(불참자) 면접 결과를 추가한 <b>최종 파일</b>을 업로드하세요. 여러 파일을 동시에 올려도 자동으로 합산됩니다. 업로드 완료 후 검토 단계로 이동합니다.</p>
         <div style="background:#fef9c3;border:1.5px solid #f59e0b;border-radius:8px;padding:11px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px">
           <span style="font-size:1.2rem;flex-shrink:0">💡</span>
           <div>
@@ -555,12 +618,12 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
         <div id="suggest-area"></div>
       </div>
       <div class="footer-nav">
-        <button class="btn btn-ghost" onclick="goStep('prep')">← 이전</button>
+        <button class="btn btn-ghost" onclick="goStep('day1')">← 이전</button>
         <button class="btn btn-primary" id="btn-to-review" onclick="proceedToReview()" disabled>다음: 검토 →</button>
       </div>
     </section>
 
-    <!-- 2. 검토 -->
+    <!-- 3. 검토 -->
     <section class="panel" id="panel-review">
       <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:.8rem;color:#1e40af;line-height:1.6">
         💡 <b>이 단계에서 태그를 조정하면 배치 결과가 달라집니다.</b> 학생을 클릭해 오른쪽 패널에서 관찰 영역 태그를 on/off로 수정하세요. 검토를 건너뛰고 바로 배치해도 됩니다.
@@ -891,8 +954,8 @@ const SEVERITY_MAP={
 function severity(key,val){return (SEVERITY_MAP[key]&&SEVERITY_MAP[key][val])||0;}
 
 /* ===================== 설정/상태 ===================== */
-const STEPS=['prep','upload','review','assign'];
-const STEP_LABELS={prep:'준비',upload:'업로드',review:'검토',assign:'배치'};
+const STEPS=['prep','day1','upload','review','assign'];
+const STEP_LABELS={prep:'준비',day1:'1일차 업로드',upload:'최종 업로드',review:'검토',assign:'배치'};
 let currentStep='prep';
 const CLASS_NAMES_DEFAULT=['가반','나반','다반','라반','마반','바반','사반','아반','자반','차반','카반','타반','파반','하반','거반'];
 let ASSIGN={numClasses:5,classNames:[],classes:[],violations:[],assigned:false};
@@ -921,8 +984,6 @@ let selectedId=null;
 
 /* ===================== 스텝 진행 ===================== */
 function canGoStep(name){
-  // 어느 단계든 자유롭게 이동 허용
-  // 단, 검토 이후 단계는 업로드된 데이터가 있어야 함
   if(name==='review'||name==='assign'||name==='export'){
     return Object.keys(students).length>0||studentsRanked.length>0;
   }
@@ -955,11 +1016,12 @@ function goStep(name){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('panel-'+name).classList.add('active');
   renderStepProgress();
+  if(name==='day1'){renderDay1Summary();}
   if(name==='review'){computeScores();renderFilters();renderReviewList();}
   if(name==='assign'){renderClassNameInputs();renderAssignResults();}
 }
 const SESSION_KEY='sinip_myeojeup_v2';
-function resetAll(){localStorage.removeItem(SESSION_KEY);uploadedFiles=[];students={};conflicts=[];conflictsAck=false;selectedId=null;ROSTER=[];rosterLocked=false;domainsLocked=false;unregistered=[];ASSIGN={numClasses:5,classNames:[],classes:[],violations:[],assigned:false};location.reload();}
+function resetAll(){localStorage.removeItem(SESSION_KEY);uploadedFiles=[];students={};conflicts=[];conflictsAck=false;selectedId=null;ROSTER=[];rosterLocked=false;domainsLocked=false;unregistered=[];ASSIGN={numClasses:5,classNames:[],classes:[],violations:[],assigned:false};day1Files=[];day1Students={};location.reload();}
 
 /* ===================== 명단 등록 ===================== */
 function rosterNo(idx){
@@ -2202,6 +2264,15 @@ document.addEventListener('DOMContentLoaded',()=>{
   ['dragover','dragenter'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.add('drag');}));
   ['dragleave','drop'].forEach(ev=>zone.addEventListener(ev,e=>{e.preventDefault();zone.classList.remove('drag');}));
   zone.addEventListener('drop',e=>{handleFiles(e.dataTransfer.files);});
+
+  // 1일차 드롭존
+  const d1zone=document.getElementById('day1-drop-zone');
+  if(d1zone){
+    ['dragover','dragenter'].forEach(ev=>d1zone.addEventListener(ev,e=>{e.preventDefault();d1zone.classList.add('drag');}));
+    ['dragleave','drop'].forEach(ev=>d1zone.addEventListener(ev,e=>{e.preventDefault();d1zone.classList.remove('drag');}));
+    d1zone.addEventListener('drop',e=>{handleDay1Files(e.dataTransfer.files);});
+    d1zone.addEventListener('click',e=>{if(e.target.tagName!=='BUTTON')document.getElementById('day1-file-input').click();});
+  }
   if(restored&&ROSTER.length){
     // 명단 복원 안내 배너 — 준비 화면 상단에 표시
     const banner=document.createElement('div');
@@ -2352,6 +2423,206 @@ function renderSuggestions(){
       </div>
     </div>`).join('');
 }
+/* ===================== 1일차 업로드 ===================== */
+let day1Files=[];   // {name, stuCount, data:[{id,name,gender}]}
+let day1Students={}; // id → {id,name,gender} — 1일차 면접 완료자
+
+function handleDay1Files(fileList){
+  const files=[...fileList].filter(f=>f.name.endsWith('.xlsx'));
+  if(!files.length)return;
+  let remaining=files.length;
+  files.forEach(f=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+        const ws=wb.Sheets['학생면접'];
+        let recs=[];
+        if(ws){
+          const rows=XLSX.utils.sheet_to_json(ws,{header:1,range:1,defval:''});
+          if(rows.length>1){
+            const idx=headerIndexMap(rows[0]);
+            const iId=idx['접수번호'],iName=idx['이름'],iGender=idx['성별'];
+            for(let i=1;i<rows.length;i++){
+              const r=rows[i];
+              const id=iId==null?'':String(r[iId]||'').trim();
+              if(!id)continue;
+              // 실제 데이터가 있는 행만 (점수 or 특이사항)
+              const hasData=Object.keys(idx).some(k=>{
+                if(['접수번호','이름','성별','면접교사'].includes(k))return false;
+                return String(r[idx[k]]||'').trim()!=='';
+              });
+              if(!hasData)continue;
+              recs.push({id,name:iName!=null?String(r[iName]||'').trim():'',gender:iGender!=null?String(r[iGender]||'').trim():''});
+            }
+          }
+        }
+        recs.forEach(rec=>{day1Students[rec.id]=rec;});
+        day1Files.push({name:f.name,stuCount:recs.length});
+      }catch(err){
+        day1Files.push({name:f.name,stuCount:0,err:err.message});
+      }
+      remaining--;
+      if(remaining===0){renderDay1FileList();renderDay1Summary();}
+    };
+    reader.readAsArrayBuffer(f);
+  });
+}
+
+function renderDay1FileList(){
+  const el=document.getElementById('day1-file-list');
+  el.innerHTML=day1Files.map(f=>{
+    const hasErr=!!f.err;
+    const borderColor=hasErr?'#fca5a5':f.stuCount===0?'#fde68a':'#bbf7d0';
+    const bgColor=hasErr?'#fef2f2':f.stuCount===0?'#fffbeb':'#f0fdf4';
+    const icon=hasErr?'❌':f.stuCount===0?'⚠️':'✅';
+    const meta=hasErr?`읽기 오류: ${f.err}`:`학생면접 ${f.stuCount}명`;
+    return `<div class="file-card" style="border-color:${borderColor};background:${bgColor}">
+      <span class="name">${icon} ${f.name}</span>
+      <span class="meta">${meta}</span>
+    </div>`;
+  }).join('');
+}
+
+function renderDay1Summary(){
+  const summaryEl=document.getElementById('day1-summary');
+  const absentEl=document.getElementById('day1-absent-area');
+  const exportBtn=document.getElementById('btn-day1-export');
+
+  if(!day1Files.length){summaryEl.innerHTML='';absentEl.innerHTML='';if(exportBtn)exportBtn.disabled=true;return;}
+
+  const doneCount=Object.keys(day1Students).length;
+  const rosterReady=rosterLocked&&ROSTER.length>0;
+
+  // 불참자 계산 (명단 기준)
+  let absentList=[];
+  if(rosterReady){
+    absentList=ROSTER.filter(r=>!day1Students[r.no]);
+  }
+  const absentCount=absentList.length;
+  const totalCount=rosterReady?ROSTER.length:doneCount;
+
+  summaryEl.innerHTML=`<div class="day1-stat-bar">
+    <div class="day1-stat-card" style="background:#f0fdf4;border:1.5px solid #bbf7d0">
+      <div class="num" style="color:var(--green)">${doneCount}</div>
+      <div class="label" style="color:var(--green)">✅ 면접 완료</div>
+    </div>
+    ${rosterReady?`
+    <div class="day1-stat-card" style="background:#fffbeb;border:1.5px solid #fde68a">
+      <div class="num" style="color:var(--amber)">${absentCount}</div>
+      <div class="label" style="color:var(--amber)">⚠ 불참 / 미완료</div>
+    </div>
+    <div class="day1-stat-card" style="background:#eff6ff;border:1.5px solid #bfdbfe">
+      <div class="num" style="color:var(--primary)">${totalCount}</div>
+      <div class="label" style="color:var(--primary)">📋 명단 전체</div>
+    </div>`
+    :`<div style="font-size:.8rem;color:var(--amber);padding:10px 0">
+      ⚠ 준비 단계에서 명단을 등록·확정하면 불참자를 자동으로 확인할 수 있습니다.
+    </div>`}
+  </div>`;
+
+  // 불참자 목록
+  if(rosterReady&&absentCount>0){
+    const chips=absentList.map(r=>{
+      const gClass=r.gender==='남'?'m':r.gender==='여'?'f':'';
+      const gLabel=r.gender||'-';
+      return `<div class="day1-absent-chip">
+        <div class="ac-name">${r.name||'(이름없음)'}</div>
+        <div class="ac-no">${r.no}</div>
+        <div class="ac-gender ${gClass}">${gLabel}</div>
+      </div>`;
+    }).join('');
+    absentEl.innerHTML=`<div class="day1-absent-list">
+      <h4>⚠ 내일 면접 대상 — 불참자 ${absentCount}명</h4>
+      <div class="day1-absent-grid">${chips}</div>
+    </div>`;
+  } else if(rosterReady&&absentCount===0){
+    absentEl.innerHTML=`<div style="margin-top:14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:12px 16px;font-size:.85rem;color:var(--green);font-weight:700">
+      🎉 명단의 모든 학생이 면접에 참여했습니다!
+    </div>`;
+  } else {
+    absentEl.innerHTML='';
+  }
+
+  if(exportBtn)exportBtn.disabled=(doneCount===0);
+}
+
+async function exportDay1Excel(){
+  if(!Object.keys(day1Students).length){alert('업로드된 1일차 데이터가 없습니다.');return;}
+  const wb=new ExcelJS.Workbook();
+  const border={style:'thin',color:{argb:'FFBFCFDD'}};
+  const allBorder={top:border,left:border,bottom:border,right:border};
+
+  // ── 시트1: 면접 완료자 ──
+  const ws1=wb.addWorksheet('1일차_면접완료');
+  ws1.addRow(['접수번호','이름','성별','비고']);
+  const h1=ws1.getRow(1);
+  h1.height=24;
+  h1.eachCell(cell=>{
+    cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1E3A5F'}};
+    cell.font={bold:true,color:{argb:'FFFFFFFF'},size:10};
+    cell.border=allBorder;cell.alignment={horizontal:'center',vertical:'middle'};
+  });
+  Object.values(day1Students).sort((a,b)=>a.id.localeCompare(b.id)).forEach((s,i)=>{
+    const row=ws1.addRow([s.id,s.name,s.gender,'']);
+    row.height=20;
+    row.eachCell(cell=>{
+      cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:i%2===0?'FFF7FAFD':'FFFFFFFF'}};
+      cell.border=allBorder;cell.alignment={horizontal:'center',vertical:'middle'};
+    });
+    row.getCell(2).alignment={horizontal:'left',vertical:'middle'};
+    if(s.gender==='남')row.getCell(3).font={color:{argb:'FF2563EB'},bold:true};
+    else if(s.gender==='여')row.getCell(3).font={color:{argb:'FFE11D48'},bold:true};
+  });
+  ws1.getColumn(1).width=14;ws1.getColumn(2).width=14;ws1.getColumn(3).width=8;ws1.getColumn(4).width=20;
+  ws1.views=[{state:'frozen',ySplit:1}];
+
+  // ── 시트2: 불참자 ──
+  const ws2=wb.addWorksheet('1일차_불참자');
+  const rosterReady=rosterLocked&&ROSTER.length>0;
+  const absentList=rosterReady?ROSTER.filter(r=>!day1Students[r.no]):[];
+
+  ws2.addRow(['접수번호','이름','성별','내일 면접 필요']);
+  const h2=ws2.getRow(1);
+  h2.height=24;
+  h2.eachCell(cell=>{
+    cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFB45309'}};
+    cell.font={bold:true,color:{argb:'FFFFFFFF'},size:10};
+    cell.border=allBorder;cell.alignment={horizontal:'center',vertical:'middle'};
+  });
+
+  if(absentList.length){
+    absentList.forEach((r,i)=>{
+      const row=ws2.addRow([r.no,r.name,r.gender,'✓ 면접 필요']);
+      row.height=20;
+      row.eachCell(cell=>{
+        cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:i%2===0?'FFFFFBEB':'FFFFFFFF'}};
+        cell.border=allBorder;cell.alignment={horizontal:'center',vertical:'middle'};
+      });
+      row.getCell(2).alignment={horizontal:'left',vertical:'middle'};
+      row.getCell(4).font={color:{argb:'FFB45309'},bold:true};
+      if(r.gender==='남')row.getCell(3).font={color:{argb:'FF2563EB'},bold:true};
+      else if(r.gender==='여')row.getCell(3).font={color:{argb:'FFE11D48'},bold:true};
+    });
+  } else {
+    const row=ws2.addRow(['','명단을 등록·확정하면 불참자가 자동으로 표시됩니다.','','']);
+    ws2.mergeCells(2,2,2,4);
+    row.getCell(2).font={italic:true,color:{argb:'FF9AAABB'}};
+    row.getCell(2).alignment={horizontal:'left',vertical:'middle'};
+  }
+  ws2.getColumn(1).width=14;ws2.getColumn(2).width=14;ws2.getColumn(3).width=8;ws2.getColumn(4).width=18;
+  ws2.views=[{state:'frozen',ySplit:1}];
+
+  const today=new Date();
+  const dateStr=`${today.getMonth()+1}월${today.getDate()}일`;
+  const buf=await wb.xlsx.writeBuffer();
+  const blob=new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`1일차_예비소집_${dateStr}.xlsx`;
+  a.click();
+}
+
 function handleFiles(fileList){
   const files=[...fileList].filter(f=>f.name.endsWith('.xlsx'));
   if(!files.length)return;
@@ -3088,7 +3359,8 @@ function renderAssignResults(){
       }).join('');
       const moreHtml=tags.length>maxDots?'<span class="student-mini-tag-more">+' +(tags.length-maxDots)+'</span>':'';
       const confirmed=ASSIGN.confirmed;
-      return '<div class="student-mini'+(isMig?' migrant-bg':'')+(confirmed?' confirmed-lock':'')+'"'
+      const genderClass=s.gender==='남'?' gender-m':s.gender==='여'?' gender-f':'';
+      return '<div class="student-mini'+genderClass+(isMig?' migrant-bg':'')+(confirmed?' confirmed-lock':'')+'"'
         +' data-name="'+(s.name||'')+'" data-no="'+no+'"'
         +' draggable="'+(confirmed?'false':'true')+'"'
         +(confirmed?'':' ondragstart="onDragStart(event,\''+no+'\')"')
