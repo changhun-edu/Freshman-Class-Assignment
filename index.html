@@ -371,7 +371,21 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 .classname-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-top:10px}
 .classname-grid input{padding:6px 8px;font-size:.85rem}
 
-/* ── 1일차 업로드 ── */
+/* ── 인라인 문항 편집 ── */
+.field-edit-btn{margin-left:auto;padding:2px 9px;border-radius:5px;border:1.5px solid var(--border);background:#fff;font-size:.72rem;font-weight:700;color:var(--text-sub);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:.12s}
+.field-edit-btn:hover{border-color:var(--primary);color:var(--primary)}
+.field-edit-btn.edited{border-color:#f59e0b;color:#b45309;background:#fffbeb}
+.field-inline-editor{margin-top:8px;padding:10px 12px;background:#f8faff;border:1.5px solid #bfdbfe;border-radius:8px;display:flex;flex-direction:column;gap:7px}
+.field-inline-editor label{font-size:.72rem;font-weight:700;color:var(--primary-dark);margin-bottom:2px;display:block}
+.field-inline-editor input[type=text],.field-inline-editor textarea{width:100%;padding:6px 9px;border:1.5px solid var(--border);border-radius:6px;font-size:.8rem;font-family:inherit;resize:vertical}
+.field-inline-editor input[type=text]:focus,.field-inline-editor textarea:focus{border-color:var(--primary);outline:none}
+.field-inline-editor textarea{min-height:52px}
+.field-edit-actions{display:flex;gap:6px;margin-top:4px}
+.field-edit-save{padding:5px 14px;border-radius:6px;border:none;background:var(--primary);color:#fff;font-size:.78rem;font-weight:700;cursor:pointer}
+.field-edit-save:hover{background:var(--primary-dark)}
+.field-edit-cancel{padding:5px 10px;border-radius:6px;border:1.5px solid var(--border);background:#fff;color:var(--text-sub);font-size:.78rem;font-weight:700;cursor:pointer}
+.field-edit-reset{padding:5px 10px;border-radius:6px;border:1.5px solid #fde68a;background:#fffbeb;color:#b45309;font-size:.78rem;font-weight:700;cursor:pointer;margin-left:auto}
+.edited-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#f59e0b;margin-left:4px;vertical-align:middle}
 .drop-zone-day1{border:2px dashed var(--border);border-radius:var(--r-lg);padding:44px;text-align:center;color:var(--text-muted);cursor:pointer;background:var(--surface2)}
 .drop-zone-day1.drag{border-color:var(--primary);background:var(--primary-light);color:var(--primary-dark)}
 .drop-zone-day1 .big{font-size:2rem}
@@ -388,6 +402,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
 .day1-absent-chip .ac-gender{font-size:.7rem;font-weight:700;margin-top:2px}
 .day1-absent-chip .ac-gender.m{color:#2563eb}
 .day1-absent-chip .ac-gender.f{color:#e11d48}
+#btn-day1-export:disabled{background:#c3ccd8!important;box-shadow:none;cursor:not-allowed;color:#fff}
 </style>
 </head>
 <body>
@@ -566,6 +581,14 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
           </div>
         </div>
 
+        <div style="background:#fef9c3;border:1.5px solid #f59e0b;border-radius:8px;padding:11px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px">
+          <span style="font-size:1.2rem;flex-shrink:0">💡</span>
+          <div>
+            <div style="font-weight:800;font-size:.85rem;color:#92400e;margin-bottom:3px">파일을 합치지 않아도 됩니다!</div>
+            <div style="font-size:.8rem;color:#92400e;line-height:1.6">면접교사별로 각자 작성한 엑셀 파일을 합치지 않고 그대로 여러 개 함께 업로드하면 자동으로 합산됩니다.<br>드래그 앤 드롭으로 한꺼번에 올리거나 파일 찾아보기에서 여러 파일을 선택하세요.</div>
+          </div>
+        </div>
+
         <!-- 드롭존 -->
         <div id="day1-drop-zone" class="drop-zone-day1">
           <div class="big">📁</div>
@@ -588,7 +611,12 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
       <div class="footer-nav">
         <button class="btn btn-ghost" onclick="goStep('prep')">← 이전</button>
         <div style="display:flex;gap:8px">
-          <button class="btn btn-ghost" id="btn-day1-export" onclick="exportDay1Excel()" disabled>📥 1일차 통합 엑셀 다운로드</button>
+          <button id="btn-day1-export" onclick="exportDay1Excel()" disabled
+            style="padding:10px 20px;border-radius:8px;border:none;font-weight:800;font-size:.92rem;cursor:pointer;background:#059669;color:#fff;display:flex;align-items:center;gap:7px;box-shadow:0 2px 8px rgba(5,150,105,.35);transition:.15s"
+            onmouseover="if(!this.disabled)this.style.background='#047857'"
+            onmouseout="if(!this.disabled)this.style.background='#059669'">
+            📥 1일차 통합 엑셀 다운로드
+          </button>
           <button class="btn btn-primary" onclick="goStep('upload')">다음: 최종 업로드 →</button>
         </div>
       </div>
@@ -953,6 +981,88 @@ const SEVERITY_MAP={
 };
 function severity(key,val){return (SEVERITY_MAP[key]&&SEVERITY_MAP[key][val])||0;}
 
+/* ===================== 문항 편집 오버라이드 ===================== */
+// {stu_0: {label, q, cmt}, par_sep: {label, q, opts:[...]}, surveyq_0: {label, q, opts:[...]}}
+const FIELD_EDITS={};
+
+function getStuField(f){
+  const e=FIELD_EDITS['stu_'+f.idx];
+  return e?{...f,...e}:f;
+}
+function getParField(f){
+  const e=FIELD_EDITS['par_'+f.key];
+  return e?{...f,...e}:f;
+}
+function getSurveyQ(q,i){
+  const e=FIELD_EDITS['surveyq_'+i];
+  return e?{...q,...e}:q;
+}
+
+// 인라인 편집 상태 (현재 편집 중인 key)
+let editingFieldKey=null;
+
+function startEditField(key,e){
+  e.stopPropagation();
+  editingFieldKey=key;
+  renderDomainToggles();
+}
+function cancelEditField(e){
+  e.stopPropagation();
+  editingFieldKey=null;
+  renderDomainToggles();
+}
+function saveEditField(key,e){
+  e.stopPropagation();
+  const labelEl=document.getElementById('edit-label-'+key);
+  const qEl=document.getElementById('edit-q-'+key);
+  const cmtEl=document.getElementById('edit-cmt-'+key);
+  const edit={};
+  if(labelEl) edit.label=labelEl.value.trim()||labelEl.placeholder;
+  if(qEl)     edit.q    =qEl.value.trim()||qEl.placeholder;
+  if(cmtEl)   edit.cmt  =cmtEl.value.trim()||cmtEl.placeholder;
+  // 학부모 opts 수집
+  const optsEls=document.querySelectorAll('.edit-opt-'+key);
+  if(optsEls.length){
+    const opts=[...optsEls].map(el=>el.value.trim()).filter(Boolean);
+    if(opts.length) edit.opts=opts;
+  }
+  FIELD_EDITS[key]=edit;
+  editingFieldKey=null;
+  renderDomainToggles();
+  renderPrepSummary();
+}
+function resetEditField(key,e){
+  e.stopPropagation();
+  if(!confirm('이 문항을 기본값으로 되돌리시겠습니까?'))return;
+  delete FIELD_EDITS[key];
+  editingFieldKey=null;
+  renderDomainToggles();
+  renderPrepSummary();
+}
+function addOptField(key,e){
+  e.stopPropagation();
+  const container=document.getElementById('edit-opts-'+key);
+  if(!container)return;
+  const idx=container.children.length;
+  const inp=document.createElement('input');
+  inp.type='text';inp.className='edit-opt-'+key;
+  inp.placeholder='선택지 '+(idx+1);
+  inp.style.cssText='flex:1;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:.8rem';
+  inp.onclick=ev=>ev.stopPropagation();
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;gap:6px;align-items:center;margin-bottom:4px';
+  const del=document.createElement('button');
+  del.textContent='✕';del.className='btn btn-ghost btn-sm';
+  del.style.cssText='padding:3px 7px;flex-shrink:0';
+  del.onclick=ev=>{ev.stopPropagation();row.remove();};
+  row.appendChild(inp);row.appendChild(del);
+  container.appendChild(row);
+}
+function removeOptRow(btn,e){
+  e.stopPropagation();
+  btn.closest('.opt-edit-row').remove();
+}
+
 /* ===================== 설정/상태 ===================== */
 const STEPS=['prep','day1','upload','review','assign'];
 const STEP_LABELS={prep:'준비',day1:'1일차 업로드',upload:'최종 업로드',review:'검토',assign:'배치'};
@@ -1200,44 +1310,152 @@ function renderDomainToggles(){
 
     // 학생 문항 체크박스
     const stuItems=stuFs.map(f=>{
+      const ef=getStuField(f);
       const fOn=CONFIG.stuFields[f.idx]!==false;
+      const key='stu_'+f.idx;
+      const isEditing=editingFieldKey===key;
+      const isEdited=!!FIELD_EDITS[key];
+      const editedDot=isEdited?'<span class="edited-dot" title="수정됨"></span>':'';
+      const editBlock=isEditing?`
+        <div class="field-inline-editor" onclick="event.stopPropagation()">
+          <div>
+            <label>문항명</label>
+            <input type="text" id="edit-label-${key}" value="${ef.label.replace(/"/g,'&quot;')}" placeholder="${f.label}">
+          </div>
+          <div>
+            <label>면접 질문</label>
+            <textarea id="edit-q-${key}" placeholder="${f.q}">${ef.q}</textarea>
+          </div>
+          <div>
+            <label>채점 기준 (0·1·2)</label>
+            <textarea id="edit-cmt-${key}" placeholder="${f.cmt}">${ef.cmt}</textarea>
+          </div>
+          <div class="field-edit-actions">
+            <button class="field-edit-save" onclick="saveEditField('${key}',event)">저장</button>
+            <button class="field-edit-cancel" onclick="cancelEditField(event)">취소</button>
+            ${isEdited?`<button class="field-edit-reset" onclick="resetEditField('${key}',event)">기본값으로</button>`:''}
+          </div>
+        </div>`:''
+      ;
       return `<div class="field-checkbox-row" onclick="event.stopPropagation();toggleFieldCheck('stu',${f.idx})">
         <input type="checkbox" ${fOn&&on?'checked':''} ${!on?'disabled':''} onchange="event.stopPropagation();CONFIG.stuFields[${f.idx}]=this.checked;renderDomainToggles();renderPrepSummary()">
-        <div class="field-checkbox-body">
-          <div class="field-checkbox-who" style="background:${dc.bg};color:${dc.fg}">학생 면접</div>
-          <div class="field-checkbox-label">${f.label}</div>
-          <div class="field-checkbox-q">${f.q}</div>
-          <div class="field-checkbox-cmt">${f.cmt}</div>
+        <div class="field-checkbox-body" style="width:100%">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <div class="field-checkbox-who" style="background:${dc.bg};color:${dc.fg}">학생 면접</div>
+            <div class="field-checkbox-label">${ef.label}${editedDot}</div>
+            <button class="field-edit-btn ${isEdited?'edited':''}" onclick="startEditField('${key}',event)">${isEditing?'편집 중…':'✏️ 편집'}</button>
+          </div>
+          <div class="field-checkbox-q">${ef.q}</div>
+          <div class="field-checkbox-cmt">${ef.cmt}</div>
+          ${editBlock}
         </div>
       </div>`;
     }).join('');
 
     // 학부모 문항 체크박스
     const parItems=parFs.map(f=>{
+      const ef=getParField(f);
       const fOn=CONFIG.parFields[f.key]!==false;
       const sq=SURVEY_Q.find(q=>q.domain===d&&q.label.replace(/\s/g,'')===f.label.replace(/\s/g,''));
+      const key='par_'+f.key;
+      const isEditing=editingFieldKey===key;
+      const isEdited=!!FIELD_EDITS[key];
+      const editedDot=isEdited?'<span class="edited-dot" title="수정됨"></span>':'';
+      const currentOpts=ef.opts||f.opts;
+      const optsRows=currentOpts.map((o,i)=>`
+        <div class="opt-edit-row" style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
+          <input type="text" class="edit-opt-${key}" value="${o.replace(/"/g,'&quot;')}" placeholder="선택지 ${i+1}"
+            style="flex:1;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:.8rem"
+            onclick="event.stopPropagation()">
+          <button class="btn btn-ghost btn-sm" style="padding:3px 7px;flex-shrink:0" onclick="event.stopPropagation();this.closest('.opt-edit-row').remove()">✕</button>
+        </div>`).join('');
+      const editBlock=isEditing?`
+        <div class="field-inline-editor" onclick="event.stopPropagation()">
+          <div>
+            <label>문항명</label>
+            <input type="text" id="edit-label-${key}" value="${ef.label.replace(/"/g,'&quot;')}" placeholder="${f.label}">
+          </div>
+          ${sq?`<div>
+            <label>설문 질문</label>
+            <textarea id="edit-q-${key}" placeholder="${sq.q}">${ef.q||sq.q}</textarea>
+          </div>`:''}
+          <div>
+            <label>선택지</label>
+            <div id="edit-opts-${key}">${optsRows}</div>
+            <button class="btn btn-ghost btn-sm" style="margin-top:4px;font-size:.75rem" onclick="addOptField('${key}',event)">+ 선택지 추가</button>
+          </div>
+          <div class="field-edit-actions">
+            <button class="field-edit-save" onclick="saveEditField('${key}',event)">저장</button>
+            <button class="field-edit-cancel" onclick="cancelEditField(event)">취소</button>
+            ${isEdited?`<button class="field-edit-reset" onclick="resetEditField('${key}',event)">기본값으로</button>`:''}
+          </div>
+        </div>`:''
+      ;
       return `<div class="field-checkbox-row" onclick="event.stopPropagation();toggleFieldCheck('par','${f.key}')">
         <input type="checkbox" ${fOn&&on?'checked':''} ${!on?'disabled':''} onchange="event.stopPropagation();CONFIG.parFields['${f.key}']=this.checked;renderDomainToggles();renderPrepSummary()">
-        <div class="field-checkbox-body">
-          <div class="field-checkbox-who" style="background:${dc.bg};color:${dc.fg}">학부모 설문</div>
-          <div class="field-checkbox-label">${f.label}</div>
-          ${sq?`<div class="field-checkbox-q">${sq.q}</div>`:''}
-          <div class="field-checkbox-cmt">${f.opts.join(' / ')}</div>
+        <div class="field-checkbox-body" style="width:100%">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <div class="field-checkbox-who" style="background:${dc.bg};color:${dc.fg}">학부모 설문</div>
+            <div class="field-checkbox-label">${ef.label}${editedDot}</div>
+            <button class="field-edit-btn ${isEdited?'edited':''}" onclick="startEditField('${key}',event)">${isEditing?'편집 중…':'✏️ 편집'}</button>
+          </div>
+          ${sq?`<div class="field-checkbox-q">${ef.q||sq.q}</div>`:''}
+          <div class="field-checkbox-cmt">${(ef.opts||f.opts).join(' / ')}</div>
+          ${editBlock}
         </div>
       </div>`;
     }).join('');
 
     // 기본생활·안전: SURVEY_Q 항목(습관/건강)을 체크박스로 표시
-    const habitNote=(d==='기본생활·안전')?SURVEY_Q.filter(q=>q.domain==='기본생활·안전').map(q=>{
+    const habitNote=(d==='기본생활·안전')?SURVEY_Q.filter(q=>q.domain==='기본생활·안전').map((q,qi)=>{
       const key=q.surveyKey||'';
+      const eq=getSurveyQ(q,qi);
       const fOn=CONFIG.parFields[key]!==false;
+      const editKey='surveyq_'+qi;
+      const isEditing=editingFieldKey===editKey;
+      const isEdited=!!FIELD_EDITS[editKey];
+      const editedDot=isEdited?'<span class="edited-dot" title="수정됨"></span>':'';
+      const currentOpts=eq.opts||q.opts;
+      const optsRows=currentOpts.map((o,i)=>`
+        <div class="opt-edit-row" style="display:flex;gap:6px;align-items:center;margin-bottom:4px">
+          <input type="text" class="edit-opt-${editKey}" value="${o.replace(/"/g,'&quot;')}" placeholder="선택지 ${i+1}"
+            style="flex:1;padding:5px 8px;border:1.5px solid var(--border);border-radius:6px;font-size:.8rem"
+            onclick="event.stopPropagation()">
+          <button class="btn btn-ghost btn-sm" style="padding:3px 7px;flex-shrink:0" onclick="event.stopPropagation();this.closest('.opt-edit-row').remove()">✕</button>
+        </div>`).join('');
+      const editBlock=isEditing?`
+        <div class="field-inline-editor" onclick="event.stopPropagation()">
+          <div>
+            <label>문항명</label>
+            <input type="text" id="edit-label-${editKey}" value="${eq.label.replace(/"/g,'&quot;')}" placeholder="${q.label}">
+          </div>
+          <div>
+            <label>설문 질문</label>
+            <textarea id="edit-q-${editKey}" placeholder="${q.q}">${eq.q||q.q}</textarea>
+          </div>
+          <div>
+            <label>선택지</label>
+            <div id="edit-opts-${editKey}">${optsRows}</div>
+            <button class="btn btn-ghost btn-sm" style="margin-top:4px;font-size:.75rem" onclick="addOptField('${editKey}',event)">+ 선택지 추가</button>
+          </div>
+          <div class="field-edit-actions">
+            <button class="field-edit-save" onclick="saveEditField('${editKey}',event)">저장</button>
+            <button class="field-edit-cancel" onclick="cancelEditField(event)">취소</button>
+            ${isEdited?`<button class="field-edit-reset" onclick="resetEditField('${editKey}',event)">기본값으로</button>`:''}
+          </div>
+        </div>`:''
+      ;
       return `<div class="field-checkbox-row" onclick="event.stopPropagation();CONFIG.parFields['${key}']=!CONFIG.parFields['${key}'];renderDomainToggles();renderPrepSummary()">
         <input type="checkbox" ${fOn&&on?'checked':''} ${!on?'disabled':''} onchange="event.stopPropagation();CONFIG.parFields['${key}']=this.checked;renderDomainToggles();renderPrepSummary()">
-        <div class="field-checkbox-body">
-          <div class="field-checkbox-who" style="background:${dc.bg};color:${dc.fg}">학부모 설문</div>
-          <div class="field-checkbox-label">${q.label}</div>
-          <div class="field-checkbox-q">${q.q}</div>
-          <div class="field-checkbox-cmt">${q.opts.join(' / ')}</div>
+        <div class="field-checkbox-body" style="width:100%">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <div class="field-checkbox-who" style="background:${dc.bg};color:${dc.fg}">학부모 설문</div>
+            <div class="field-checkbox-label">${eq.label}${editedDot}</div>
+            <button class="field-edit-btn ${isEdited?'edited':''}" onclick="startEditField('${editKey}',event)">${isEditing?'편집 중…':'✏️ 편집'}</button>
+          </div>
+          <div class="field-checkbox-q">${eq.q||q.q}</div>
+          <div class="field-checkbox-cmt">${(eq.opts||q.opts).join(' / ')}</div>
+          ${editBlock}
         </div>
       </div>`;
     }).join(''):'';
