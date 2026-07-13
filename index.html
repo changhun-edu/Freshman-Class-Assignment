@@ -420,7 +420,7 @@ table.roster-table tr.dup-row td{background:var(--amber-light)}
       <div class="header-badge">
         <span class="lock-icon">🔒</span>개인정보 미저장 · 작업 후 엑셀로 내보내세요
       </div>
-      <div style="font-size:.72rem;color:rgba(255,255,255,.6);white-space:nowrap">💾 명단 자동저장</div>
+
     </div>
     <button onclick="openHelpModal()" style="padding:7px 14px;border-radius:8px;border:1.5px solid rgba(255,255,255,.6);background:transparent;color:#fff;font-weight:700;font-size:.82rem;cursor:pointer;white-space:nowrap">? 사용법</button>
     <button onclick="if(confirm('현재 작업 내용이 모두 초기화됩니다.\n이 작업은 되돌릴 수 없습니다.\n\n정말 초기화하시겠습니까?'))resetAll()" style="padding:7px 12px;border-radius:8px;border:1.5px solid rgba(255,100,100,.5);background:transparent;color:rgba(255,180,180,.9);font-weight:600;font-size:.78rem;cursor:pointer;white-space:nowrap">전체초기화</button>
@@ -1131,7 +1131,7 @@ function goStep(name){
   if(name==='assign'){renderClassNameInputs();renderAssignResults();}
 }
 const SESSION_KEY='sinip_myeojeup_v2';
-function resetAll(){localStorage.removeItem(SESSION_KEY);uploadedFiles=[];students={};conflicts=[];conflictsAck=false;selectedId=null;ROSTER=[];rosterLocked=false;domainsLocked=false;unregistered=[];ASSIGN={numClasses:5,classNames:[],classes:[],violations:[],assigned:false};day1Files=[];day1Students={};location.reload();}
+function resetAll(){localStorage.removeItem(SESSION_KEY);uploadedFiles=[];students={};conflicts=[];conflictsAck=false;selectedId=null;ROSTER=[];rosterLocked=false;domainsLocked=false;unregistered=[];ASSIGN={numClasses:5,classNames:[],classes:[],violations:[],assigned:false};day1Files=[];day1Students={};day1ParData={};location.reload();}
 
 /* ===================== 명단 등록 ===================== */
 function rosterNo(idx){
@@ -2652,8 +2652,9 @@ function renderSuggestions(){
     </div>`).join('');
 }
 /* ===================== 1일차 업로드 ===================== */
-let day1Files=[];   // {name, stuCount, data:[{id,name,gender}]}
-let day1Students={}; // id → {id,name,gender} — 1일차 면접 완료자
+let day1Files=[];    // {name, stuCount, parCount, err}
+let day1Students={}; // id → {id, name, gender, stu, par}
+let day1ParData={};  // id → par record (학부모설문)
 
 function handleDay1Files(fileList){
   const files=[...fileList].filter(f=>f.name.endsWith('.xlsx'));
@@ -2664,31 +2665,39 @@ function handleDay1Files(fileList){
     reader.onload=e=>{
       try{
         const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
-        const ws=wb.Sheets['학생면접'];
-        let recs=[];
-        if(ws){
-          const rows=XLSX.utils.sheet_to_json(ws,{header:1,range:1,defval:''});
-          if(rows.length>1){
-            const idx=headerIndexMap(rows[0]);
-            const iId=idx['접수번호'],iName=idx['이름'],iGender=idx['성별'];
-            for(let i=1;i<rows.length;i++){
-              const r=rows[i];
-              const id=iId==null?'':String(r[iId]||'').trim();
-              if(!id)continue;
-              // 실제 데이터가 있는 행만 (점수 or 특이사항)
-              const hasData=Object.keys(idx).some(k=>{
-                if(['접수번호','이름','성별','면접교사'].includes(k))return false;
-                return String(r[idx[k]]||'').trim()!=='';
-              });
-              if(!hasData)continue;
-              recs.push({id,name:iName!=null?String(r[iName]||'').trim():'',gender:iGender!=null?String(r[iGender]||'').trim():''});
-            }
-          }
+        let stuCount=0,parCount=0;
+
+        // 학생면접 시트 파싱 — 기존 parseStuSheet 재활용
+        if(wb.Sheets['학생면접']){
+          const recs=parseStuSheet(wb.Sheets['학생면접']);
+          stuCount=recs.length;
+          recs.forEach(rec=>{
+            if(!day1Students[rec.id]) day1Students[rec.id]={id:rec.id,name:rec.name,gender:rec.gender,stu:null,par:null};
+            day1Students[rec.id].stu=rec;
+            if(rec.name) day1Students[rec.id].name=rec.name;
+            if(rec.gender) day1Students[rec.id].gender=rec.gender;
+          });
         }
-        recs.forEach(rec=>{day1Students[rec.id]=rec;});
-        day1Files.push({name:f.name,stuCount:recs.length});
+
+        // 학부모설문 시트 파싱 — 기존 parseParSheet 재활용
+        const parWs=wb.Sheets['학부모설문']||wb.Sheets['학부모확인'];
+        if(parWs){
+          const recs=parseParSheet(parWs);
+          parCount=recs.length;
+          recs.forEach(rec=>{
+            if(!day1Students[rec.id]) day1Students[rec.id]={id:rec.id,name:rec.name,gender:'',stu:null,par:null};
+            day1Students[rec.id].par=rec;
+            if(rec.name&&!day1Students[rec.id].name) day1Students[rec.id].name=rec.name;
+          });
+        }
+
+        if(!stuCount&&!parCount){
+          day1Files.push({name:f.name,stuCount:0,parCount:0,err:'학생면접/학부모설문 시트를 찾을 수 없습니다'});
+        } else {
+          day1Files.push({name:f.name,stuCount,parCount});
+        }
       }catch(err){
-        day1Files.push({name:f.name,stuCount:0,err:err.message});
+        day1Files.push({name:f.name,stuCount:0,parCount:0,err:err.message});
       }
       remaining--;
       if(remaining===0){renderDay1FileList();renderDay1Summary();}
@@ -2704,7 +2713,8 @@ function renderDay1FileList(){
     const borderColor=hasErr?'#fca5a5':f.stuCount===0?'#fde68a':'#bbf7d0';
     const bgColor=hasErr?'#fef2f2':f.stuCount===0?'#fffbeb':'#f0fdf4';
     const icon=hasErr?'❌':f.stuCount===0?'⚠️':'✅';
-    const meta=hasErr?`읽기 오류: ${f.err}`:`학생면접 ${f.stuCount}명`;
+    const meta=hasErr?`읽기 오류: ${f.err}`
+      :`학생면접 ${f.stuCount}명${f.parCount?` · 학부모설문 ${f.parCount}명`:''}`;
     return `<div class="file-card" style="border-color:${borderColor};background:${bgColor}">
       <span class="name">${icon} ${f.name}</span>
       <span class="meta">${meta}</span>
@@ -2776,70 +2786,239 @@ function renderDay1Summary(){
 }
 
 async function exportDay1Excel(){
-  if(!Object.keys(day1Students).length){alert('업로드된 1일차 데이터가 없습니다.');return;}
-  const wb=new ExcelJS.Workbook();
-  const border={style:'thin',color:{argb:'FFBFCFDD'}};
-  const allBorder={top:border,left:border,bottom:border,right:border};
+  const allStudents=Object.values(day1Students);
+  if(!allStudents.length){alert('업로드된 1일차 데이터가 없습니다.');return;}
 
-  // ── 시트1: 면접 완료자 ──
-  const ws1=wb.addWorksheet('1일차_면접완료');
-  ws1.addRow(['접수번호','이름','성별','비고']);
-  const h1=ws1.getRow(1);
-  h1.height=24;
-  h1.eachCell(cell=>{
-    cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1E3A5F'}};
-    cell.font={bold:true,color:{argb:'FFFFFFFF'},size:10};
-    cell.border=allBorder;cell.alignment={horizontal:'center',vertical:'middle'};
-  });
-  Object.values(day1Students).sort((a,b)=>a.id.localeCompare(b.id)).forEach((s,i)=>{
-    const row=ws1.addRow([s.id,s.name,s.gender,'']);
-    row.height=20;
-    row.eachCell(cell=>{
-      cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:i%2===0?'FFF7FAFD':'FFFFFFFF'}};
-      cell.border=allBorder;cell.alignment={horizontal:'center',vertical:'middle'};
-    });
-    row.getCell(2).alignment={horizontal:'left',vertical:'middle'};
-    if(s.gender==='남')row.getCell(3).font={color:{argb:'FF2563EB'},bold:true};
-    else if(s.gender==='여')row.getCell(3).font={color:{argb:'FFE11D48'},bold:true};
-  });
-  ws1.getColumn(1).width=14;ws1.getColumn(2).width=14;ws1.getColumn(3).width=8;ws1.getColumn(4).width=20;
-  ws1.views=[{state:'frozen',ySplit:1}];
-
-  // ── 시트2: 불참자 ──
-  const ws2=wb.addWorksheet('1일차_불참자');
+  const stuFields=getEffectiveStuFields().filter(f=>CONFIG.domains[f.domain]&&CONFIG.stuFields[f.idx]!==false);
+  const activeItems=getActiveItems();
+  const specialEdOn=CONFIG.specialEd.enabled;
   const rosterReady=rosterLocked&&ROSTER.length>0;
   const absentList=rosterReady?ROSTER.filter(r=>!day1Students[r.no]):[];
 
-  ws2.addRow(['접수번호','이름','성별','내일 면접 필요']);
-  const h2=ws2.getRow(1);
-  h2.height=24;
-  h2.eachCell(cell=>{
-    cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFB45309'}};
-    cell.font={bold:true,color:{argb:'FFFFFFFF'},size:10};
-    cell.border=allBorder;cell.alignment={horizontal:'center',vertical:'middle'};
+  const wb=new ExcelJS.Workbook();
+  wb.creator='신입생면접자료정리';wb.created=new Date();
+
+  // ── 공통 스타일 ──
+  const headerFill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1E3A5F'}};
+  const headerFont={bold:true,color:{argb:'FFFFFFFF'},size:10};
+  const borderThin={style:'thin',color:{argb:'FFBFCFDD'}};
+  const allBorder={top:borderThin,left:borderThin,bottom:borderThin,right:borderThin};
+  const centerAlign={horizontal:'center',vertical:'middle',wrapText:true};
+  const leftAlign={horizontal:'left',vertical:'middle',wrapText:true};
+  function makeDropdown(opts){return{type:'list',allowBlank:true,formulae:[`"${opts.join(',')}"`],showErrorMessage:false};}
+  function styleHeader(ws,rowNum,colCount){
+    for(let c=1;c<=colCount;c++){
+      const cell=ws.getCell(rowNum,c);
+      cell.fill=headerFill;cell.font=headerFont;cell.border=allBorder;cell.alignment=centerAlign;
+    }
+    ws.getRow(rowNum).height=32;
+  }
+  function styleData(ws,rowNum,colCount,isOdd){
+    const argb=isOdd?'FFF7FAFD':'FFFFFFFF';
+    for(let c=1;c<=colCount;c++){
+      const cell=ws.getCell(rowNum,c);
+      cell.fill={type:'pattern',pattern:'solid',fgColor:{argb}};
+      cell.border=allBorder;cell.alignment=leftAlign;
+    }
+    ws.getRow(rowNum).height=20;
+  }
+  function colToLetter(n){let s='';while(n>0){s=String.fromCharCode(64+(n%26||26))+s;n=Math.floor((n-1)/26);}return s;}
+
+  // ════════════════════════════════
+  //  시트1: 학생면접 통합
+  // ════════════════════════════════
+  const ws1=wb.addWorksheet('학생면접');
+  const specialEdCol=specialEdOn?5:null;
+  const scoreStart=4+(specialEdOn?1:0)+1;
+  const scoreEnd=scoreStart+stuFields.length-1;
+  const sumCol=scoreEnd+1;
+  const scoreStartL=stuFields.length?colToLetter(scoreStart):'';
+  const scoreEndL=stuFields.length?colToLetter(scoreEnd):'';
+  const h1=['접수번호','이름','성별','면접교사',...(specialEdOn?['특수교육']:[]),...stuFields.map((f,i)=>`${i+1}.${f.label}(0~2)`),'합계','분리대상(관리번호)','동반대상(관리번호)','특이사항(서술)'];
+
+  // 1행 안내
+  ws1.mergeCells(1,1,1,h1.length);
+  const g1=ws1.getCell(1,1);
+  g1.value='※ 1일차 예비소집 면접 결과 통합본입니다. 내용을 확인하고 2일차 결과를 추가한 후 최종 업로드에서 사용하세요.';
+  g1.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEBF5FB'}};
+  g1.font={italic:true,color:{argb:'FF2C5F8A'},size:9};
+  g1.alignment={horizontal:'left',vertical:'middle',wrapText:true};
+  g1.border=allBorder;
+  ws1.getRow(1).height=28;
+
+  // 2행 헤더
+  ws1.addRow(h1);
+  styleHeader(ws1,2,h1.length);
+  stuFields.forEach((f,i)=>{ws1.getCell(2,scoreStart+i).note={texts:[{text:f.cmt}]};});
+
+  // 데이터 행 — 명단 순서 우선, 없으면 수집된 학생 순
+  const orderedIds=rosterReady
+    ?[...ROSTER.map(r=>r.no).filter(no=>day1Students[no]),...Object.keys(day1Students).filter(id=>!ROSTER.find(r=>r.no===id))]
+    :Object.keys(day1Students).sort();
+
+  orderedIds.forEach((id,i)=>{
+    const d=day1Students[id]||{};
+    const stu=d.stu||{};
+    const q=stu.q||{};
+    const rowVals=[
+      id, d.name||'', d.gender||'', stu.teacher||'',
+      ...(specialEdOn?[stu.specialEd||'']:[]),
+      ...stuFields.map(f=>q[f.idx]!=null?q[f.idx]:''),
+      '', // 합계(수식으로)
+      stu.sep||'', stu.pair||'', stu.note||''
+    ];
+    const row=ws1.addRow(rowVals);
+    const r=row.number;
+    styleData(ws1,r,h1.length,i%2===0);
+    // 점수 셀 스타일
+    for(let c=scoreStart;c<=scoreEnd;c++){
+      ws1.getCell(r,c).dataValidation=makeDropdown(['0','1','2']);
+      ws1.getCell(r,c).alignment=centerAlign;
+    }
+    ws1.getCell(r,3).dataValidation=makeDropdown(['남','여']);
+    ws1.getCell(r,3).alignment=centerAlign;
+    if(specialEdCol) ws1.getCell(r,specialEdCol).alignment=centerAlign;
+    // 합계 수식
+    if(stuFields.length&&scoreStartL&&scoreEndL){
+      ws1.getCell(r,sumCol).value={formula:`SUM(${scoreStartL}${r}:${scoreEndL}${r})`};
+    }
+    ws1.getCell(r,sumCol).alignment=centerAlign;
+    ws1.getCell(r,sumCol).font={bold:true};
+  });
+
+  const w1=[11,10,7,10,...(specialEdOn?[9]:[]),...stuFields.map(()=>12),9,18,18,34];
+  ws1.columns.forEach((c,i)=>c.width=w1[i]||12);
+  ws1.views=[{state:'frozen',xSplit:2,ySplit:2}];
+
+  // ════════════════════════════════
+  //  시트2: 학부모설문 통합
+  // ════════════════════════════════
+  const ws2=wb.addWorksheet('학부모설문');
+  const h2=['접수번호','이름'];
+  const par2Drops={};
+  let col2=3;
+  // 헤더 컬럼 구성 — activeItems 기반 (buildInterviewWorkbook과 동일)
+  const colMeta=[]; // {type:'single'|'multi', item, parKey, subNums}
+  activeItems.forEach((item,qi)=>{
+    const qNum=qi+1;
+    if(item.multi&&item.subNums){
+      h2.push(`${qNum}.${item.label} (예:${item.subNums[0]},${item.subNums[1]})`);
+      colMeta.push({type:'multi',item,col:col2});col2++;
+      h2.push(`${qNum}.${item.label} 구체내용`);
+      colMeta.push({type:'multiNote',item,col:col2});col2++;
+    } else {
+      const nums=item.optNums?item.optNums.join('/'):'';
+      h2.push(`${qNum}.${item.label}${nums?` (${nums})`:''}`);
+      par2Drops[col2]=item.opts;
+      colMeta.push({type:'single',item,col:col2});col2++;
+      h2.push(`${qNum}.${item.label} 구체내용`);
+      colMeta.push({type:'singleNote',item,col:col2});col2++;
+    }
+  });
+  h2.push(`${activeItems.length+1}.입학초기 배려사항`);
+  colMeta.push({type:'care',col:col2});col2++;
+
+  // 1행 안내
+  ws2.mergeCells(1,1,1,h2.length);
+  const g2=ws2.getCell(1,1);
+  g2.value='※ 1일차 예비소집 학부모설문 통합본입니다. 내용을 확인하고 2일차 결과를 추가한 후 최종 업로드에서 사용하세요.';
+  g2.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEBF5FB'}};
+  g2.font={italic:true,color:{argb:'FF2C5F8A'},size:9};
+  g2.alignment={horizontal:'left',vertical:'middle'};g2.border=allBorder;
+  ws2.getRow(1).height=28;
+
+  ws2.addRow(h2);
+  styleHeader(ws2,2,h2.length);
+
+  // 데이터 행
+  const parMap={
+    sep:'sep',peer:'peer',comm:'comm',inst:'inst',emo:'emo',wait:'wait',learn:'learn',lang:'lang',langcomm:'langcomm'
+  };
+  orderedIds.forEach((id,i)=>{
+    const d=day1Students[id]||{};
+    const par=d.par||{};
+    const row=ws2.addRow([id,d.name||'']);
+    const r=row.number;
+    styleData(ws2,r,h2.length,i%2===0);
+
+    colMeta.forEach(meta=>{
+      const cell=ws2.getCell(r,meta.col);
+      if(meta.type==='single'){
+        // SURVEY_TO_PAR_KEY로 매핑
+        const parKey=SURVEY_TO_PAR_KEY[meta.item.label];
+        const val=parKey?par[parKey]||'':'';
+        cell.value=val;cell.alignment=centerAlign;
+        if(par2Drops[meta.col]) cell.dataValidation=makeDropdown(par2Drops[meta.col]);
+      } else if(meta.type==='singleNote'){
+        const parKey=SURVEY_TO_PAR_KEY[meta.item.label];
+        cell.value=parKey&&par[parKey+'Note']?par[parKey+'Note']:'';
+        cell.alignment=leftAlign;
+      } else if(meta.type==='multi'){
+        // habit / health → 해당 항목 O인 것 subNum으로 조합
+        let val='';
+        if(meta.item.surveyKey==='habit'&&par.habit){
+          val=PAR_HABIT.map((h,j)=>par.habit[h]==='O'?meta.item.subNums[j]:'').filter(Boolean).join(',');
+        } else if(meta.item.surveyKey==='health'&&par.health){
+          val=PAR_HEALTH.map((h,j)=>par.health[h]==='O'?meta.item.subNums[j+1]:'').filter(Boolean).join(',');
+        }
+        cell.value=val;cell.alignment=centerAlign;
+      } else if(meta.type==='multiNote'){
+        if(meta.item.surveyKey==='health') cell.value=par.healthNote||'';
+        cell.alignment=leftAlign;
+      } else if(meta.type==='care'){
+        cell.value=par.care||'';cell.alignment=leftAlign;
+      }
+    });
+  });
+
+  ws2.getColumn(1).width=11;ws2.getColumn(2).width=10;
+  for(let c=3;c<=h2.length;c++) ws2.getColumn(c).width=h2[c-1]?.length>10?18:13;
+  ws2.views=[{state:'frozen',xSplit:2,ySplit:2}];
+
+  // ════════════════════════════════
+  //  시트3: 불참자 명단
+  // ════════════════════════════════
+  const ws3=wb.addWorksheet('불참자명단');
+  const absentHeaderFill={type:'pattern',pattern:'solid',fgColor:{argb:'FFB45309'}};
+
+  // 1행 안내
+  ws3.mergeCells(1,1,1,4);
+  const g3=ws3.getCell(1,1);
+  g3.value='※ 2일차(내일) 면접 대상 학생 목록입니다. 이 명단의 학생들이 면접을 완료하면 통합 파일에 추가하세요.';
+  g3.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFFBEB'}};
+  g3.font={italic:true,color:{argb:'FF92400E'},size:9};
+  g3.alignment={horizontal:'left',vertical:'middle'};g3.border=allBorder;
+  ws3.getRow(1).height=24;
+
+  // 2행 헤더
+  ws3.addRow(['접수번호','이름','성별','비고']);
+  const h3row=ws3.getRow(2);h3row.height=28;
+  h3row.eachCell(cell=>{
+    cell.fill=absentHeaderFill;cell.font={bold:true,color:{argb:'FFFFFFFF'},size:10};
+    cell.border=allBorder;cell.alignment=centerAlign;
   });
 
   if(absentList.length){
     absentList.forEach((r,i)=>{
-      const row=ws2.addRow([r.no,r.name,r.gender,'✓ 면접 필요']);
+      const row=ws3.addRow([r.no,r.name,r.gender,'']);
       row.height=20;
-      row.eachCell(cell=>{
+      row.eachCell((cell,c)=>{
         cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:i%2===0?'FFFFFBEB':'FFFFFFFF'}};
-        cell.border=allBorder;cell.alignment={horizontal:'center',vertical:'middle'};
+        cell.border=allBorder;
+        cell.alignment=c===2?leftAlign:centerAlign;
       });
-      row.getCell(2).alignment={horizontal:'left',vertical:'middle'};
-      row.getCell(4).font={color:{argb:'FFB45309'},bold:true};
-      if(r.gender==='남')row.getCell(3).font={color:{argb:'FF2563EB'},bold:true};
-      else if(r.gender==='여')row.getCell(3).font={color:{argb:'FFE11D48'},bold:true};
+      ws3.getCell(row.number,3).dataValidation=makeDropdown(['남','여']);
+      if(r.gender==='남') ws3.getCell(row.number,3).font={color:{argb:'FF2563EB'},bold:true};
+      else if(r.gender==='여') ws3.getCell(row.number,3).font={color:{argb:'FFE11D48'},bold:true};
     });
   } else {
-    const row=ws2.addRow(['','명단을 등록·확정하면 불참자가 자동으로 표시됩니다.','','']);
-    ws2.mergeCells(2,2,2,4);
+    const row=ws3.addRow(['','명단을 등록·확정하면 불참자가 자동으로 표시됩니다.','','']);
+    ws3.mergeCells(3,2,3,4);
     row.getCell(2).font={italic:true,color:{argb:'FF9AAABB'}};
-    row.getCell(2).alignment={horizontal:'left',vertical:'middle'};
+    row.getCell(2).alignment=leftAlign;
   }
-  ws2.getColumn(1).width=14;ws2.getColumn(2).width=14;ws2.getColumn(3).width=8;ws2.getColumn(4).width=18;
-  ws2.views=[{state:'frozen',ySplit:1}];
+  ws3.getColumn(1).width=14;ws3.getColumn(2).width=16;ws3.getColumn(3).width=8;ws3.getColumn(4).width=24;
+  ws3.views=[{state:'frozen',ySplit:2}];
 
   const today=new Date();
   const dateStr=`${today.getMonth()+1}월${today.getDate()}일`;
