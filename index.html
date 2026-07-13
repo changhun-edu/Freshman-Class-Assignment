@@ -2856,6 +2856,7 @@ async function exportDay1Excel(){
     ?[...ROSTER.map(r=>r.no).filter(no=>day1Students[no]),...Object.keys(day1Students).filter(id=>!ROSTER.find(r=>r.no===id))]
     :Object.keys(day1Students).sort();
 
+  // ── 면접 완료자 행 ──
   orderedIds.forEach((id,i)=>{
     const d=day1Students[id]||{};
     const stu=d.stu||{};
@@ -2870,7 +2871,6 @@ async function exportDay1Excel(){
     const row=ws1.addRow(rowVals);
     const r=row.number;
     styleData(ws1,r,h1.length,i%2===0);
-    // 점수 셀 스타일
     for(let c=scoreStart;c<=scoreEnd;c++){
       ws1.getCell(r,c).dataValidation=makeDropdown(['0','1','2']);
       ws1.getCell(r,c).alignment=centerAlign;
@@ -2878,13 +2878,58 @@ async function exportDay1Excel(){
     ws1.getCell(r,3).dataValidation=makeDropdown(['남','여']);
     ws1.getCell(r,3).alignment=centerAlign;
     if(specialEdCol) ws1.getCell(r,specialEdCol).alignment=centerAlign;
-    // 합계 수식
     if(stuFields.length&&scoreStartL&&scoreEndL){
       ws1.getCell(r,sumCol).value={formula:`SUM(${scoreStartL}${r}:${scoreEndL}${r})`};
     }
     ws1.getCell(r,sumCol).alignment=centerAlign;
     ws1.getCell(r,sumCol).font={bold:true};
   });
+
+  // ── 구분선 행: 불참자 입력 안내 ──
+  if(absentList.length){
+    const sepRow=ws1.addRow(['▼ 2일차 면접 대상 (아래에 입력하세요)']);
+    ws1.mergeCells(sepRow.number,1,sepRow.number,h1.length);
+    const sepCell=ws1.getCell(sepRow.number,1);
+    sepCell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF3CD'}};
+    sepCell.font={bold:true,color:{argb:'FF92400E'},size:9};
+    sepCell.alignment={horizontal:'left',vertical:'middle'};
+    sepCell.border=allBorder;
+    ws1.getRow(sepRow.number).height=22;
+
+    // ── 불참자 빈 입력 행 (접수번호·이름·성별 미리 채움) ──
+    absentList.forEach((r,i)=>{
+      const rowVals=[
+        r.no, r.name, r.gender, '',
+        ...(specialEdOn?['']:[]),
+        ...stuFields.map(()=>''),
+        '', '', '', ''
+      ];
+      const row=ws1.addRow(rowVals);
+      const rn=row.number;
+      // 연한 노란 배경으로 구분
+      for(let c=1;c<=h1.length;c++){
+        const cell=ws1.getCell(rn,c);
+        cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:i%2===0?'FFFFFBEB':'FFFEF9C3'}};
+        cell.border=allBorder;
+        cell.alignment=centerAlign;
+      }
+      ws1.getCell(rn,2).alignment=leftAlign;
+      ws1.getCell(rn,h1.length).alignment=leftAlign; // 특이사항
+      for(let c=scoreStart;c<=scoreEnd;c++){
+        ws1.getCell(rn,c).dataValidation=makeDropdown(['0','1','2']);
+      }
+      ws1.getCell(rn,3).dataValidation=makeDropdown(['남','여']);
+      if(specialEdCol) ws1.getCell(rn,specialEdCol).alignment=centerAlign;
+      if(stuFields.length&&scoreStartL&&scoreEndL){
+        ws1.getCell(rn,sumCol).value={formula:`SUM(${scoreStartL}${rn}:${scoreEndL}${rn})`};
+      }
+      ws1.getCell(rn,sumCol).alignment=centerAlign;
+      ws1.getCell(rn,sumCol).font={bold:true};
+      if(r.gender==='남') ws1.getCell(rn,3).font={color:{argb:'FF2563EB'},bold:true};
+      else if(r.gender==='여') ws1.getCell(rn,3).font={color:{argb:'FFE11D48'},bold:true};
+      ws1.getRow(rn).height=20;
+    });
+  }
 
   const w1=[11,10,7,10,...(specialEdOn?[9]:[]),...stuFields.map(()=>12),9,18,18,34];
   ws1.columns.forEach((c,i)=>c.width=w1[i]||12);
@@ -2930,7 +2975,7 @@ async function exportDay1Excel(){
   ws2.addRow(h2);
   styleHeader(ws2,2,h2.length);
 
-  // 데이터 행
+  // 데이터 행 — 면접 완료자
   const parMap={
     sep:'sep',peer:'peer',comm:'comm',inst:'inst',emo:'emo',wait:'wait',learn:'learn',lang:'lang',langcomm:'langcomm'
   };
@@ -2944,7 +2989,6 @@ async function exportDay1Excel(){
     colMeta.forEach(meta=>{
       const cell=ws2.getCell(r,meta.col);
       if(meta.type==='single'){
-        // SURVEY_TO_PAR_KEY로 매핑
         const parKey=SURVEY_TO_PAR_KEY[meta.item.label];
         const val=parKey?par[parKey]||'':'';
         cell.value=val;cell.alignment=centerAlign;
@@ -2954,7 +2998,6 @@ async function exportDay1Excel(){
         cell.value=parKey&&par[parKey+'Note']?par[parKey+'Note']:'';
         cell.alignment=leftAlign;
       } else if(meta.type==='multi'){
-        // habit / health → 해당 항목 O인 것 subNum으로 조합
         let val='';
         if(meta.item.surveyKey==='habit'&&par.habit){
           val=PAR_HABIT.map((h,j)=>par.habit[h]==='O'?meta.item.subNums[j]:'').filter(Boolean).join(',');
@@ -2970,6 +3013,33 @@ async function exportDay1Excel(){
       }
     });
   });
+
+  // ── 구분선 + 불참자 빈 입력 행 ──
+  if(absentList.length){
+    const sepRow2=ws2.addRow(['▼ 2일차 면접 대상 (아래에 입력하세요)']);
+    ws2.mergeCells(sepRow2.number,1,sepRow2.number,h2.length);
+    const sepCell2=ws2.getCell(sepRow2.number,1);
+    sepCell2.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFFF3CD'}};
+    sepCell2.font={bold:true,color:{argb:'FF92400E'},size:9};
+    sepCell2.alignment={horizontal:'left',vertical:'middle'};
+    sepCell2.border=allBorder;
+    ws2.getRow(sepRow2.number).height=22;
+
+    absentList.forEach((r,i)=>{
+      const row=ws2.addRow([r.no,r.name]);
+      const rn=row.number;
+      for(let c=1;c<=h2.length;c++){
+        const cell=ws2.getCell(rn,c);
+        cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:i%2===0?'FFFFFBEB':'FFFEF9C3'}};
+        cell.border=allBorder;
+        cell.alignment=c<=2?leftAlign:centerAlign;
+      }
+      colMeta.forEach(meta=>{
+        if(par2Drops[meta.col]) ws2.getCell(rn,meta.col).dataValidation=makeDropdown(par2Drops[meta.col]);
+      });
+      ws2.getRow(rn).height=20;
+    });
+  }
 
   ws2.getColumn(1).width=11;ws2.getColumn(2).width=10;
   for(let c=3;c<=h2.length;c++) ws2.getColumn(c).width=h2[c-1]?.length>10?18:13;
@@ -3040,6 +3110,7 @@ function handleFiles(fileList){
       try{
         const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
         let stuCount=0,parCount=0;
+        // '불참자명단' 시트는 참조용이므로 무시하고 학생면접·학부모설문만 파싱
         if(wb.Sheets['학생면접']){const recs=parseStuSheet(wb.Sheets['학생면접']);stuCount=recs.length;mergeStu(recs,f.name);}
         const parSheet=wb.Sheets['학부모설문']||wb.Sheets['학부모확인'];
         if(parSheet){const recs=parseParSheet(parSheet);parCount=recs.length;mergePar(recs,f.name);}
