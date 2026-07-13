@@ -74,6 +74,9 @@ input[type=number], input[type=text]{padding:8px 10px;border:1px solid var(--bor
 .file-card{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border:1px solid var(--border);border-radius:var(--r);background:var(--surface2);margin-bottom:6px;font-size:.85rem}
 .file-card .name{font-weight:700}
 .file-card .meta{color:var(--text-sub)}
+.file-card-info{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.file-card-del{flex-shrink:0;margin-left:12px;padding:4px 10px;border-radius:6px;border:1.5px solid #fca5a5;background:#fef2f2;color:#dc2626;font-size:.75rem;font-weight:700;cursor:pointer;transition:.12s;white-space:nowrap}
+.file-card-del:hover{background:#dc2626;color:#fff;border-color:#dc2626}
 .summary-banner{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px}
 .pill-stat{padding:8px 14px;border-radius:20px;font-size:.83rem;font-weight:700}
 .pill-ok{background:var(--green-light);color:var(--green)}
@@ -2708,9 +2711,19 @@ function handleDay1Files(fileList){
   });
 }
 
+function removeDay1File(idx){
+  day1Files.splice(idx,1);
+  // 남은 파일로 day1Students/day1ParData 재계산
+  day1Students={};day1ParData={};
+  // 재파싱 없이 카운트 기반이므로 전체 재업로드 유도 안내
+  renderDay1FileList();
+  renderDay1Summary();
+  saveSession();
+}
 function renderDay1FileList(){
   const el=document.getElementById('day1-file-list');
-  el.innerHTML=day1Files.map(f=>{
+  if(!day1Files.length){el.innerHTML='';return;}
+  el.innerHTML=day1Files.map((f,i)=>{
     const hasErr=!!f.err;
     const borderColor=hasErr?'#fca5a5':f.stuCount===0?'#fde68a':'#bbf7d0';
     const bgColor=hasErr?'#fef2f2':f.stuCount===0?'#fffbeb':'#f0fdf4';
@@ -2718,8 +2731,11 @@ function renderDay1FileList(){
     const meta=hasErr?`읽기 오류: ${f.err}`
       :`학생면접 ${f.stuCount}명${f.parCount?` · 학부모설문 ${f.parCount}명`:''}`;
     return `<div class="file-card" style="border-color:${borderColor};background:${bgColor}">
-      <span class="name">${icon} ${f.name}</span>
-      <span class="meta">${meta}</span>
+      <div class="file-card-info">
+        <span class="name">${icon} ${f.name}</span>
+        <span class="meta">${meta}</span>
+      </div>
+      <button class="file-card-del" onclick="removeDay1File(${i})">✕ 삭제</button>
     </div>`;
   }).join('');
 }
@@ -3125,8 +3141,21 @@ function handleFiles(fileList){
     reader.readAsArrayBuffer(f);
   });
 }
+function removeUploadFile(idx){
+  uploadedFiles.splice(idx,1);
+  // 남은 파일 기준으로 students 재계산을 위해 초기화 후 재파싱 안내
+  // (원본 바이너리 미보관이므로 데이터도 초기화)
+  students={};conflicts=[];conflictsAck=false;unregistered=[];
+  renderFileList();
+  renderUploadSummary();
+  computeUnregistered();
+  renderSuggestions();
+  saveSession();
+}
 function renderFileList(){
-  document.getElementById('file-list').innerHTML=uploadedFiles.map(f=>{
+  const el=document.getElementById('file-list');
+  if(!uploadedFiles.length){el.innerHTML='';return;}
+  el.innerHTML=uploadedFiles.map((f,i)=>{
     const hasErr=f.stuCount===0&&f.parCount===0;
     const hasWarn=f.stuCount===0||f.parCount===0;
     const borderColor=hasErr?'#fca5a5':hasWarn?'#fde68a':'#bbf7d0';
@@ -3135,12 +3164,20 @@ function renderFileList(){
     const meta=hasErr?'시트를 읽지 못했습니다. 서식을 확인하세요.'
       :`학생면접 ${f.stuCount}명${f.parCount?` · 학부모설문 ${f.parCount}명`:''}${f.stuCount===0?' · ⚠ 학생면접 없음':f.parCount===0?' · 학부모설문 없음':''}`;
     return `<div class="file-card" style="border-color:${borderColor};background:${bgColor}">
-      <span class="name">${icon} ${f.name}</span>
-      <span class="meta">${meta}</span>
+      <div class="file-card-info">
+        <span class="name">${icon} ${f.name}</span>
+        <span class="meta">${meta}</span>
+      </div>
+      <button class="file-card-del" onclick="removeUploadFile(${i})">✕ 삭제</button>
     </div>`;
   }).join('');
 }
 function renderUploadSummary(){
+  if(!uploadedFiles.length){
+    document.getElementById('upload-summary').innerHTML='';
+    document.getElementById('btn-to-review').disabled=true;
+    return;
+  }
   const list=Object.values(students);
   const both=list.filter(s=>s.stu&&s.par).length;
   const onlyStu=list.filter(s=>s.stu&&!s.par).length;
