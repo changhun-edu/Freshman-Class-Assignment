@@ -1476,9 +1476,9 @@ function renderDomainToggles(){
             ${habitNote?`<div class="field-section-label" style="margin-top:8px">학부모 설문 (체크리스트)</div>${habitNote}`:''}`
           :'<div style="font-size:.8rem;color:var(--text-muted);padding:10px 0">이 영역에 등록된 문항이 없습니다.</div>'
         }
-        ${on&&(stuFs.length>1||parFs.length>1||habitTotalCnt>0)?`<div style="margin-top:8px;display:flex;gap:6px">
-          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();STU_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.stuFields[f.idx]=true;});PAR_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.parFields[f.key]=true;});renderDomainToggles();renderPrepSummary()">모두 선택</button>
-          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();STU_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.stuFields[f.idx]=false;});PAR_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.parFields[f.key]=false;});renderDomainToggles();renderPrepSummary()">모두 해제</button>
+        ${on&&(stuFs.length>0||parFs.length>0||habitTotalCnt>0)?`<div style="margin-top:8px;display:flex;gap:6px">
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();STU_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.stuFields[f.idx]=true;});PAR_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.parFields[f.key]=true;});${d==='기본생활·안전'?"CONFIG.parFields['habit']=true;CONFIG.parFields['health']=true;":''}renderDomainToggles();renderPrepSummary()">모두 선택</button>
+          <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();STU_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.stuFields[f.idx]=false;});PAR_FIELDS.filter(f=>f.domain==='${d}').forEach(f=>{CONFIG.parFields[f.key]=false;});${d==='기본생활·안전'?"CONFIG.parFields['habit']=false;CONFIG.parFields['health']=false;":''}renderDomainToggles();renderPrepSummary()">모두 해제</button>
         </div>`:''}
       </div>
     </div>`;
