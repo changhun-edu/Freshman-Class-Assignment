@@ -975,7 +975,7 @@ const SURVEY_Q=[
     opts:['어려움 없음','약간 어려워함','많이 어려워함'],optNums:['①','②','③'],note:true},
   {label:'학습 활동 집중',domain:'기초학습준비도',q:'아이가 앉아서 한 가지 활동(그림 그리기, 책 보기 등)을 10분 정도 지속하는 데 어려움이 있나요?',
     opts:['없음','약간 있음','많이 있음'],optNums:['①','②','③'],note:true},
-  {label:'기본 생활 습관',surveyKey:'habit',domain:'기본생활·안전',q:'다음 중 도움이 필요한 부분이 있나요? (해당 항목 모두 표시)',
+  {label:'기본 생활 습관',surveyKey:'habit',domain:'기본생활·안전',q:'학교생활에서 스스로 해야 하는 부분입니다. 아직 어려운 것이 있다면 미리 알려주세요. (해당 항목 모두 표시)',
     opts:['화장실 사용','식사','옷 입고 벗기','정리정돈','물건 챙기기','등하교 적응','해당 없음'],
     subNums:['8-1','8-2','8-3','8-4','8-5','8-6','8-7'],note:true,multi:true},
   {label:'건강 및 안전',surveyKey:'health',domain:'기본생활·안전',q:'건강상 학교에서 꼭 알아야 할 내용이 있나요? (해당 항목 모두 표시)',
@@ -2667,7 +2667,7 @@ function mergeStu(records,filename){
     if(s.name&&rec.name&&s.name!==rec.name)conflicts.push({id:rec.id,type:'이름 불일치',detail:`${s.name} ↔ ${rec.name} (${filename})`});
     if(!s.name)s.name=rec.name; if(!s.gender)s.gender=rec.gender;
     if(s.stu)conflicts.push({id:rec.id,type:'학생면접 중복 입력',detail:`${s.stu.source} → ${filename} 값으로 덮어씀`});
-    if(rec.specialEd==='O')s.specialEdMark=true;
+    if(/^[oO○◯〇]$/.test(rec.specialEd))s.specialEdMark=true;
     // 분리/동반 대상 → ROSTER에 반영
     if(rec.sep||rec.pair){
       const r=ROSTER.find(x=>x.no===rec.id);
