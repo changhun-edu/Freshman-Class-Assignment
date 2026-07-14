@@ -1110,6 +1110,7 @@ let uploadedFiles=[];
 let students={};
 let conflicts=[];
 let conflictsAck=false;
+let scoreWarnings=[];
 let studentsRanked=[];
 let activeFilter='all';
 let selectedId=null;
@@ -1153,7 +1154,7 @@ function goStep(name){
   if(name==='assign'){renderClassNameInputs();renderAssignResults();}
 }
 const SESSION_KEY='sinip_myeojeup_v2';
-function resetAll(){localStorage.removeItem(SESSION_KEY);uploadedFiles=[];students={};conflicts=[];conflictsAck=false;selectedId=null;ROSTER=[];rosterLocked=false;domainsLocked=false;unregistered=[];ASSIGN={numClasses:5,classNames:[],classes:[],violations:[],assigned:false};day1Files=[];day1Students={};day1ParData={};location.reload();}
+function resetAll(){localStorage.removeItem(SESSION_KEY);uploadedFiles=[];students={};conflicts=[];conflictsAck=false;scoreWarnings=[];selectedId=null;ROSTER=[];rosterLocked=false;domainsLocked=false;unregistered=[];ASSIGN={numClasses:5,classNames:[],classes:[],violations:[],assigned:false};day1Files=[];day1Students={};day1ParData={};location.reload();}
 
 /* ===================== 명단 등록 ===================== */
 function rosterNo(idx){
@@ -1561,7 +1562,10 @@ async function buildInterviewWorkbook(prefill){
       type:'list',
       allowBlank,
       formulae:[`"${opts.join(',')}"`],
-      showErrorMessage:false
+      showErrorMessage:true,
+      errorStyle:'stop',
+      errorTitle:'입력 오류',
+      error:`${opts.join(', ')} 중에서만 입력하세요.`
     };
   }
 
@@ -2627,7 +2631,26 @@ function parseStuSheet(ws){
     const filled=fieldCols.some(f=>f.col!=null&&String(r[f.col]||'').trim()!=='')||(iNote!=null&&String(r[iNote]||'').trim()!=='')||(iSpecialEd!=null&&String(r[iSpecialEd]||'').trim()!=='');
     if(!filled)continue;
     const q={};
-    fieldCols.forEach(f=>{if(f.col!=null){const v=r[f.col];if(String(v).trim()!=='')q[f.idx]=Number(v)||0;}});
+    const rowWarns=[];
+    fieldCols.forEach(f=>{
+      if(f.col!=null){
+        const v=r[f.col];
+        if(String(v).trim()!==''){
+          const raw=Number(v);
+          if(!isNaN(raw)&&(raw<0||raw>2)){
+            rowWarns.push({label:f.label,raw,fixed:Math.min(2,Math.max(0,raw))});
+            q[f.idx]=Math.min(2,Math.max(0,raw));
+          } else {
+            q[f.idx]=isNaN(raw)?0:raw;
+          }
+        }
+      }
+    });
+    if(rowWarns.length){
+      const id2=iId==null?'':String(r[iId]||'').trim();
+      const name2=iName!=null?String(r[iName]||'').trim():'';
+      scoreWarnings.push({id:id2,name:name2,warns:rowWarns});
+    }
     out.push({id,name:iName!=null?String(r[iName]||'').trim():'',gender:iGender!=null?String(r[iGender]||'').trim():'',
       teacher:iTeacher!=null?String(r[iTeacher]||'').trim():'',q,note:iNote!=null?String(r[iNote]||'').trim():'',
       specialEd:iSpecialEd!=null?String(r[iSpecialEd]||'').trim():'',
@@ -2901,7 +2924,7 @@ async function exportDay1Excel(){
   const allBorder={top:borderThin,left:borderThin,bottom:borderThin,right:borderThin};
   const centerAlign={horizontal:'center',vertical:'middle',wrapText:true};
   const leftAlign={horizontal:'left',vertical:'middle',wrapText:true};
-  function makeDropdown(opts){return{type:'list',allowBlank:true,formulae:[`"${opts.join(',')}"`],showErrorMessage:false};}
+  function makeDropdown(opts){return{type:'list',allowBlank:true,formulae:[`"${opts.join(',')}"`],showErrorMessage:true,errorStyle:'stop',errorTitle:'입력 오류',error:`${opts.join(', ')} 중에서만 입력하세요.`};}
   function styleHeader(ws,rowNum,colCount){
     for(let c=1;c<=colCount;c++){
       const cell=ws.getCell(rowNum,c);
@@ -3223,7 +3246,7 @@ function removeUploadFile(idx){
   uploadedFiles.splice(idx,1);
   // 남은 파일 기준으로 students 재계산을 위해 초기화 후 재파싱 안내
   // (원본 바이너리 미보관이므로 데이터도 초기화)
-  students={};conflicts=[];conflictsAck=false;unregistered=[];
+  students={};conflicts=[];conflictsAck=false;scoreWarnings=[];unregistered=[];
   renderFileList();
   renderUploadSummary();
   computeUnregistered();
@@ -3265,7 +3288,17 @@ function renderUploadSummary(){
     ${onlyStu?`<span class="pill-stat pill-warn">⚠ 학부모확인 미제출 ${onlyStu}명</span>`:''}
     ${onlyPar?`<span class="pill-stat pill-warn">⚠ 학생면접 미제출 ${onlyPar}명</span>`:''}
     ${conflicts.length?`<span class="pill-stat pill-err">🔴 확인 필요 ${conflicts.length}건</span>`:''}
+    ${scoreWarnings.length?`<span class="pill-stat pill-err">🔴 점수 범위 초과 자동 보정 ${scoreWarnings.length}명</span>`:''}
   </div>`;
+  if(scoreWarnings.length){
+    html+=`<div class="conflict-list" style="border-left:3px solid #f59e0b;background:#fffbeb">
+      <div style="font-weight:700;color:#b45309;margin-bottom:6px">⚠ 점수 범위 초과 — 자동으로 0~2 범위로 보정했습니다</div>
+      ${scoreWarnings.map(w=>`<div style="margin-bottom:4px">
+        접수번호 <b>${w.id}</b> (${w.name||'이름없음'}) —
+        ${w.warns.map(ww=>`${ww.label}: <b style="color:#dc2626">${ww.raw}</b> → <b>${ww.fixed}</b>`).join(', ')}
+      </div>`).join('')}
+    </div>`;
+  }
   if(conflicts.length){
     html+=`<div class="conflict-list">${conflicts.map(c=>`<div><b>[${c.type}]</b> 접수번호 ${c.id} — ${c.detail}</div>`).join('')}</div>
     <div style="margin-top:10px"><label style="font-size:.85rem"><input type="checkbox" onchange="conflictsAck=this.checked;document.getElementById('btn-to-review').disabled=(!conflictsAck)||unregistered.length>0;"> 위 내용을 확인했으며 이대로 진행합니다</label></div>`;
@@ -3282,21 +3315,35 @@ function proceedToReview(){goStep('review');}
 function activeStuFields(){return getEffectiveStuFields().filter(f=>CONFIG.domains[f.domain]&&CONFIG.stuFields[f.idx]!==false);}
 function activeParFields(){return getEffectiveParFields().filter(f=>CONFIG.domains[f.domain]&&CONFIG.parFields[f.key]!==false);}
 function computeDomainResult(s,domain){
-  let score=0,max=0,flag=false;
+  // ── 학생면접 바구니 (태그 판정 기준) ──
+  let stuScore=0,stuMax=0,stuFlag=false;
   getEffectiveStuFields().filter(f=>f.domain===domain&&CONFIG.stuFields[f.idx]!==false).forEach(f=>{
-    if(s.stu&&s.stu.q&&s.stu.q[f.idx]!=null){const v=s.stu.q[f.idx];score+=v;max+=2;if(v===2)flag=true;}
+    if(s.stu&&s.stu.q&&s.stu.q[f.idx]!=null){const v=s.stu.q[f.idx];stuScore+=v;stuMax+=2;if(v===2)stuFlag=true;}
   });
+  if(stuMax>0&&stuScore>=2)stuFlag=true;
+
+  // ── 학부모설문 바구니 (참고용) ──
+  let parScore=0,parMax=0,parFlag=false;
   getEffectiveParFields().filter(f=>f.domain===domain&&CONFIG.parFields[f.key]!==false).forEach(f=>{
-    if(s.par&&s.par[f.key]){const v=severity(f.key,s.par[f.key]);score+=v;max+=2;if(v===2)flag=true;}
+    if(s.par&&s.par[f.key]){const v=severity(f.key,s.par[f.key]);parScore+=v;parMax+=2;if(v===2)parFlag=true;}
   });
   if(domain==='기본생활·안전'&&s.par){
     const entries=[...(s.par.habit?Object.entries(s.par.habit):[]),...(s.par.health?Object.entries(s.par.health):[])];
     const cnt=entries.filter(([k,v])=>String(v).trim()==='O').length;
-    score+=cnt;max+=entries.length;
-    if(cnt>=1)flag=true;
+    parScore+=cnt;parMax+=entries.length;
+    if(cnt>=1)parFlag=true;
   }
-  if(score>=2)flag=true;
-  return{score,max,flag};
+  if(parMax>0&&parScore>=2)parFlag=true;
+
+  // ── 최종 flag: 학생면접 결과만으로 판정, 면접 데이터 없을 때만 설문으로 보완 ──
+  const flag=stuMax>0?stuFlag:parFlag;
+  const score=stuScore+parScore;
+  const max=stuMax+parMax;
+
+  // ── 상충 감지: 둘 다 데이터 있고 결과가 반대인 경우 ──
+  const conflict=stuMax>0&&parMax>0&&stuFlag!==parFlag;
+
+  return{score,max,flag,stuFlag,parFlag,stuScore,stuMax,parScore,parMax,conflict};
 }
 function computeScores(){
   const list=Object.values(students);
@@ -3306,6 +3353,8 @@ function computeScores(){
     s.domains={};
     enabled.forEach(d=>{s.domains[d]=computeDomainResult(s,d);});
     s.autoTags=enabled.filter(d=>s.domains[d].flag);
+    // 상충 영역 수집 (면접·설문 결과가 반대인 영역)
+    s.conflictDomains=enabled.filter(d=>s.domains[d].conflict);
     if(!s.tagsInitialized){
       s.tags=[...s.autoTags];
       if(CONFIG.specialEd.enabled&&s.specialEdMark)s.tags.push('특수교육');
@@ -3350,7 +3399,7 @@ function renderReviewList(){
     const cls=s.id===selectedId?'active-row':'';
     return `<tr class="${cls}" onclick="selectStudent('${s.id}')">
       <td>${i+1}</td>
-      <td><b>${s.name||'(이름없음)'}</b>${s.missing.length?` <span style="color:var(--amber);font-size:.72rem">(${s.missing.join(',')} 없음)</span>`:''}</td>
+      <td><b>${s.name||'(이름없음)'}</b>${s.missing.length?` <span style="color:var(--amber);font-size:.72rem">(${s.missing.join(',')} 없음)</span>`:''}${s.conflictDomains&&s.conflictDomains.length?` <span style="color:#b45309;font-size:.7rem;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:1px 7px;vertical-align:middle">⚠ 면접·설문 결과 상이</span>`:''}</td>
       <td>${s.gender||'-'}</td>
       <td>${s.tags.map(t=>tagChip(t)).join('')||'<span style="color:var(--text-muted);font-size:.78rem">-</span>'}</td>
     </tr>`;
@@ -3374,6 +3423,7 @@ function renderDetail(){
     ${s.gender?`<span style="font-size:.76rem;background:var(--surface2);border-radius:6px;padding:2px 8px;margin-left:4px">${s.gender}</span>`:''}
   </h3>`;
   if(s.missing.length) html+=`<div style="font-size:.77rem;color:var(--amber);margin-bottom:8px">⚠ ${s.missing.join(', ')} 데이터 없음</div>`;
+  if(s.conflictDomains&&s.conflictDomains.length) html+=`<div style="font-size:.77rem;color:#b45309;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;padding:6px 10px;margin-bottom:8px">⚠ <b>면접·설문 결과 상이</b> — ${s.conflictDomains.join(', ')}<br><span style="font-size:.72rem;color:#92400e">배정은 학생 면접 결과를 기준으로 합니다. 검토 후 태그를 조정하세요.</span></div>`;
 
   // ── 관찰 영역 토글 스위치 ──
   html+=`<div class="sec-title" style="margin-top:10px">관찰 영역 <span style="font-weight:400;font-size:.74rem;color:var(--text-muted)">— 토글을 눌러 on/off 조정</span></div>`;
@@ -3409,8 +3459,12 @@ function renderDetail(){
   enabled.forEach(d=>{
     const res=s.domains[d];
     const dc=DOMAIN_COLORS[d]||{bg:'#eee',fg:'#888'};
-    html+=`<div style="margin-bottom:8px;padding:8px 10px;border-radius:8px;border:1px solid var(--border)">
-      <div style="font-size:.78rem;font-weight:800;color:${dc.fg};margin-bottom:5px">${DOMAIN_ICONS[d]||''} ${d} <span style="font-weight:400;color:var(--text-muted)">${res?res.score+'/'+res.max:''}점</span></div>
+    const conflictThis=res&&res.conflict;
+    html+=`<div style="margin-bottom:8px;padding:8px 10px;border-radius:8px;border:1px solid ${conflictThis?'#fde68a':'var(--border)'}${conflictThis?';background:#fffbeb':''}">
+      <div style="font-size:.78rem;font-weight:800;color:${dc.fg};margin-bottom:5px">${DOMAIN_ICONS[d]||''} ${d}
+        <span style="font-weight:400;color:var(--text-muted)"> 면접 ${res?res.stuScore+'/'+res.stuMax:'?'}점${res&&res.parMax>0?' · 설문 '+res.parScore+'/'+res.parMax+'점':''}</span>
+        ${conflictThis?'<span style="font-size:.68rem;color:#b45309;background:#fef3c7;border-radius:8px;padding:1px 6px;margin-left:4px">⚠ 상이</span>':''}
+      </div>
       <div class="qgrid">`;
     getEffectiveStuFields().filter(f=>f.domain===d).forEach(f=>{
       const v=s.stu&&s.stu.q?s.stu.q[f.idx]:undefined;
